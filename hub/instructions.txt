@@ -1,0 +1,3 @@
+DO NOT rename folders or the mod won't be able to read them.
+
+/BGM is where hub BGM shall be put.

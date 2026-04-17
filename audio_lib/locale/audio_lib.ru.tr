@@ -1,0 +1,79 @@
+# textdomain: audio_lib
+
+##[ init.lua ]##
+Library to easily manage sounds (accessibility options!)=Библиотека для простого управления звуками (опции доступности!)
+
+##[ src/GUI/gui_settings.lua ]##
+Used by:@n@1=Используется:@n@1
+It only affects mods that use audio_lib=Только затрагивает моды, использующие audio_lib
+Main=Главный
+BGM=Музыка
+SFX=Звуковые эффекты
+Accessibility=Доступность
+Reset=Сброс
+Apply=Применить
+
+##[ src/GUI/gui_settings.lua ]##
+##[ src/items.lua ]##
+Audio Settings=Настройки аудио
+
+##[ src/commands.lua ]##
+Open the audio settings menu=Открыть меню с настройками аудио
+
+##[ src/register/MTG.lua ]##
+Cart moves=Движется вагонетка
+Grass breaks=Ломается стекло
+Chest closes=Закрывается сундук
+Chest opens=Открывается сундук
+Lapilli burst out=Лапилли вырываются наружу
+Chop chop=Чоп-чоп
+Footsteps (gravel)=Шаги (гравий)
+Footsteps (grass)=Шаги (трава)
+Footsteps (dirt)=Шаги (грязь)
+Metal breaks=Ломается металл
+Node breaks=Ломается блок
+Furnace crackles=Потрескивает печь
+Gravel breaks=Ломается гравий
+Ice breaks=Ломается лёд
+Item evaporates=Исчезает предмет
+Node placed=Ставится блок
+Hard node placed=Ставится твёрдый блок
+Metal node placed=Ставится металлический блок
+Item breaks=Ломается предмет
+Hit=Удар
+Door closes=Закрывается дверь
+Door opens=Открывается дверь
+Fence gate closes=Закрывается калитка
+Fence gate opens=Открывается калитка
+Glass door closes=Закрывается стеклянная дверь
+Glass door opens=Открывается стеклянная дверь
+Steel door closes=Закрывается стальная дверь
+Steel door opens=Открывается стальная дверь
+Lava boils=Бурлит лава
+Water flows=Течёт вода
+Fire exstinguishes=Тушится огонь
+Fire burns=Горит огонь
+Flint scratches=Звучит огниво
+Fire roars=Шумит огонь
+Fire crackles=Потрескивает огонь
+Explosion=Взрыв
+Fuse burns=Горит фитиль
+Fuse ignites=Поджигается фитиль
+Steel bar door slams=Захлопывается дверь из стальных прутьев
+Steel bar door creaks=Скрипит дверь из стальных прутьев
+
+##[ src/tests/bgm.lua ]##
+Audio Lib BGM test #1@n@n1. Play BGM #1 in loop.@n@nRight click to stop any BGM=Audio Lib BGM тест #1@n@n1. Проигрывать BGM #1 на повторе.@n@nПКМ чтобы остановить любой BGM
+Audio Lib BGM test #2@n@n1. Play BGM #1 for 1s@n2. Play BGM #2 for 3s, gain 0.3@n3. Play BGM #1 for 4s from where it stopped@n4. Stop BGM #1 after 2s=Музыка в Audio Lib: Тест № 2@n@n1. Воспроизведение музыки № 1 в течение 1 с.@n2. Воспроизведение музыки № 2 в течение 3 с, усиление 0.3@n3. Воспроизведение музыки № 1 в течение 4 с там, где она остановилась@n4. Остановка музыки № 1 после 2 с
+Audio Lib BGM test #3@n@n1. Play BGM #2 for 2s@n2. Gradually change (1s) gain to 0.5 for 3s@n3. Change gain to 1.4 for 2s@n4. Fade it out in 2s=Музыка в Audio Lib: Тест № 3@n@n1. Воспроизведение музыки № 2 в течение 2 с.@n2. Плавное изменение (1 с) усиления до 0.5 в течение 3 с@n3. Именение усиления до 1.4 в течение 2 с@n4. Затухание 2 с
+Starts changing volume=Начинает менять громкость
+Starts fading=Начинает затухать
+
+##[ src/tests/custom_types.lua ]##
+Custom type test=Тест произвольного типа
+Audio Lib custom sound test #1@n@n1. Play Custom Sound #1 to the player=Произвольные звуки в Audio Lib: Тест № 1@n@n1. Воспроизведение произвольного звука № 1 у игрока
+
+##[ src/tests/sfx.lua ]##
+Audio Lib sfx test #1@n@n1. Play SFX #1 to the player=Звуковые эффекты в Audio Lib: Тест № 1@n@n1. Воспроизведение звукового эффекта № 1 у игрока
+Audio Lib sfx test #2@n@n1. Play SFX #1 at player's position@n2. Play SFX #1 again after 2 seconds, shifted by 30 nodes on the X axis from the player's position@n3.Play it again after 0.5s, but shifted by 30 nodes in the opposite direction@n4. Play it again after 0.4s, like in step #2=Звуковые эффекты в Audio Lib: Тест № 1@n@n1. Воспроизведение звукового эффекта № 1 в позиции игрока@n2. Повторное воспроизведение звукового эффекта № 1 после 2 с, на расстоянии 30 блоков по оси X от позиции игрока@n3. Повторное его воспроизведение после 0.5 с, но на расстоянии 30 блоков в противополном направлении@n4. Повторное его воспроизведение после 0.4 с, как в этапе 2
+Audio Lib sfx test #3@n@n1. Play SFX #1 three times as a non overlappable sound, in two different places at the same time@n2. You should only hear two sounds (the first one with the same position will be immediately interrupted)=Audio Lib sfx test #3@n@n1. Играть SFX #1 три раза в качестве звука, который не сможет быть перекрытым, в двух разных местах одновременно @n2. Вы должны услышать только два звука (первый звук с одинаковой позицией будет немедленно прерван)

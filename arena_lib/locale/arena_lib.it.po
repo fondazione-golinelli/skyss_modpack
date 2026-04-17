@@ -1,0 +1,1631 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-16 20:41+0100\n"
+"PO-Revision-Date: 2026-03-16 19:57+0000\n"
+"Last-Translator: Zughy <zughy@noreply.codeberg.org>\n"
+"Language-Team: Italian <https://translate.codeberg.org/projects/zughy-"
+"friends-minetest/arena_lib/it/>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.16.2\n"
+
+#: init.lua:7
+msgid "Library to easily create mini-games"
+msgstr "Libreria per creare minigiochi con facilità"
+
+#: src/_load.lua:172
+msgid "Notifications"
+msgstr "Notifiche"
+
+#: src/_load.lua:174
+msgid "Countdown ticks"
+msgstr "Rintocco conto alla rovescia"
+
+#: src/_load.lua:175
+msgid "Someone is eliminated"
+msgstr "Qualcunə è eliminatə"
+
+#: src/_load.lua:176
+msgid "Someone joins"
+msgstr "Qualcunə entra"
+
+#: src/_load.lua:177
+msgid "Someone leaves"
+msgstr "Qualcunə abbandona"
+
+#: src/_load.lua:178
+msgid "Someone joins (queue)"
+msgstr "Qualcunə entra (coda)"
+
+#: src/_load.lua:179
+msgid "Someone leaves (queue)"
+msgstr "Qualcunə abbandona (coda)"
+
+#: src/_load.lua:183 src/api/core.lua:1424 src/api/core.lua:1932
+msgid "-- missing description --"
+msgstr "-- descrizione mancante --"
+
+#: src/admin_tools/entrances.lua:19 src/admin_tools/minigame_settings.lua:21
+#: src/deps/parties.lua:17 src/editor/editor_main.lua:80
+msgid "You can't perform this action while in game!"
+msgstr "Non puoi eseguire quest'azione mentre sei in partita!"
+
+#: src/admin_tools/entrances.lua:23 src/admin_tools/minigame_settings.lua:26
+#: src/api/core.lua:611 src/api/in_game.lua:685 src/api/in_game.lua:719
+#: src/utils/debug.lua:30
+msgid "This minigame doesn't exist!"
+msgstr "Questo minigioco non esiste!"
+
+#: src/admin_tools/entrances.lua:68
+msgid "Entrance type - @1"
+msgstr "Tipo d'entrata - @1"
+
+#: src/admin_tools/entrances.lua:69
+msgid "Pressing \"overwrite\" will try to disable the arena first"
+msgstr "Premere \"sovrascrivi\" proverà prima a disabilitare l'arena"
+
+#: src/admin_tools/entrances.lua:71
+msgid "OVERWRITE ALL"
+msgstr "SOVRASCRIVI TUTTO"
+
+#: src/admin_tools/entrances.lua:73 src/admin_tools/entrances.lua:81
+#: src/admin_tools/minigame_settings.lua:93 src/editor/tools_settings.lua:215
+msgid "Overwrite"
+msgstr "Sovrascrivi"
+
+#: src/admin_tools/entrances.lua:108 src/admin_tools/entrances.lua:123
+msgid "@1 - nothing to overwrite"
+msgstr "@1 - niente da sovrascrivere"
+
+#: src/admin_tools/minigame_settings.lua:17 src/deps/parties.lua:12
+msgid "You can't perform this action while in queue!"
+msgstr "Non puoi eseguire quest'azione mentre sei in coda!"
+
+#: src/admin_tools/minigame_settings.lua:90
+msgid "Minigame settings"
+msgstr "Impostazioni minigioco"
+
+#: src/api/core.lua:181 src/commands.lua:201 src/commands.lua:202
+#: src/commands.lua:203 src/commands.lua:204 src/commands.lua:206
+#: src/commands.lua:207 src/commands.lua:208 src/commands.lua:211
+#: src/commands.lua:214
+msgid "arena"
+msgstr "arena"
+
+#: src/api/core.lua:182
+msgid "team"
+msgstr "squadra"
+
+#: src/api/core.lua:183 src/api/in_game.lua:213 src/api/in_game.lua:1489
+msgid "spectator"
+msgstr "spettante"
+
+#: src/api/core.lua:192
+msgid "@1 has been eliminated"
+msgstr "@1 è statə eliminatə"
+
+#: src/api/core.lua:193
+msgid "@1 has been eliminated by @2"
+msgstr "@1 è statə eliminatə da @2"
+
+#: src/api/core.lua:194
+msgid "You're the last player standing: you win!"
+msgstr "Sei l'ultimə giocante rimastə in partita: hai vinto!"
+
+#: src/api/core.lua:195
+msgid "There are no other teams left, you win!"
+msgstr "Non ci sono altre squadre rimaste, hai vinto!"
+
+#: src/api/core.lua:196
+msgid "@1 has quit the match"
+msgstr "@1 ha abbandonatə la partita"
+
+#: src/api/core.lua:197
+msgid "@1 wins the game"
+msgstr "@1 ha vinto la partita"
+
+#: src/api/core.lua:198
+msgid "Team @1 wins the game"
+msgstr "La squadra @1 ha vinto la partita"
+
+#: src/api/core.lua:199
+msgid "@1 win the game"
+msgstr "@1 hanno vinto la partita"
+
+#: src/api/core.lua:200
+msgid "Teams @1 win the game"
+msgstr "Le squadre @1 hanno vinto la partita"
+
+#: src/api/core.lua:201
+msgid "There are no winners"
+msgstr "Non ci sono vincitorɜ"
+
+#: src/api/core.lua:556 src/api/core.lua:620 src/api/core.lua:761
+#: src/api/core.lua:784 src/api/core.lua:815 src/api/core.lua:874
+#: src/api/core.lua:916 src/api/core.lua:977 src/api/core.lua:1084
+#: src/api/core.lua:1094 src/api/core.lua:1199 src/api/core.lua:1216
+#: src/api/core.lua:1223 src/api/core.lua:1254 src/api/core.lua:1306
+#: src/api/core.lua:1325 src/api/core.lua:1341 src/api/core.lua:1361
+#: src/api/core.lua:1449 src/editor/tools_settings.lua:329
+#: src/signs/signs.lua:164
+msgid "Parameters don't seem right!"
+msgstr "I parametri hanno qualcosa che non va!"
+
+#: src/api/core.lua:581 src/api/core.lua:840
+msgid "Property type doesn't match, aborting!"
+msgstr "Il tipo della proprietà non corrisponde, annullo!"
+
+#: src/api/core.lua:596 src/api/core.lua:846
+msgid "Parameter @1 successfully overwritten"
+msgstr "Parametro @1 sovrascritto con successo"
+
+#: src/api/core.lua:624 src/api/core.lua:881
+msgid "This minigame needs at least @1 players!"
+msgstr "Questo minigioco ha bisogno di almeno @1 giocanti!"
+
+#: src/api/core.lua:628 src/api/core.lua:862
+msgid "In endless minigames, the minimum amount of players must always be 0!"
+msgstr ""
+"Nei minigiochi infiniti, il numero minimo di giocanti deve sempre essere 0!"
+
+#: src/api/core.lua:693
+msgid "Arena @1 successfully created"
+msgstr "Arena @1 creata con successo"
+
+#: src/api/core.lua:721
+msgid "Arena @1 successfully removed"
+msgstr "Arena @1 rimossa con successo"
+
+#: src/api/core.lua:747
+msgid "Arena @1 successfully renamed in @2"
+msgstr "Arena @1 rinominata con successo in @2"
+
+#: src/api/core.lua:765
+msgid "@1's author successfully removed"
+msgstr "Autorə dell'arena @1 rimossə con successo"
+
+#: src/api/core.lua:768
+msgid "@1's author successfully changed to @2"
+msgstr "Autorə dell'arena @1 cambiatə con successo in @2"
+
+#: src/api/core.lua:788
+msgid "@1's thumbnail successfully removed"
+msgstr "Miniatura di @1 rimossa con successo"
+
+#: src/api/core.lua:792 src/api/core.lua:1420
+#: src/editor/tools_customise_bgm.lua:128
+msgid "File not found!"
+msgstr "File non trovato!"
+
+#: src/api/core.lua:796
+msgid "@1's thumbnail successfully changed to @2"
+msgstr "Miniatura di @1 cambiata con successo in @2"
+
+#: src/api/core.lua:892
+msgid "Players amount successfully changed ( min @1 | max @2 )"
+msgstr "Numero dellɜ giocanti modificato con successo ( min @1 | max @2 )"
+
+#: src/api/core.lua:909 src/api/core.lua:969 src/commands.lua:319
+msgid "Teams are not enabled!"
+msgstr "Le squadre non sono abilitate!"
+
+#: src/api/core.lua:923 src/api/core.lua:982
+msgid "Nothing to do here!"
+msgstr "È già tutto a posto qui!"
+
+#: src/api/core.lua:950
+msgid "Teams amount successfully changed (@1)"
+msgstr "Numero delle squadre modificato con successo (@1)"
+
+#: src/api/core.lua:973
+msgid "Teams cannot be disabled in this minigame!"
+msgstr "Le squadre non possono essere disabilitate in questo minigioco!"
+
+#: src/api/core.lua:996
+msgid "Teams successfully enabled for the arena @1"
+msgstr "Squadre abilitate con successo nell'arena @1"
+
+#: src/api/core.lua:1003
+msgid "Teams successfully disabled for the arena @1"
+msgstr "Squadre disabilitate con successo nell'arena @1"
+
+#: src/api/core.lua:1033
+msgid "This team doesn't exist!"
+msgstr "Questa squadra non esiste!"
+
+#: src/api/core.lua:1041
+msgid "A team ID must be specified!"
+msgstr "È necessario specificare l'ID della squadra!"
+
+#: src/api/core.lua:1048
+msgid "There are no spawners to remove!"
+msgstr "Non ci sono punti di rinascita da rimuovere!"
+
+#: src/api/core.lua:1066
+msgid "Spawn point #@1 successfully deleted"
+msgstr "Punto di rinascita #@1 cancellato con successo"
+
+#: src/api/core.lua:1071
+msgid "All the spawn points belonging to team @1 have been removed"
+msgstr ""
+"Tutti i punti di rinascita appartenenti alla squadra @1 sono stati rimossi"
+
+#: src/api/core.lua:1080
+msgid "All spawn points have been removed"
+msgstr "Tutti i punti di rinascita sono stati rimossi"
+
+#: src/api/core.lua:1106 src/api/core.lua:1114
+msgid "There's already a spawn in this point!"
+msgstr "C'è già un punto di rinascita in questo punto!"
+
+#: src/api/core.lua:1132
+msgid "Spawn point #@1 successfully set"
+msgstr "Punto di rinascita #@1 impostato con successo"
+
+#: src/api/core.lua:1149
+msgid "There is no entrance type with this name!"
+msgstr "Non c'è nessun tipo di entrata con questo nome!"
+
+#: src/api/core.lua:1159
+msgid "Entrance type of arena @1 successfully changed (@2)"
+msgstr "Tipo d'entrata dell'arena @1 cambiato con successo (@2)"
+
+#: src/api/core.lua:1179
+msgid "There is already an entrance for this arena!"
+msgstr "Esiste già un'entrata per quest'arena!"
+
+#: src/api/core.lua:1187
+msgid "Entrance of arena @1 successfully set"
+msgstr "Entrata dell'arena @1 impostata con successo"
+
+#: src/api/core.lua:1191 src/signs/signs_editor.lua:46
+msgid "There is no entrance to remove assigned to @1!"
+msgstr "Non c'è nessun'entrata da rimuovere assegnata a @1!"
+
+#: src/api/core.lua:1196
+msgid "Entrance of arena @1 successfully removed"
+msgstr "Entrata dell'arena @1 rimossa con successo"
+
+#: src/api/core.lua:1231
+msgid "Custom return point of arena @1 succesfully set"
+msgstr "Punto di ritorno personalizzato dell'arena @1 impostato con successo"
+
+#: src/api/core.lua:1232
+msgid "Custom return point of arena @1 succesfully removed"
+msgstr "Punto di ritorno personalizzato dell'arena @1 rimosso con successo"
+
+#: src/api/core.lua:1273
+msgid "Regions of different arenas can't overlap!"
+msgstr "La regione non può intersecarsi con quella di altre arene!"
+
+#: src/api/core.lua:1288
+msgid "(pos1 and pos2 have been automatically sorted)"
+msgstr "(pos1 e pos2 sono state ordinate automaticamente)"
+
+#: src/api/core.lua:1293
+msgid "Region of arena @1 successfully overwritten"
+msgstr "Regione dell'arena @1 sovrascritta con successo"
+
+#: src/api/core.lua:1312
+msgid "Lighting of arena @1 successfully overwritten"
+msgstr "Illuminazione dell'arena @1 sovrascritta con successo"
+
+#: src/api/core.lua:1348
+msgid "(@1) Celestial vault of arena @2 successfully overwritten"
+msgstr "(@1) Volta celeste dell'arena @2 sovrascritta con successo"
+
+#: src/api/core.lua:1397
+msgid "Weather condition of arena @1 successfully overwritten"
+msgstr "Condizione meteo dell'arena @1 sovrascritta con successo"
+
+#: src/api/core.lua:1415
+msgid "parameter `@1` is mandatory!"
+msgstr "Il parametro `@1` è obbligatorio!"
+
+#: src/api/core.lua:1428
+msgid "Background music of arena @1 successfully overwritten"
+msgstr "Musica di sottofondo dell'arena @1 sovrascritta con successo"
+
+#: src/api/core.lua:1444
+msgid "Timers are not enabled in this mod!"
+msgstr "I timer non sono abilitati in questa mod!"
+
+#: src/api/core.lua:1455
+msgid "Arena @1's timer is now @2 seconds"
+msgstr "Il timer dell'arena @1 è ora @2 secondi"
+
+#: src/api/core.lua:1482
+msgid "Insufficient spawners, the arena can't be enabled!"
+msgstr "Punti di rinascita insufficienti, l'arena non può essere abilitata!"
+
+#: src/api/core.lua:1488
+msgid "Entrance not set, the arena can't be enabled!"
+msgstr "Entrata non dichiarata, l'arena non può essere abilitata!"
+
+#: src/api/core.lua:1499 src/api/core.lua:1506
+msgid ""
+"If the arena region is declared, all the existing spawn points must be "
+"placed inside it!"
+msgstr ""
+"Se si dichiara la regione dell'arena, tutti i punti di rinascita presenti "
+"devono essere posizionati al suo interno!"
+
+#: src/api/core.lua:1517 src/map_reset/map_reset.lua:70
+#: src/map_reset/map_saving.lua:33
+msgid "Region not declared!"
+msgstr "Regione non dichiarata!"
+
+#: src/api/core.lua:1547
+msgid "Arena @1 successfully enabled"
+msgstr "Arena @1 abilitata con successo"
+
+#: src/api/core.lua:1561
+msgid "The arena is already disabled!"
+msgstr "L'arena è già disabilitata!"
+
+#: src/api/core.lua:1572
+msgid "You can't disable an arena during an ongoing game!"
+msgstr "Non puoi disabilitare un'arena mentre una partita è in corso!"
+
+#: src/api/core.lua:1587
+msgid "The arena you were queueing for has been disabled... :("
+msgstr "L'arena per la quale eri in coda è stata disabilitata... :("
+
+#: src/api/core.lua:1595
+msgid "Arena @1 successfully disabled"
+msgstr "Arena @1 disabilitata con successo"
+
+#: src/api/core.lua:2122
+msgid "Schematic of arena @1 deleted"
+msgstr "Schematica dell'arena @1 cancellata"
+
+#: src/api/core.lua:2131
+msgid "An arena with that name exists already!"
+msgstr "Esiste già un'arena con quel nome!"
+
+#: src/api/core.lua:2138
+msgid "The name contains unsupported characters!"
+msgstr "Il nome contiene caratteri non supportati!"
+
+#: src/api/in_game.lua:170 src/api/in_game.lua:729
+msgid "No ongoing game!"
+msgstr "Nessuna partita in corso!"
+
+#: src/api/in_game.lua:177 src/utils/macros.lua:40
+msgid "You're already inside a minigame!"
+msgstr "Sei già dentro a un minigioco!"
+
+#: src/api/in_game.lua:182
+msgid "Spectate mode not supported!"
+msgstr "Modalità assisti non supportata!"
+
+#: src/api/in_game.lua:186
+msgid "This minigame doesn't allow spectators to join from outside!"
+msgstr "Questo minigioco non permette allɜ spettanti di entrare da fuori!"
+
+#: src/api/in_game.lua:193 src/utils/macros.lua:130
+msgid ""
+"You must detach yourself from the entity you're attached to before entering!"
+msgstr ""
+"Devi prima staccarti dall'entità alla quale sei agganciatə se vuoi entrare!"
+
+#: src/api/in_game.lua:198 src/utils/macros.lua:135
+msgid ""
+"Your version of Luanti is too old to enter this minigame! Please update it"
+msgstr ""
+"La tua versione di Luanti è troppo vecchia per entrare in questo minigioco! "
+"Per favore aggiornala"
+
+#: src/api/in_game.lua:204
+msgid "There is nothing to spectate!"
+msgstr "Non c'è niente a cui assistere!"
+
+#: src/api/in_game.lua:221
+msgid "The arena is loading, try again in a few seconds!"
+msgstr "L'arena è in caricamento, riprova tra qualche secondo!"
+
+#: src/api/in_game.lua:226
+msgid "This minigame doesn't allow to join while in progress!"
+msgstr "Questo minigioco non permette di entrare a partita iniziata!"
+
+#: src/api/in_game.lua:391
+msgid "Players and spectators can now interact with each other"
+msgstr "Giocanti e spettanti possono ora interagire tra di loro"
+
+#: src/api/in_game.lua:690 src/api/in_game.lua:724
+#: src/map_reset/map_reset.lua:53 src/map_reset/map_saving.lua:23
+#: src/utils/debug.lua:48 src/utils/macros.lua:8
+msgid "This arena doesn't exist!"
+msgstr "Quest'arena non esiste!"
+
+#: src/api/in_game.lua:695
+msgid "Can't force a game to start if the arena is not even in queue!"
+msgstr ""
+"Non è possibile forzare l'avvio di una partita se l'arena non è almeno in "
+"coda!"
+
+#: src/api/in_game.lua:700 src/utils/debug.lua:408
+msgid "You can't perform this action during an ongoing game!"
+msgstr "Non puoi eseguire quest'azione mentre c'è una partita in corso!"
+
+#: src/api/in_game.lua:709
+msgid "Game start in arena @1 successfully forced"
+msgstr "Avvio della partita nell'arena @1 forzato con successo"
+
+#: src/api/in_game.lua:732
+msgid "The arena has been forcibly terminated by @1"
+msgstr "La conclusione della partita è stata forzata da @1"
+
+#: src/api/in_game.lua:735
+msgid "Game in arena @1 successfully terminated"
+msgstr "La partita nell'arena @1 è stata terminata con successo"
+
+#: src/api/in_game.lua:1511
+msgid "@1 has been kicked by @2"
+msgstr "@1 è stato cacciatə da @2"
+
+#: src/api/in_game.lua:1513
+msgid "@1 has been kicked"
+msgstr "@1 è stato cacciatə"
+
+#: src/api/in_game.lua:1660
+msgid "You can't leave the game area!"
+msgstr "Non si può abbandonare l'area di gioco!"
+
+#: src/api/in_queue.lua:39
+msgid "Game begins in @1!"
+msgstr "La partita inizierà tra @1!"
+
+#: src/api/in_queue.lua:40
+msgid "Get ready!"
+msgstr "Preparati!"
+
+#: src/api/in_queue.lua:42 src/api/in_queue.lua:248
+msgid "@1 seconds for the match to start"
+msgstr "@1 secondi all'inizio"
+
+#: src/api/in_queue.lua:63 src/map_reset/map_saving.lua:38
+msgid "The map is resetting, try again in a few seconds!"
+msgstr "La mappa si sta rigenerando, riprova tra qualche secondo!"
+
+#: src/api/in_queue.lua:76
+msgid "You're already queuing for this arena!"
+msgstr "Sei già in coda per quest'arena!"
+
+#: src/api/in_queue.lua:85
+msgid ""
+"You've been blocked from entering any queue for 10 seconds, due to joining "
+"and leaving repeatedly in a short amount of time!"
+msgstr ""
+"Ti è stato interdetto l'accesso alle code per 10 secondi, causa ripetuto "
+"entrare e uscire in poco tempo!"
+
+#: src/api/in_queue.lua:132 src/api/in_queue.lua:238 src/api/in_queue.lua:243
+msgid "Waiting for more players..."
+msgstr "In attesa di più giocanti..."
+
+#: src/api/in_queue.lua:177
+msgid "Only the party leader can leave the queue!"
+msgstr "Solo lə capə gruppo può abbandonare la coda!"
+
+#: src/api/in_queue.lua:239
+msgid "The queue has been cancelled due to not enough players"
+msgstr "La coda è stata annullata per troppɜ pochɜ giocanti"
+
+#: src/api/in_queue.lua:437
+msgid "You've joined team @1"
+msgstr "Ti sei unitə alla squadra @1"
+
+#: src/api/map.lua:26
+msgid "You can't build outside the game region!"
+msgstr "Non si può costruire al di fuori dell'area di gioco!"
+
+#: src/api/map.lua:39
+msgid "You can't modify the map whilst enabled!"
+msgstr "Non si può modificare la mappa mentre è abilitata!"
+
+#: src/commands.lua:15
+msgid "There's a time and place for everything. But not now!"
+msgstr "C'è tempo e luogo per ogni cosa. Ma non ora!"
+
+#: src/commands.lua:28
+msgid "Manage arena_lib arenas; it requires arenalib_admin"
+msgstr "Gestisce le arene di arena_lib; richiede arenalib_admin"
+
+#: src/commands.lua:48 src/commands.lua:61 src/commands.lua:75
+#: src/commands.lua:88 src/commands.lua:102 src/commands.lua:119
+#: src/commands.lua:138 src/commands.lua:155
+msgid ""
+"There are more minigames having an arena called @1: please specify the name "
+"of the minigame before the name of the arena, separating them with a space"
+msgstr ""
+"Ci sono più minigiochi contenenti un'arena chiamata @1: specifica il nome "
+"del minigioco prima del nome dell'arena, separandoli con uno spazio"
+
+#: src/commands.lua:184
+msgid "This player is not online!"
+msgstr "Questə giocante non è connessə!"
+
+#: src/commands.lua:189
+msgid "The player must be in a game to perform this action!"
+msgstr "Lə giocante deve essere in partita per eseguire questa azione!"
+
+#: src/commands.lua:193
+msgid "Player successfully kicked"
+msgstr "Giocante cacciatə con successo"
+
+#: src/commands.lua:199
+msgid "COMMANDS"
+msgstr "COMANDI"
+
+#: src/commands.lua:200
+msgid ""
+"check if there is any unused resource inside the arena_lib world folder "
+"(inside BGM and Thumbnails)"
+msgstr ""
+"Controlla se ci sono file inutilizzati nella cartella del mondo di arena_lib "
+"(dentro a BGM e Thumbnails)"
+
+#: src/commands.lua:201 src/commands.lua:202 src/commands.lua:203
+#: src/commands.lua:204 src/commands.lua:205 src/commands.lua:206
+#: src/commands.lua:207 src/commands.lua:208 src/commands.lua:211
+#: src/commands.lua:213 src/commands.lua:214 src/commands.lua:215
+msgid "minigame"
+msgstr "minigioco"
+
+#: src/commands.lua:201
+msgid "creates an arena for the specified minigame"
+msgstr "Crea un'arena per il minigioco specificato"
+
+#: src/commands.lua:202
+msgid "disables an arena"
+msgstr "disabilita un'arena"
+
+#: src/commands.lua:203
+msgid "enters the arena editor"
+msgstr "entra nell'editor dell'arena"
+
+#: src/commands.lua:204
+msgid "enables an arena"
+msgstr "abilita un'arena"
+
+#: src/commands.lua:205
+msgid "changes the entrance types of the specified minigame"
+msgstr "cambia i tipi d'entrata del minigioco specificato"
+
+#: src/commands.lua:206
+msgid "DEBUG ONLY - resets the properties of a bugged arena"
+msgstr "SOLO DEBUG - ripristina le proprietà di un'arena rotta"
+
+#: src/commands.lua:207
+msgid "forcibly ends an ongoing game"
+msgstr "forza la conclusione di una partita in corso"
+
+#: src/commands.lua:208
+msgid "forcibly loads (if in queue) or starts (if in the loading phase) a game"
+msgstr ""
+"forza il caricamento (se in coda) o l'avvio (se nella fase di caricamento) "
+"di una partita"
+
+#: src/commands.lua:209
+msgid "lists all the installed minigames, alphabetically sorted"
+msgstr "elenca tutti i minigiochi installati, in ordine alfabetico"
+
+#: src/commands.lua:210
+msgid "see @1"
+msgstr "vedi @1"
+
+#: src/commands.lua:211
+msgid "prints all the arena's info"
+msgstr "stampa a schermo tutte le informazioni dell'arena"
+
+#: src/commands.lua:212
+msgid "player"
+msgstr "giocante"
+
+#: src/commands.lua:212
+msgid ""
+"kicks a player from an ongoing game. When kicked, they must wait 2 minutes "
+"before re-entering a match"
+msgstr ""
+"caccia unə giocante da una partita in corso. Una volta cacciatə, dovrà "
+"aspettare 2 minuti prima di poter rientrare in una partita"
+
+#: src/commands.lua:213
+msgid "lists all the arenas of the specified minigame"
+msgstr "elenca tutte le arene del minigioco specificato"
+
+#: src/commands.lua:214
+msgid "deletes an arena"
+msgstr "cancella un'arena"
+
+#: src/commands.lua:215
+msgid "tweaks the minigame settings for the current server"
+msgstr "modifica le impostazioni del minigioco per il server corrente"
+
+#: src/commands.lua:217
+msgid "UTILS"
+msgstr "UTILITÀ"
+
+#: src/commands.lua:218
+msgid "Barrier node: use it to fence your arenas"
+msgstr "Nodo barriera: usalo per recintare le tue arene"
+
+#: src/commands.lua:231
+msgid "Quits a queue or an ongoing game"
+msgstr "Abbandona una coda o una partita in corso"
+
+#: src/commands.lua:235
+msgid "You must be in a game or in queue to perform this action!"
+msgstr "Devi essere in partita o in coda per eseguire questa azione!"
+
+#: src/commands.lua:244
+msgid "You can't perform this action during the celebration phase!"
+msgstr "Non puoi eseguire quest'azione durante la fase di celebrazione!"
+
+#: src/commands.lua:269 src/commands.lua:298
+msgid "message"
+msgstr "messaggio"
+
+#: src/commands.lua:270
+msgid "Writes a message in the arena global chat while in a game"
+msgstr ""
+"Scrive un messaggio nella chat globale dell'arena mentre si è in una partita"
+
+#: src/commands.lua:276 src/commands.lua:281 src/commands.lua:305
+#: src/commands.lua:310
+msgid "You must be in a game to perform this action!"
+msgstr "Devi essere in partita per eseguire questa azione!"
+
+#: src/commands.lua:299
+msgid ""
+"Writes a message in the arena team chat while in a game (if teams are "
+"enabled)"
+msgstr ""
+"Scrive un messaggio nella chat di squadra dell'arena mentre si è in una "
+"partita (se le squadre sono abilitate)"
+
+#: src/deps/parties.lua:28
+msgid "The party leader must not be in queue to perform this action!"
+msgstr "Lə capə gruppo non deve essere in coda per eseguire quest'azione!"
+
+#: src/deps/parties.lua:33
+msgid "The party leader must not be in game to perform this action!"
+msgstr "Lə capə gruppo non deve essere in partita per eseguire quest'azione!"
+
+#: src/editor/editor_icons.lua:7
+msgid "Players"
+msgstr "Giocanti"
+
+#: src/editor/editor_icons.lua:20
+msgid "Values are PER TEAM! Use item #4 to change value"
+msgstr "I valori sono PER SQUADRA! Usa il 4° oggetto per cambiare valore"
+
+#: src/editor/editor_icons.lua:32
+msgid "Spawners"
+msgstr "Punti di rinascita"
+
+#: src/editor/editor_icons.lua:47
+msgid "Map"
+msgstr "Mappa"
+
+#: src/editor/editor_icons.lua:64
+msgid "Customise"
+msgstr "Personalizza"
+
+#: src/editor/editor_icons.lua:79
+msgid "Settings"
+msgstr "Impostazioni"
+
+#: src/editor/editor_icons.lua:94
+msgid "Info"
+msgstr "Info"
+
+#: src/editor/editor_icons.lua:112
+msgid "Go back"
+msgstr "Torna indietro"
+
+#: src/editor/editor_icons.lua:127
+msgid "Enable and leave"
+msgstr "Abilita ed esci"
+
+#: src/editor/editor_icons.lua:145 src/spectate/spectate_tools.lua:180
+#: src/spectate/spectate_tools.lua:202
+msgid "Leave"
+msgstr "Abbandona"
+
+#: src/editor/editor_main.lua:75 src/utils/macros.lua:30
+msgid "You must leave the editor first!"
+msgstr "Devi prima uscire dall'editor!"
+
+#: src/editor/editor_main.lua:178
+msgid "Wooosh!"
+msgstr "Wooosh!"
+
+#: src/editor/editor_main.lua:289
+msgid "Players and teams"
+msgstr "Giocanti e squadre"
+
+#: src/editor/tools_customise_bgm.lua:14
+msgid "Background music"
+msgstr "Musica di sottofondo"
+
+#: src/editor/tools_customise_bgm.lua:65
+msgid "Audio file"
+msgstr "File audio"
+
+#: src/editor/tools_customise_bgm.lua:67
+msgid "leave empty to remove the current track"
+msgstr "lascia vuoto per rimuovere la traccia corrente"
+
+#: src/editor/tools_customise_bgm.lua:68
+msgid "Description"
+msgstr "Descrizione"
+
+#: src/editor/tools_customise_bgm.lua:70
+msgid "used for accessibility purposes"
+msgstr "usata per l'accessibilità"
+
+#: src/editor/tools_customise_bgm.lua:72
+msgid "Title"
+msgstr "Titolo"
+
+#: src/editor/tools_customise_bgm.lua:74
+msgid "Author"
+msgstr "Autorə"
+
+#: src/editor/tools_customise_bgm.lua:80
+msgid "Volume"
+msgstr "Volume"
+
+#: src/editor/tools_customise_bgm.lua:85
+msgid "Pitch"
+msgstr "Tono"
+
+#: src/editor/tools_customise_bgm.lua:94
+#: src/editor/tools_customise_lighting.lua:71
+#: src/editor/tools_customise_sky.lua:99
+#: src/editor/tools_customise_weather.lua:88
+msgid "Apply"
+msgstr "Applica"
+
+#: src/editor/tools_customise_lighting.lua:12
+msgid "Lighting"
+msgstr "Illuminazione"
+
+#: src/editor/tools_customise_lighting.lua:60
+msgid "Global light"
+msgstr "Luce globale"
+
+#: src/editor/tools_customise_lighting.lua:65
+msgid "Saturation"
+msgstr "Saturazione"
+
+#: src/editor/tools_customise_lighting.lua:70
+#: src/editor/tools_customise_sky.lua:98
+#: src/editor/tools_customise_weather.lua:87
+msgid "Reset"
+msgstr "Ripristina"
+
+#: src/editor/tools_customise_sky.lua:24
+msgid "Celestial vault"
+msgstr "Volta celeste"
+
+#: src/editor/tools_customise_sky.lua:83
+msgid "Sky"
+msgstr "Cielo"
+
+#: src/editor/tools_customise_sky.lua:84 src/editor/tools_customise_sky.lua:222
+msgid "Fog"
+msgstr "Nebbia"
+
+#: src/editor/tools_customise_sky.lua:85
+msgid "Sun"
+msgstr "Sole"
+
+#: src/editor/tools_customise_sky.lua:86
+msgid "Moon"
+msgstr "Luna"
+
+#: src/editor/tools_customise_sky.lua:87
+msgid "Stars"
+msgstr "Stelle"
+
+#: src/editor/tools_customise_sky.lua:88 src/editor/tools_customise_sky.lua:147
+msgid "Clouds"
+msgstr "Nuvole"
+
+#: src/editor/tools_customise_sky.lua:145
+msgid "Type"
+msgstr "Tipo"
+
+#: src/editor/tools_customise_sky.lua:153
+msgid "Day sky"
+msgstr "Cielo diurno"
+
+#: src/editor/tools_customise_sky.lua:155
+msgid "Dawn sky"
+msgstr "Cielo alba"
+
+#: src/editor/tools_customise_sky.lua:157
+msgid "Night sky"
+msgstr "Cielo notturno"
+
+#: src/editor/tools_customise_sky.lua:159
+msgid "Day horizon"
+msgstr "Orizz. diurno"
+
+#: src/editor/tools_customise_sky.lua:161
+msgid "Dawn horizon"
+msgstr "Orizz. alba"
+
+#: src/editor/tools_customise_sky.lua:163
+msgid "Night horizon"
+msgstr "Orizz. notturno"
+
+#: src/editor/tools_customise_sky.lua:165
+msgid "Indoors"
+msgstr "Al chiuso"
+
+#: src/editor/tools_customise_sky.lua:168
+msgid "Custom fog tint"
+msgstr "Personalizza tinta nebbia"
+
+#: src/editor/tools_customise_sky.lua:173
+msgid "Fog sun tint"
+msgstr "Tinta nebbia sole"
+
+#: src/editor/tools_customise_sky.lua:175
+msgid "Fog moon tint"
+msgstr "Tinta nebbia luna"
+
+#: src/editor/tools_customise_sky.lua:187
+msgid "Base colour"
+msgstr "Colore base"
+
+#: src/editor/tools_customise_sky.lua:195
+msgid "Top"
+msgstr "Sopra"
+
+#: src/editor/tools_customise_sky.lua:196
+#: src/editor/tools_customise_sky.lua:369
+msgid "Bottom"
+msgstr "Sotto"
+
+#: src/editor/tools_customise_sky.lua:197
+msgid "West"
+msgstr "Ovest"
+
+#: src/editor/tools_customise_sky.lua:198
+msgid "East"
+msgstr "Est"
+
+#: src/editor/tools_customise_sky.lua:199
+msgid "North"
+msgstr "Nord"
+
+#: src/editor/tools_customise_sky.lua:200
+msgid "South"
+msgstr "Sud"
+
+#: src/editor/tools_customise_sky.lua:227
+msgid "Fog distance"
+msgstr "Distanza nebbia"
+
+#: src/editor/tools_customise_sky.lua:228
+msgid "Fog start"
+msgstr "Inizio nebbia"
+
+#: src/editor/tools_customise_sky.lua:232
+#: src/editor/tools_customise_sky.lua:325
+#: src/editor/tools_customise_sky.lua:365
+#: src/editor/tools_customise_weather.lua:63
+msgid "Colour"
+msgstr "Colore"
+
+#: src/editor/tools_customise_sky.lua:253
+msgid "Visible sun"
+msgstr "Sole visibile"
+
+#: src/editor/tools_customise_sky.lua:254
+msgid "Visible sunrise"
+msgstr "Alba visibile"
+
+#: src/editor/tools_customise_sky.lua:261
+#: src/editor/tools_customise_sky.lua:297
+msgid "Texture"
+msgstr "Texture"
+
+#: src/editor/tools_customise_sky.lua:262
+#: src/editor/tools_customise_sky.lua:298
+msgid "Tonemap"
+msgstr "Mappa tonale"
+
+#: src/editor/tools_customise_sky.lua:263
+#: src/editor/tools_customise_sky.lua:299
+#: src/editor/tools_customise_sky.lua:323
+msgid "Size"
+msgstr "Dimensione"
+
+#: src/editor/tools_customise_sky.lua:273
+msgid "Sunrise texture"
+msgstr "Texture alba"
+
+#: src/editor/tools_customise_sky.lua:291
+msgid "Visible moon"
+msgstr "Luna visibile"
+
+#: src/editor/tools_customise_sky.lua:318
+msgid "Visible stars"
+msgstr "Stelle visibili"
+
+#: src/editor/tools_customise_sky.lua:327
+msgid "Count"
+msgstr "Quantità"
+
+#: src/editor/tools_customise_sky.lua:328
+#: src/editor/tools_customise_sky.lua:372
+msgid "Opacity"
+msgstr "Opacità"
+
+#: src/editor/tools_customise_sky.lua:332
+msgid "Seed (0 = random)"
+msgstr "Seme (0 = casuale)"
+
+#: src/editor/tools_customise_sky.lua:356
+msgid "Clouds must be enabled first to change their parameters"
+msgstr "Vanno prima abilitate le nuvole per poterne cambiare i parametri"
+
+#: src/editor/tools_customise_sky.lua:367
+msgid "Ambient"
+msgstr "Ambiente"
+
+#: src/editor/tools_customise_sky.lua:380
+msgid "Density"
+msgstr "Densità"
+
+#: src/editor/tools_customise_sky.lua:384
+msgid "Thickness"
+msgstr "Spessore"
+
+#: src/editor/tools_customise_sky.lua:386
+msgid "Height"
+msgstr "Altezza"
+
+#: src/editor/tools_customise_sky.lua:388
+msgid "Speed"
+msgstr "Velocità"
+
+#: src/editor/tools_customise_weather.lua:14
+msgid "Weather condition"
+msgstr "Condizione meteo"
+
+#: src/editor/tools_customise_weather.lua:74
+msgid "Rain"
+msgstr "Pioggia"
+
+#: src/editor/tools_customise_weather.lua:75
+msgid "Snow"
+msgstr "Neve"
+
+#: src/editor/tools_customise_weather.lua:76
+msgid "Dust"
+msgstr "Pulviscolo"
+
+#: src/editor/tools_customise_weather.lua:82 src/utils/debug.lua:248
+msgid "Strength"
+msgstr "Intensità"
+
+#: src/editor/tools_map.lua:23
+msgid "Arena region (LMB pos1, RMB pos2, Q removes)"
+msgstr "Regione dell'arena (sx pos1, dx pos2, Q rimuovi)"
+
+#: src/editor/tools_map.lua:93
+msgid "Save a schematic of the map"
+msgstr "Salva una schematica della mappa"
+
+#: src/editor/tools_map.lua:109
+msgid "Load and paste the map schematic"
+msgstr "Carica e incolla la schematica della mappa"
+
+#: src/editor/tools_map.lua:141
+msgid ""
+"Are you sure you want to edit the region? The associated schematic will be "
+"deleted"
+msgstr ""
+"Sei sicurə di voler modificare la regione dell'arena? La schematica "
+"associata verrà rimossa"
+
+#: src/editor/tools_map.lua:142 src/editor/tools_map.lua:158
+#: src/editor/tools_settings.lua:244 src/player_manager.lua:237
+#: src/signs/signs_editor.lua:140
+msgid "Yes"
+msgstr "Sì"
+
+#: src/editor/tools_map.lua:143 src/editor/tools_map.lua:159
+#: src/editor/tools_settings.lua:245 src/player_manager.lua:238
+#: src/signs/signs_editor.lua:141 src/spectate/spectate_tools.lua:222
+msgid "Cancel"
+msgstr "Annulla"
+
+#: src/editor/tools_map.lua:157
+msgid ""
+"Are you sure you want to delete the region of the arena? It'll also delete "
+"the associated schematic, if any"
+msgstr ""
+"Sei sicurə di voler eliminare la regione dell'arena? La schematica associata "
+"verrà rimossa, se ne esiste una"
+
+#: src/editor/tools_players.lua:24
+msgid "Players required"
+msgstr "Giocanti minimɜ"
+
+#: src/editor/tools_players.lua:49
+msgid "Players supported (right click to remove the limit)"
+msgstr "Giocanti massimɜ (tasto dx per rimuovere il limite)"
+
+#: src/editor/tools_players.lua:81
+msgid "Players supported (click to set a limit)"
+msgstr "Giocanti massimɜ (premi per impostare un limite)"
+
+#: src/editor/tools_players.lua:105
+msgid "Teams amount"
+msgstr "Numero squadre"
+
+#: src/editor/tools_players.lua:129
+msgid "Change value (LMB decreases, RMB increases)"
+msgstr "Cambia valore (sx diminuisce, dx aumenta)"
+
+#: src/editor/tools_players.lua:153
+msgid "Teams: on (click to toggle off)"
+msgstr "Squadre: attive (premi per disattivare)"
+
+#: src/editor/tools_players.lua:175
+msgid "Teams: off (click to toggle on)"
+msgstr "Squadre: non attive (premi per attivare)"
+
+#: src/editor/tools_settings.lua:27
+msgid "Custom return point (LMB sets, RMB removes)"
+msgstr "Punto di ritorno personalizzato (sx imposta, dx rimuove)"
+
+#: src/editor/tools_settings.lua:62
+msgid "Arena name, author and thumbnail"
+msgstr "Nome arena, autorə e miniatura"
+
+#: src/editor/tools_settings.lua:81 src/editor/tools_settings.lua:212
+msgid "Arena properties"
+msgstr "Proprietà arena"
+
+#: src/editor/tools_settings.lua:101
+msgid "Timer: on"
+msgstr "Timer: attivo"
+
+#: src/editor/tools_settings.lua:121
+msgid "Delete arena"
+msgstr "Cancella arena"
+
+#: src/editor/tools_settings.lua:167
+msgid "Rename arena"
+msgstr "Rinomina arena"
+
+#: src/editor/tools_settings.lua:169
+msgid "Set author"
+msgstr "Imposta autorə"
+
+#: src/editor/tools_settings.lua:171
+msgid "Set thumbnail"
+msgstr "Imposta miniatura"
+
+#: src/editor/tools_settings.lua:230
+msgid "Set timer"
+msgstr "Imposta timer"
+
+#: src/editor/tools_settings.lua:243
+msgid "Are you sure you want to delete arena @1?"
+msgstr "Sei sicurə di voler eliminare l'arena @1?"
+
+#: src/editor/tools_spawners.lua:32
+msgid "Add spawner"
+msgstr "Aggiungi punto di rinascita"
+
+#: src/editor/tools_spawners.lua:50
+msgid "Remove the closest spawner"
+msgstr "Rimuovi il punto di rinascita più vicino"
+
+#: src/editor/tools_spawners.lua:67
+msgid "Add team spawner"
+msgstr "Aggiungi punto di rinascita squadra"
+
+#: src/editor/tools_spawners.lua:86
+msgid "Remove the closest spawner of the selected team"
+msgstr "Rimuovi il punto di rinascita più vicino della squadra selezionata"
+
+#: src/editor/tools_spawners.lua:105
+msgid "Switch team"
+msgstr "Cambia squadra"
+
+#: src/editor/tools_spawners.lua:123 src/editor/tools_spawners.lua:177
+msgid "Selected team: @1"
+msgstr "Squadra selezionata: @1"
+
+#: src/editor/tools_spawners.lua:133
+msgid "Delete all spawners"
+msgstr "Cancella tutti i punti di rinascita"
+
+#: src/editor/tools_spawners.lua:152
+msgid "Delete all spawners of the team"
+msgstr "Cancella tutti i punti di rinascita della squadra"
+
+#: src/hud/hud_waypoints.lua:49
+msgid "Return point (custom)"
+msgstr "Punto di ritorno (personalizzato)"
+
+#: src/hud/hud_waypoints.lua:49
+msgid "Return point"
+msgstr "Punto di ritorno"
+
+#: src/map_reset/map_reset.lua:62
+msgid "There is no schematic to paste!"
+msgstr "Non c'è nessuna schematica da incollare!"
+
+#: src/map_reset/map_reset.lua:82
+msgid "Schematic of arena @1 successfully pasted"
+msgstr "Schematica dell'arena @1 incollata con successo"
+
+#: src/map_reset/map_saving.lua:28 src/utils/macros.lua:13
+msgid "You must disable the arena first!"
+msgstr "Devi prima disabilitare l'arena!"
+
+#: src/map_reset/map_saving.lua:43
+msgid "Schematic of arena @1 successfully saved"
+msgstr "Schematica dell'arena @1 salvata con successo"
+
+#: src/nodes.lua:6
+msgid "Barrier"
+msgstr "Barriera"
+
+#: src/nodes.lua:25
+msgid ""
+"You need either the `arenalib_admin` or `creative` privilege to perform this "
+"action!"
+msgstr ""
+"Hai bisogno del privilegio `arenalib_admin` o `creative` per eseguire "
+"quest'azione!"
+
+#: src/player_manager.lua:236
+msgid "The game you were in is still in progress: do you want to rejoin?"
+msgstr "La partita in cui eri è ancora in corso: vuoi rientrare?"
+
+#: src/player_manager.lua:273
+msgid "The match has ended whilst you were deciding :c"
+msgstr "La partita è finita mentre stavi decidendo :c"
+
+#: src/signs/signs.lua:40
+msgid "Sign"
+msgstr "Cartello"
+
+#: src/signs/signs.lua:43
+msgid "Signs"
+msgstr "Cartelli"
+
+#: src/signs/signs.lua:45
+msgid "One sign per arena"
+msgstr "Un cartello per arena"
+
+#: src/signs/signs.lua:61
+msgid "Arena sign"
+msgstr "Cartello dell'arena"
+
+#: src/signs/signs.lua:101 src/signs/signs.lua:121
+msgid "This minigame doesn't exist anymore!"
+msgstr "Questo minigioco non esiste più!"
+
+#: src/signs/signs.lua:105 src/signs/signs.lua:127
+msgid "This arena doesn't exist anymore!"
+msgstr "Quest'arena non esiste più!"
+
+#: src/signs/signs.lua:138
+msgid ""
+"Uh-oh, it looks like this sign has been misplaced: well, fixed, hit it again!"
+msgstr ""
+"Oh oh, sembra che questo cartello sia fuori posto: beh, sistemato, "
+"colpiscilo di nuovo!"
+
+#: src/signs/signs.lua:169
+msgid "That's not an arena_lib sign!"
+msgstr "Questo non è un cartello di arena_lib!"
+
+#: src/signs/signs.lua:297
+msgid "No ongoing activity"
+msgstr "Nessuna attività in corso"
+
+#: src/signs/signs.lua:315 src/signs/signs.lua:316
+msgid "The arena is not enabled"
+msgstr "L'arena non è abilitata"
+
+#: src/signs/signs.lua:321
+msgid "Leave the queue (you can also left-click the sign)"
+msgstr "Abbandona la coda (puoi anche colpire il cartello con il sinistro)"
+
+#: src/signs/signs.lua:324
+msgid "Full"
+msgstr "Piena"
+
+#: src/signs/signs.lua:328 src/signs/signs.lua:335
+msgid "Play (you can also left-click the sign)"
+msgstr "Gioca (puoi anche colpire il cartello con il sinistro)"
+
+#: src/signs/signs.lua:331
+msgid "This minigame can't be joined whilst a game is in progress"
+msgstr "Questo minigioco non permette di entrare durante una partita in corso"
+
+#: src/signs/signs.lua:340
+msgid "Spectate mode not supported"
+msgstr "Modalità assisti non supportata"
+
+#: src/signs/signs.lua:343
+msgid "Spectate"
+msgstr "Assisti"
+
+#: src/signs/signs.lua:346
+msgid "Spectate (there must be a game in progress)"
+msgstr "Assisti (ci deve essere una partita in corso)"
+
+#: src/signs/signs.lua:354
+msgid "Edit"
+msgstr "Modifica"
+
+#: src/signs/signs.lua:355
+msgid "Force start"
+msgstr "Forza avvio"
+
+#: src/signs/signs.lua:391
+msgid "Now inside"
+msgstr "Ora dentro"
+
+#: src/signs/signs.lua:396
+msgid "Close"
+msgstr "Chiudi"
+
+#: src/signs/signs_editor.lua:11
+msgid "Add sign"
+msgstr "Aggiungi cartello"
+
+#: src/signs/signs_editor.lua:33
+msgid "Remove sign"
+msgstr "Rimuovi cartello"
+
+#: src/signs/signs_editor.lua:57
+msgid "Teleport onto the sign"
+msgstr "Teletrasportati al cartello"
+
+#: src/signs/signs_editor.lua:70
+msgid "There is no entrance assigned to @1!"
+msgstr "Non c'è nessun'entrata assegnata a @1!"
+
+#: src/signs/signs_editor.lua:84
+msgid "Return where you were"
+msgstr "Torna dov'eri"
+
+#: src/signs/signs_editor.lua:139
+msgid "Are you sure you want to delete the sign from @1?"
+msgstr "Sei sicurə di voler rimuovere il cartello di @1?"
+
+#: src/spectate/spectate_main.lua:146
+msgid "In @1, spectate chat @2is shared@3 with players"
+msgstr "Su @1, la chat spettatore @2è condivisa@3 con lɜ giocanti"
+
+#: src/spectate/spectate_main.lua:147
+msgid "In @1, spectate chat @2is not shared@3 with players"
+msgstr "Su @1, la chat spettatore @2non è condivisa@3 con lɜ giocanti"
+
+#: src/spectate/spectate_main.lua:158 src/utils/debug.lua:370
+msgid "Spectators inside: @1"
+msgstr "Spettanti attuali: @1"
+
+#: src/spectate/spectate_main.lua:783
+msgid "Currently spectating: @1"
+msgstr "Stai seguendo: @1"
+
+#: src/spectate/spectate_tools.lua:9 src/spectate/spectate_tools.lua:31
+msgid "Change player"
+msgstr "Cambia giocante"
+
+#: src/spectate/spectate_tools.lua:53
+msgid "Change team"
+msgstr "Cambia squadra"
+
+#: src/spectate/spectate_tools.lua:93
+msgid "Change entity"
+msgstr "Cambia entità"
+
+#: src/spectate/spectate_tools.lua:127
+msgid "Change area"
+msgstr "Cambia area"
+
+#: src/spectate/spectate_tools.lua:161
+msgid "Enter the match"
+msgstr "Entra in partita"
+
+#: src/spectate/spectate_tools.lua:220
+msgid ""
+"Are you sure you want to quit?\n"
+"If you leave, you can't re-enter"
+msgstr ""
+"Sicurə di voler abbandonare?\n"
+"Se lo farai, non potrai più rientrare"
+
+#: src/spectate/spectate_tools.lua:221
+msgid "Confirm"
+msgstr "Conferma"
+
+#: src/utils/debug.lua:36
+msgid "ID: @1, name: @2"
+msgstr "ID: @1, nome: @2"
+
+#: src/utils/debug.lua:39
+msgid "Total arenas: @1"
+msgstr "Arene totali: @1"
+
+#: src/utils/debug.lua:71
+msgid "Players required per team: @1"
+msgstr "Giocanti minimɜ per squadra: @1"
+
+#: src/utils/debug.lua:72
+msgid "Players supported per team: @1"
+msgstr "Giocanti massimɜ per squadra: @1"
+
+#: src/utils/debug.lua:86
+msgid "Players inside per team: @1"
+msgstr "Giocanti dentro per squadra: @1"
+
+#: src/utils/debug.lua:88
+msgid "Spectators inside per team: @1"
+msgstr "Spettanti dentro per squadra: @1"
+
+#: src/utils/debug.lua:150
+msgid "Current spectatable entities: @1"
+msgstr "Entità attualmente seguibili: @1"
+
+#: src/utils/debug.lua:151
+msgid "Current spectatable areas: @1"
+msgstr "Aree attualmente seguibili: @1"
+
+#: src/utils/debug.lua:157
+msgid "in queue"
+msgstr "in coda"
+
+#: src/utils/debug.lua:159
+msgid "loading"
+msgstr "in caricamento"
+
+#: src/utils/debug.lua:161
+msgid "in game"
+msgstr "in partita"
+
+#: src/utils/debug.lua:163
+msgid "celebrating"
+msgstr "in celebrazione"
+
+#: src/utils/debug.lua:165
+msgid "waiting"
+msgstr "in attesa"
+
+#: src/utils/debug.lua:170
+msgid "Is resetting: @1"
+msgstr "In rigenerazione: @1"
+
+#: src/utils/debug.lua:215
+msgid "current: @1"
+msgstr "corrente: @1"
+
+#: src/utils/debug.lua:215
+msgid "Initial time: @1"
+msgstr "Tempo iniziale: @1"
+
+#: src/utils/debug.lua:238
+msgid "rain"
+msgstr "pioggia"
+
+#: src/utils/debug.lua:240
+msgid "snow"
+msgstr "neve"
+
+#: src/utils/debug.lua:242
+msgid "dust"
+msgstr "pulviscolo"
+
+#: src/utils/debug.lua:244 src/utils/debug.lua:247
+msgid "custom"
+msgstr "personalizzato"
+
+#: src/utils/debug.lua:327
+msgid "Spectator properties: @1"
+msgstr "Proprietà spettanti: @1"
+
+#: src/utils/debug.lua:350
+msgid "Team properties: @1"
+msgstr "Proprietà squadra: @1"
+
+#: src/utils/debug.lua:355
+msgid "Name: @1 | (mod: @2)"
+msgstr "Nome: @1 | (mod: @2)"
+
+#: src/utils/debug.lua:356
+msgid "ID: @1"
+msgstr "ID: @1"
+
+#: src/utils/debug.lua:357
+msgid "Match ID: @1"
+msgstr "ID partita: @1"
+
+#: src/utils/debug.lua:359
+msgid "Author: @1"
+msgstr "Autorə: @1"
+
+#: src/utils/debug.lua:360
+msgid "Thumbnail: @1"
+msgstr "Miniatura: @1"
+
+#: src/utils/debug.lua:361
+msgid "BGM: @1"
+msgstr "Musica di sottofondo: @1"
+
+#: src/utils/debug.lua:363
+msgid "Teams: @1"
+msgstr "Squadre: @1"
+
+#: src/utils/debug.lua:366
+msgid "Players required: @1"
+msgstr "Giocanti minimɜ: @1"
+
+#: src/utils/debug.lua:367
+msgid "Players supported: @1"
+msgstr "Giocanti massimɜ: @1"
+
+#: src/utils/debug.lua:368
+msgid "Players inside: @1"
+msgstr "Giocanti attuali: @1"
+
+#: src/utils/debug.lua:372
+msgid "Players and spectators inside: @1"
+msgstr "Giocanti e spettanti attuali: @1"
+
+#: src/utils/debug.lua:373
+msgid "Past and present players: @1"
+msgstr "Giocanti presenti e passatɜ: @1"
+
+#: src/utils/debug.lua:374
+msgid "Past and present players inside: @1"
+msgstr "Giocanti presenti e passatɜ dentro: @1"
+
+#: src/utils/debug.lua:379
+msgid "Enabled: @1"
+msgstr "Abilitata: @1"
+
+#: src/utils/debug.lua:380
+msgid "Status: @1"
+msgstr "Stato: @1"
+
+#: src/utils/debug.lua:382
+msgid "Entrance: @1"
+msgstr "Entrata: @1"
+
+#: src/utils/debug.lua:383
+msgid "Region: @1"
+msgstr "Regione: @1"
+
+#: src/utils/debug.lua:384
+msgid "Custom return point: @1"
+msgstr "Punto di ritorno personalizzato: @1"
+
+#: src/utils/debug.lua:385
+msgid "Spawn points: @1"
+msgstr "Punti di rinascita: @1"
+
+#: src/utils/debug.lua:388
+msgid "Custom sky: @1"
+msgstr "Cielo personalizzato: @1"
+
+#: src/utils/debug.lua:389
+msgid "Weather: @1"
+msgstr "Meteo: @1"
+
+#: src/utils/debug.lua:390
+msgid "Custom lighting: @1"
+msgstr "Illuminazione personalizzata: @1"
+
+#: src/utils/debug.lua:392
+msgid "Properties: @1"
+msgstr "Proprietà: @1"
+
+#: src/utils/debug.lua:393
+msgid "Temp properties: @1"
+msgstr "Proprietà temporanee: @1"
+
+#: src/utils/debug.lua:394
+msgid "Player properties: @1"
+msgstr "Proprietà giocanti: @1"
+
+#: src/utils/debug.lua:462
+msgid "Unused arena_lib resources:"
+msgstr "Risorse inutilizzate di arena_lib:"
+
+#: src/utils/macros.lua:19
+msgid ""
+"There must be no one inside the editor of the arena to perform this command! "
+"(now inside: @1)"
+msgstr ""
+"Non deve esserci nessunə nell'editor dell'arena per poter eseguire questo "
+"comando! (attualmente dentro: @1)"
+
+#: src/utils/macros.lua:35
+msgid "The arena is not enabled!"
+msgstr "L'arena non è attiva!"
+
+#: src/utils/macros.lua:47
+msgid ""
+"You've recently been kicked from a game! Time left before being able to join "
+"a new match: @1s"
+msgstr ""
+"Sei statə recentemente cacciatə da una partita! Tempo restante prima di "
+"poter rientrare in una partita: @1s"
+
+#: src/utils/macros.lua:61
+msgid "Only the party leader can join a match!"
+msgstr "Solo lə capə gruppo può entrare in partita!"
+
+#: src/utils/macros.lua:67
+msgid "There is not enough space on the team your party is in!"
+msgstr "Non c'è abbastanza spazio nella squadra in cui si trova il tuo gruppo!"
+
+#: src/utils/macros.lua:81
+msgid ""
+"One of your party members has recently been kicked from a game! Time left "
+"before being able to join a new match: @1s"
+msgstr ""
+"Uno dei membri della tua squadra è stato recentemente cacciato da una "
+"partita! Tempo restante prima di poter rientrare in una partita: @1s"
+
+#: src/utils/macros.lua:86
+msgid ""
+"You must wait for all your party members to finish their ongoing games "
+"before entering a new one!"
+msgstr ""
+"Devi aspettare che i membri della tua squadra terminino le loro partite in "
+"corso prima di iniziarne una nuova!"
+
+#: src/utils/macros.lua:91
+msgid ""
+"Can't enter a game if some of your party members are attached to something! "
+"(e.g. boats, horses etc.)"
+msgstr ""
+"Non puoi entrare in partita se alcuni membri del gruppo sono attaccatɜ a "
+"qualcosa! (es. barche, cavalli ecc.)"
+
+#: src/utils/macros.lua:96
+msgid "@1 is running a Luanti version too old to play this minigame!"
+msgstr ""
+"@1 sta usando una versione di Luanti troppo vecchia per giocare a questo "
+"minigioco!"
+
+#: src/utils/macros.lua:102
+msgid "There is not enough space for the whole party!"
+msgstr "Non c'è abbastanza spazio per tutto il gruppo!"
+
+#: src/utils/macros.lua:116
+msgid "There is no team with enough space for the whole party!"
+msgstr "Non c'è una squadra con abbastanza spazio per tutto il gruppo!"
+
+#: src/utils/macros.lua:140
+msgid "The arena is already full!"
+msgstr "L'arena è già piena!"
+
+#: src/utils/utils.lua:40
+msgid "[!] @1"
+msgstr "[!] @1"

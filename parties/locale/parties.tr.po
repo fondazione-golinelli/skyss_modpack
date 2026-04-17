@@ -1,0 +1,217 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 11:59+0100\n"
+"PO-Revision-Date: 2026-03-04 20:29+0000\n"
+"Last-Translator: birdlover32767 <birdlover32767@noreply.codeberg.org>\n"
+"Language-Team: Turkish <https://translate.codeberg.org/projects/zughy-"
+"friends-minetest/parties/tr/>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15.2\n"
+
+#: init.lua:7 src/_load.lua:30
+msgid "Parties"
+msgstr "Partiler"
+
+#: init.lua:8
+msgid "Team up with your friends and create a party!"
+msgstr "Arkadaşların ile takım ol ve bir parti oluştur!"
+
+#: src/_load.lua:30
+msgid "Notifications"
+msgstr "Bildirimler"
+
+#: src/_load.lua:32
+msgid "Party invite jingle"
+msgstr "Parti davet sesi"
+
+#: src/_load.lua:33
+msgid "Someone joins the party"
+msgstr "Birisi partiye girdi"
+
+#: src/_load.lua:34
+msgid "Someone leaves the party"
+msgstr "Birisi partiden ayrıldı"
+
+#: src/commands.lua:6
+msgid "manage parties"
+msgstr "partileri yönet"
+
+#: src/commands.lua:6 src/commands.lua:18
+msgid "Do `/party help` to see all the subcommands"
+msgstr "Bütün altkomutları görmek için `/party help` komutunu kullan"
+
+#: src/commands.lua:10 src/commands.lua:30
+msgid "message"
+msgstr "mesaj"
+
+#: src/commands.lua:11 src/commands.lua:30
+msgid "sends a message in the party chat"
+msgstr "parti sohbetinde mesaj gönderir"
+
+#: src/commands.lua:24
+msgid "COMMANDS"
+msgstr "KOMUTLAR"
+
+#: src/commands.lua:25
+msgid "disbands your party"
+msgstr "partini dağıtır"
+
+#: src/commands.lua:26 src/commands.lua:27 src/commands.lua:28
+msgid "player"
+msgstr "oyuncu"
+
+#: src/commands.lua:26
+msgid "invites a player to join your party. It creates one if there is none"
+msgstr ""
+"Bir oyuncuyu partine davet eder. Eğer partide değilsen yeni bir parti yaratır"
+
+#: src/commands.lua:27
+msgid ""
+"accepts an invitation. If you've received more than one, specify `player`"
+msgstr ""
+"bir daveti kabul eder. Eğer birden fazla davet aldıysan, oyuncunun adını "
+"`player` kısmında belirt"
+
+#: src/commands.lua:28
+msgid "kicks a player from the party"
+msgstr "partinden bir oyuncuyu atar"
+
+#: src/commands.lua:29
+msgid "leaves the party you're in"
+msgstr "Birisi partiden ayrıldı"
+
+#: src/commands.lua:67
+msgid "[!] You must enter a message after `/p`!"
+msgstr "[!] İlk önce bir partiye katılmalısın!"
+
+#: src/api.lua:26 src/api.lua:244 src/api.lua:294
+msgid "[!] Only the party leader can perform this action!"
+msgstr "[!] Bunu sadece parti lideri yapabilir!"
+
+#: src/api.lua:31
+msgid "[!] You can't invite yourself!"
+msgstr "[!] Kendini davet edemezsin!"
+
+#: src/api.lua:36
+msgid "[!] This player is not online!"
+msgstr "[!] Bu oyuncu çevrimdışı!"
+
+#: src/api.lua:41 src/api.lua:111
+msgid "[!] The party has reached the maximum amount of players! (@1)"
+msgstr "[!] Parti maksimum oyuncu sayısına ulaştı! (@1)"
+
+#: src/api.lua:46
+msgid "[!] This player is already in a party!"
+msgstr "[!] Bu oyuncu zaten bir partide!"
+
+#: src/api.lua:51
+msgid "[!] You already have a pending invite from this player!"
+msgstr "[!] Bu oyuncudan zatenbir davetin var!"
+
+#: src/api.lua:56
+msgid "[!] You've already invited this player!"
+msgstr "[!] Bu oyuncuyu zaten davet ettin!"
+
+#: src/api.lua:65
+msgid "Invite to @1 successfully sent"
+msgstr "@1 adlı oyuncuya davet gönderildi"
+
+#: src/api.lua:66
+msgid ""
+"@1 has invited you to a party, would you like to join? (/party join, or /"
+"party join @2 within 60 seconds)"
+msgstr ""
+"@1 seni bir partiye davet etti, katılmak ister miydiniz? (60 saniye içinde /"
+"party join, veya /party join @2)"
+
+#: src/api.lua:82
+msgid "[!] You have no pending invites!"
+msgstr "[!] Beklemede hiç davetin yok!"
+
+#: src/api.lua:87
+msgid "[!] You have no pending invites from this player!"
+msgstr "[!] Bu oyuncudan hiç bir davetin yok!"
+
+#: src/api.lua:101
+msgid ""
+"[!] More players have invited you in their party: please specify the nick of "
+"the one you want to join!"
+msgstr ""
+"[!] Birden fazla oyuncu kendi partilerine seni davet etti, lütfen katılmak "
+"istediğinin adını belirt!"
+
+#: src/api.lua:112
+msgid "@1 has tried to enter but the party is full"
+msgstr "@1 girmeye çalıştı ama parti dolu"
+
+#: src/api.lua:117
+msgid "[!] The party leader has disconnected!"
+msgstr "[!] Partinin lideri oyundan ayrıldı!"
+
+#: src/api.lua:126
+msgid ""
+"@1 has tried to enter but an external condition has prevented them from "
+"doing it"
+msgstr "@1 girmeye çalıştı ama bir harici koşul bunu engelledi"
+
+#: src/api.lua:143 src/api.lua:158
+msgid "@1 has joined another party"
+msgstr "@1 başka partiye katıldı"
+
+#: src/api.lua:154
+msgid "@1 has joined the party"
+msgstr "@1 partiye katıldı"
+
+#: src/api.lua:168
+msgid "You've joined @1's party"
+msgstr "@1 adlı oyuncunun partisine katıldın"
+
+#: src/api.lua:187 src/api.lua:239 src/api.lua:289 src/api.lua:350
+msgid "[!] You must enter a party first!"
+msgstr "[!] İlk önce bir partiye katılmalısın!"
+
+#: src/api.lua:211
+msgid "You've left the party"
+msgstr "Partiden ayrıldın"
+
+#: src/api.lua:217 src/api.lua:226
+msgid "@1 has left the party"
+msgstr "@1 partiden ayrıldı"
+
+#: src/api.lua:249
+msgid "[!] There is no player called @1 in your party!"
+msgstr "Partinde @1 isimli oyuncu yok!"
+
+#: src/api.lua:254
+msgid "[!] You can't kick yourself!"
+msgstr "[!] Kendini atamazsın!"
+
+#: src/api.lua:276
+msgid "@1 has been kicked from the party"
+msgstr "@1 partiden atıldı"
+
+#: src/api.lua:277
+msgid "@1 has kicked you from the party"
+msgstr "@1 seni partiden attı"
+
+#: src/api.lua:302
+msgid "The party has been disbanded"
+msgstr "Parti dağıldı"
+
+#: src/api.lua:379
+msgid "@1 is the new party leader"
+msgstr "@1 yeni parti lideri oldu"
+
+#: src/api.lua:447
+msgid "Party"
+msgstr "Parti"
+
+#: src/api.lua:458
+msgid "No answer from @1..."
+msgstr "@1 adlı oyuncudan cevap yok..."

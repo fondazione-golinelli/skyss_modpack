@@ -1,0 +1,38 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 13:06+0100\n"
+"PO-Revision-Date: 2026-02-09 11:53+0000\n"
+"Language: hub.tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/HUD/hud_arenastatus.lua:124
+msgid "Current games"
+msgstr "Şimdiki oyunlar"
+
+#: src/chat.lua:9
+msgid "Chat in the hub is temporarily disabled"
+msgstr "Merkezdeki mesajlar geçici olarak devre dışı bırakıldı"
+
+#: src/commands.lua:18
+msgid "Admins have blocked this command"
+msgstr "Administratörler bu komutu blokladı"
+
+#: src/commands.lua:23
+msgid "Admins have blocked this command whilst in the lobby"
+msgstr "Administratörler merkezde bu komutu blokladı"
+
+#: src/commands.lua:29
+msgid "There's a time and place for everything. But not now!"
+msgstr "Her şey için bir yer ve zaman var. Ama şimdi değil!"
+
+#: src/items.lua:6
+msgid "Settings"
+msgstr "Ayarlar"
+
+#: src/privs.lua:4
+msgid "It allows you to use /hub"
+msgstr "/hub yapmana izin verir"

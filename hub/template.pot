@@ -1,0 +1,50 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 12:54+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: hub/src/HUD/hud_arenastatus.lua:124
+msgid "Current games"
+msgstr ""
+
+#: hub/src/chat.lua:9
+msgid "Chat in the hub is temporarily disabled"
+msgstr ""
+
+#: hub/src/commands.lua:18
+msgid "Admins have blocked this command"
+msgstr ""
+
+#: hub/src/commands.lua:23
+msgid "Admins have blocked this command whilst in the lobby"
+msgstr ""
+
+#: hub/src/commands.lua:29
+msgid "There's a time and place for everything. But not now!"
+msgstr ""
+
+#: hub/src/items.lua:6
+msgid "Settings"
+msgstr ""
+
+#: hub/src/privs.lua:4
+msgid "It allows you to use /hub"
+msgstr ""
+
+#: playerlist/src/HUD.lua:59 playerlist/src/HUD.lua:82
+msgid "...and much more!"
+msgstr ""

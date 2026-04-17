@@ -1,0 +1,79 @@
+# textdomain: audio_lib
+
+##[ init.lua ]##
+Library to easily manage sounds (accessibility options!)=Programmierbibliothek, mit der man Sounds leicht verwalten kann (Barrierefreiheitsoptionen!)
+
+##[ src/GUI/gui_settings.lua ]##
+Used by:@n@1=Verwendet von:@n@1
+It only affects mods that use audio_lib=Betrifft nur Mods, die audio_lib benutzen
+Main=Haupt
+BGM=Musik
+SFX=Sound
+Accessibility=Barrierefreiheit
+Reset=Zurücksetzen
+Apply=Anwenden
+
+##[ src/GUI/gui_settings.lua ]##
+##[ src/items.lua ]##
+Audio Settings=Audioeinstellungen
+
+##[ src/commands.lua ]##
+Open the audio settings menu=Das Audioeinstellungsmenü öffnen
+
+##[ src/register/MTG.lua ]##
+Cart moves=Lore bewegt sich
+Grass breaks=Glas zerbricht
+Chest closes=Truhe schließt
+Chest opens=Truhe öffnet sich
+Lapilli burst out=Lapilliausbruch
+Chop chop=Hack-hack
+Footsteps (gravel)=Schritte (Kies)
+Footsteps (grass)=Schritte (Gras)
+Footsteps (dirt)=Schritte (Erde)
+Metal breaks=Metall zerbricht
+Node breaks=Block bricht
+Furnace crackles=Ofen knistert
+Gravel breaks=Kies bricht
+Ice breaks=Eis bricht
+Item evaporates=Gegenstand verdampft
+Node placed=Block platziert
+Hard node placed=Harter Block platziert
+Metal node placed=Metallblock platziert
+Item breaks=Gegenstand bricht
+Hit=Treffer
+Door closes=Tür schließt
+Door opens=Tür öffnet sich
+Fence gate closes=Zauntor schließt
+Fence gate opens=Zauntor öffnet sich
+Glass door closes=Glastür schließt
+Glass door opens=Glastür öffnet sich
+Steel door closes=Stahltür schließt
+Steel door opens=Stahltür öffnet sich
+Lava boils=Lava kocht
+Water flows=Wasser fließt
+Fire exstinguishes=Feuer wird gelöscht
+Fire burns=Feuer brennt
+Flint scratches=Feuerstein kratzt
+Fire roars=Feuer tost
+Fire crackles=Feuer knistert
+Explosion=Explosion
+Fuse burns=Zündschnur brennt
+Fuse ignites=Zündschnur angezündet
+Steel bar door slams=Stahlgittertür knallt zu
+Steel bar door creaks=Stahlgittertür knarzt
+
+##[ src/tests/bgm.lua ]##
+Audio Lib BGM test #1@n@n1. Play BGM #1 in loop.@n@nRight click to stop any BGM=„Audio Lib“-Musik-Test #1@n@n1. Musik #1 in Schleife abspielen.@n@nRechtsklicken, um die ganze Musik zu stoppen
+Audio Lib BGM test #2@n@n1. Play BGM #1 for 1s@n2. Play BGM #2 for 3s, gain 0.3@n3. Play BGM #1 for 4s from where it stopped@n4. Stop BGM #1 after 2s=„Audio Lib“-Musik-Test #2@n@n1. Musik #1 für 1s abspielen@n2. Musik #2 für 3s mit Gain von 0,3 abspielen@n3. Musik #1 für 4s dort abspielen, wo sie gestoppt wurde@n4. Musik #1 nach 2s stoppen
+Audio Lib BGM test #3@n@n1. Play BGM #2 for 2s@n2. Gradually change (1s) gain to 0.5 for 3s@n3. Change gain to 1.4 for 2s@n4. Fade it out in 2s=„Audio-Lib“-Musik-Test #3@n@n1. Musik #2 für 2s abspielen@n2. Kontinuierlich (1s) Lautstärke zu 0,5 für 3s abändern@n3. Lautstärke auf 1,4 für 2s abändern@n4. In 2s ausblenden
+Starts changing volume=Lautstärkeveränderung beginnt
+Starts fading=Ausblenden beginnt
+
+##[ src/tests/custom_types.lua ]##
+Custom type test=Benutzerdefinierter-Typ-Test
+Audio Lib custom sound test #1@n@n1. Play Custom Sound #1 to the player=Audio-Lib-Benutzersound-Test #1@n@n1. Spielt Benutzersound #1 an den Spieler
+
+##[ src/tests/sfx.lua ]##
+Audio Lib sfx test #1@n@n1. Play SFX #1 to the player=„Audio Lib“-Sound-Test #1@n@n1. Sound #1 an den Spieler abspielen
+Audio Lib sfx test #2@n@n1. Play SFX #1 at player's position@n2. Play SFX #1 again after 2 seconds, shifted by 30 nodes on the X axis from the player's position@n3.Play it again after 0.5s, but shifted by 30 nodes in the opposite direction@n4. Play it again after 0.4s, like in step #2=„Audio Lib“-Sound-Test #2@n@n1. Sound #1 an Spielerposition abspielen@n2. Sound #1 erneut nach 2 Sekunden abspielen, um 30 Nodes auf der X-Achse von der Spielerposition versetzt@n3. Erneut abspielen nach 0,5s, aber um 30 Nodes in die entgegengesetzte Richtung verschoben@n4. Erneut abspielen nach 0,4s, wie im 2. Schritt
+Audio Lib sfx test #3@n@n1. Play SFX #1 three times as a non overlappable sound, in two different places at the same time@n2. You should only hear two sounds (the first one with the same position will be immediately interrupted)=

@@ -1,0 +1,220 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 11:59+0100\n"
+"PO-Revision-Date: 2026-02-21 20:29+0000\n"
+"Last-Translator: Wuzzy <wuzzy@disroot.org>\n"
+"Language-Team: German <https://translate.codeberg.org/projects/zughy-friends-"
+"minetest/parties/de/>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15.2\n"
+
+#: init.lua:7 src/_load.lua:30
+msgid "Parties"
+msgstr "Gruppen"
+
+#: init.lua:8
+msgid "Team up with your friends and create a party!"
+msgstr "Tu dich mit deinen Freunden zusammen und erstelle eine Gruppe!"
+
+#: src/_load.lua:30
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: src/_load.lua:32
+msgid "Party invite jingle"
+msgstr "Gruppeneinladeton"
+
+#: src/_load.lua:33
+msgid "Someone joins the party"
+msgstr "Jemand tritt der Gruppe bei"
+
+#: src/_load.lua:34
+msgid "Someone leaves the party"
+msgstr "Jemand verlässt die Gruppe"
+
+#: src/commands.lua:6
+msgid "manage parties"
+msgstr "Gruppen verwalten"
+
+#: src/commands.lua:6 src/commands.lua:18
+msgid "Do `/party help` to see all the subcommands"
+msgstr "`/party help` benutzen, um alle Unterbefehle zu sehen"
+
+#: src/commands.lua:10 src/commands.lua:30
+msgid "message"
+msgstr "Nachricht"
+
+#: src/commands.lua:11 src/commands.lua:30
+msgid "sends a message in the party chat"
+msgstr "sendet eine Nachricht in den Gruppenchat"
+
+#: src/commands.lua:24
+msgid "COMMANDS"
+msgstr "BEFEHLE"
+
+#: src/commands.lua:25
+msgid "disbands your party"
+msgstr "löst deine Gruppe auf"
+
+#: src/commands.lua:26 src/commands.lua:27 src/commands.lua:28
+msgid "player"
+msgstr "Spieler"
+
+#: src/commands.lua:26
+msgid "invites a player to join your party. It creates one if there is none"
+msgstr ""
+"Lädt einen Spieler ein, deiner Gruppe beizutreten. Wenn es keine gibt, wird "
+"sie erstellt"
+
+#: src/commands.lua:27
+msgid ""
+"accepts an invitation. If you've received more than one, specify `player`"
+msgstr ""
+"nimmt eine Einladung an. Falls du mehr als eine erhalten haben, gib "
+"`Spieler`an"
+
+#: src/commands.lua:28
+msgid "kicks a player from the party"
+msgstr "kickt einen Spieler aus der Gruppe"
+
+#: src/commands.lua:29
+msgid "leaves the party you're in"
+msgstr "verlässt die Gruppe, in der du dich befindest"
+
+#: src/commands.lua:67
+msgid "[!] You must enter a message after `/p`!"
+msgstr "[!] Du musst eine Nachricht hinter `/p` eingeben!"
+
+#: src/api.lua:26 src/api.lua:244 src/api.lua:294
+msgid "[!] Only the party leader can perform this action!"
+msgstr "[!] Nur der Gruppenleiter kann diese Aktion durchführen!"
+
+#: src/api.lua:31
+msgid "[!] You can't invite yourself!"
+msgstr "[!] Du kannst dich nicht selbst einladen!"
+
+#: src/api.lua:36
+msgid "[!] This player is not online!"
+msgstr "[!] Dieser Spieler ist nicht online!"
+
+#: src/api.lua:41 src/api.lua:111
+msgid "[!] The party has reached the maximum amount of players! (@1)"
+msgstr "[!] Die Gruppe hat die maximale Spieleranzahl erreicht! (@1)"
+
+#: src/api.lua:46
+msgid "[!] This player is already in a party!"
+msgstr "[!] Dieser Spieler ist bereits in einer Gruppe!"
+
+#: src/api.lua:51
+msgid "[!] You already have a pending invite from this player!"
+msgstr "[!] Du hast bereits eine ausstehende Einladung von diesem Spieler!"
+
+#: src/api.lua:56
+msgid "[!] You've already invited this player!"
+msgstr "[!] Du hast diesen Spieler bereits eingeladen!"
+
+#: src/api.lua:65
+msgid "Invite to @1 successfully sent"
+msgstr "Einladung an @1 erfolgreich gesendet"
+
+#: src/api.lua:66
+msgid ""
+"@1 has invited you to a party, would you like to join? (/party join, or /"
+"party join @2 within 60 seconds)"
+msgstr ""
+"@1 hat dich in eine Gruppe eingeladen, möchtest du beitreten? („/party join“ "
+"oder „/party join @2“ innerhalb 60 Sekunden)"
+
+#: src/api.lua:82
+msgid "[!] You have no pending invites!"
+msgstr "[!] Du hast keine ausstehenden Einladungen!"
+
+#: src/api.lua:87
+msgid "[!] You have no pending invites from this player!"
+msgstr "[!] Du hast keine ausstehenden Einladungen von diesem Spieler!"
+
+#: src/api.lua:101
+msgid ""
+"[!] More players have invited you in their party: please specify the nick of "
+"the one you want to join!"
+msgstr ""
+"[!] Weitere Spieler haben dich zu ihrer Gruppe eingeladen. Bitte gib den "
+"entsprechenden Namen des Spielers, dessen Gruppe du beitreten willst, an!"
+
+#: src/api.lua:112
+msgid "@1 has tried to enter but the party is full"
+msgstr "@1 versuchte, beizutreten, aber die Gruppe ist voll"
+
+#: src/api.lua:117
+msgid "[!] The party leader has disconnected!"
+msgstr "[!] Der Gruppenleiter hat sich getrennt!"
+
+#: src/api.lua:126
+msgid ""
+"@1 has tried to enter but an external condition has prevented them from "
+"doing it"
+msgstr ""
+"@1 versuchte, beizutreten, aber ein externer Grund hat die Person daran "
+"gehindert"
+
+#: src/api.lua:143 src/api.lua:158
+msgid "@1 has joined another party"
+msgstr "@1 ist einer anderen Gruppe beigetreten"
+
+#: src/api.lua:154
+msgid "@1 has joined the party"
+msgstr "@1 ist der Gruppe beigetreten"
+
+#: src/api.lua:168
+msgid "You've joined @1's party"
+msgstr "Du bist der Gruppe von @1 beigetreten"
+
+#: src/api.lua:187 src/api.lua:239 src/api.lua:289 src/api.lua:350
+msgid "[!] You must enter a party first!"
+msgstr "[!] Du musst zuerst einer Gruppe beitreten!"
+
+#: src/api.lua:211
+msgid "You've left the party"
+msgstr "Du hast die Gruppe verlassen"
+
+#: src/api.lua:217 src/api.lua:226
+msgid "@1 has left the party"
+msgstr "@1 hat die Gruppe verlassen"
+
+#: src/api.lua:249
+msgid "[!] There is no player called @1 in your party!"
+msgstr "[!] Es gibt keinen Spieler namens @1 in deiner Gruppe!"
+
+#: src/api.lua:254
+msgid "[!] You can't kick yourself!"
+msgstr "[!] Du kannst dich nicht selber kicken!"
+
+#: src/api.lua:276
+msgid "@1 has been kicked from the party"
+msgstr "@1 wurde aus der Gruppe gekickt"
+
+#: src/api.lua:277
+msgid "@1 has kicked you from the party"
+msgstr "@1 hat dich aus der Gruppe gekickt"
+
+#: src/api.lua:302
+msgid "The party has been disbanded"
+msgstr "Die Gruppe wurde aufgelöst"
+
+#: src/api.lua:379
+msgid "@1 is the new party leader"
+msgstr "@1 ist nun der neue Gruppenleiter"
+
+#: src/api.lua:447
+msgid "Party"
+msgstr "Gruppe"
+
+#: src/api.lua:458
+msgid "No answer from @1..."
+msgstr "Keine Antwort von @1 …"

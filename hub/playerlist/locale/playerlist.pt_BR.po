@@ -1,0 +1,14 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 13:07+0100\n"
+"PO-Revision-Date: 2026-02-09 11:53+0000\n"
+"Language: playerlist.pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/HUD.lua:59 src/HUD.lua:82
+msgid "...and much more!"
+msgstr "...e muito mais!"

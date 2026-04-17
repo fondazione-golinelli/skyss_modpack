@@ -1,0 +1,52 @@
+1:
+  description: I'm a normal teleport
+  icon: magiccompass_example.png
+  teleport_to: 10.5, 30.0, 20.5
+  rotation: 90
+
+3:
+  description: Every single icon can have a cooldown. Like me, you can spam-click how much you want, I dare you
+  icon: magiccompass_example2.png
+  teleport_to: -3.5, 5.0, -20.5
+  cooldown: 10
+
+5:
+  description: And now some cute animals in Italian to please you with a search on the internet: basettino, pangolino, coniglio ariete. Don't thank me
+  icon: magiccompass_example3.png
+  teleport_to: 60.5, 70.0, 10.5
+
+7:
+  description: Also remember to change the textures in Textures
+  icon: magiccompass_example4.png
+  teleport_to: 55.5, 30.0, -40.5
+
+9:
+  description: And how about privileges? We have those too. Like this, which doesn't work without the 'fly' and 'shout' privilege
+  icon: magiccompass_example5.png
+  teleport_to: 40.5, 40.0, 1.5
+  requires: fly, shout
+
+10:
+  description: Do you see me? That's because you have the 'fast' privilege. People who don't, they simply can't!
+  icon: magiccompass_example6.png
+  teleport_to: 90.5, 20.0, -30.5
+  requires: fast
+  hidden_by_default: true
+
+# ------------ #
+#  admins only
+# ------------ #
+
+18:
+  description: And if you can't see ME (you need the server privilege), being the only one in the row, you won't see this row nor all the empty rows before it. THIS IS THE TRUE POWER OF ADMINS, CAN YOU FEEL IT?!
+  icon: magiccompass_example6.png
+  teleport_to: 150.5, 100.0, -90.5
+  requires: server
+  hidden_by_default: true
+
+28:
+  description: Enjoy creating your teleports!
+  icon: magiccompass_example7.png
+  teleport_to: -180.5, 210.0, -20.5
+  requires: server
+  hidden_by_default: true

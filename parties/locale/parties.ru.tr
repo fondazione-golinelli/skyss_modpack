@@ -1,0 +1,61 @@
+# textdomain: parties
+# author(s):
+# reviewer(s):
+
+##[ init.lua ]##
+Team up with your friends and create a party!=Объединяйся со своими друзьями и создавай пати!
+
+##[ init.lua ]##
+##[ src/_load.lua ]##
+Parties=Партии
+
+##[ src/_load.lua ]##
+Notifications=Уведомления
+Party invite jingle=Звенит приглашение в пати
+Someone joins the party=Кто-то присоединяется к пати
+Someone leaves the party=Кто-то уходит из пати
+
+##[ src/api.lua ]##
+[!] Only the party leader can perform this action!=[!] Только лидер пати может совершать это действие!
+[!] You can't invite yourself!=[!] Ты не можешь пригласить себя!
+[!] This player is not online!=[!] Этот игрок не в сети!
+[!] The party has reached the maximum amount of players! (@1)=[!] Пати достигла максимального количества игроков! (@1)
+[!] This player is already in a party!=[!] Этот игрок уже в пати!
+[!] You already have a pending invite from this player!=
+[!] You've already invited this player!=[!] Этот игрок уже приглашён!
+Invite to @1 successfully sent=Приглашение игроку @1 было успешно отправлено
+@1 has invited you to a party, would you like to join? (/party join, or /party join @2 within 60 seconds)=Игрок @1 пригласил тебя в команду, присоединяешься? (/party join или /party join @2 в течение 60 секунд)
+[!] You have no pending invites!=[!] У тебя нет поступающих приглашений!
+[!] You have no pending invites from this player!=[!] У тебя нет поступающих приглашений от этого игрока!
+[!] More players have invited you in their party: please specify the nick of the one you want to join!=[!] Несколько игроков пригласили тебя в свои пати: пожалуйста, укажи ник одного, к которому ты хотел бы присоединиться!
+@1 has tried to enter but the party is full=Игрок @1 попробовал войти, но пати заполнена
+[!] The party leader has disconnected!=[!] Лидер пати отключился!
+@1 has tried to enter but an external condition has prevented them from doing it=Игрок @1 попробовал войти, но внешние условия помешали ему сделать это
+@1 has joined another party=Игрок @1 присоединился к другой пати
+@1 has joined the party=Игрок @1 присоединился к пати
+You've joined @1's party=Ты присоединяешься к пати игрока @1
+[!] You must enter a party first!=[!] Сначала надо войти в пати!
+You've left the party=Ты покидаешь пати
+@1 has left the party=Игрок @1 покинул пати
+[!] There is no player called @1 in your party!=[!] Не существует игрока с именем @1 в твоей пати!
+[!] You can't kick yourself!=[!] Ты не можешь выкинуть себя!
+@1 has been kicked from the party=Игрок @1 был выкинут из пати
+@1 has kicked you from the party=Игрок @1 выкинул тебя из пати
+The party has been disbanded=Пати была распущена
+@1 is the new party leader=@1 — новый лидер пати
+Party=Пати
+No answer from @1...=Нет ответа от игрока @1...
+
+##[ src/commands.lua ]##
+manage parties=управляет партиями
+Do `/party help` to see all the subcommands=Введи `/party help`, чтобы увидеть все подкоманды
+message=сообщение
+sends a message in the party chat=отправляет сообщение в пати чат
+COMMANDS=КОМАНДЫ
+disbands your party=распускает твою пати
+player=игрок
+invites a player to join your party. It creates one if there is none=приглашает игрока в твою пати. Создаёт, если её нет
+accepts an invitation. If you've received more than one, specify `player`=принимает приглашение. Если получишь больше одного, укажи кто твой `игрок`
+kicks a player from the party=выкидывает игрока из пати
+leaves the party you're in=покидает пати, в которой ты состоишь
+[!] You must enter a message after `/p`!=[!] Надо вводить сообщение после `/p`!

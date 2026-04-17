@@ -1,0 +1,41 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 14:49+0100\n"
+"PO-Revision-Date: 2026-02-09 13:48+0000\n"
+"Language: magic_compass.uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: init.lua:7 src/items.lua:7
+msgid "Magic Compass"
+msgstr "Магічний компас"
+
+#: init.lua:8
+msgid "Item to teleport into server-side defined locations"
+msgstr "Елемент для телепортації у визначені сервером місця"
+
+#: src/GUI/gui_compass.lua:138
+msgid "[!] You haven't got the requirements to teleport into this area!"
+msgstr "[!] У вас недостатньо прав для телепортування в цю зону!"
+
+#: src/GUI/gui_compass.lua:145
+msgid ""
+"[!] You can't reteleport to this location so quickly! (seconds remaining: @1)"
+msgstr ""
+"[!] Ви не можете перетелепортуватися у цю локацію так швидко! (секунд зал.: "
+"@1)"
+
+#: src/GUI/gui_compass.lua:152
+msgid "[!] Can't teleport whilst moving!"
+msgstr "[!] Неможливо телепортуватися під час руху!"
+
+#: src/_load.lua:76
+msgid "Teleport beeps"
+msgstr "Телепортаційний біп"
+
+#: src/_load.lua:77
+msgid "Action forbidden"
+msgstr "Дія заборонена"

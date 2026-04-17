@@ -1,0 +1,25 @@
+This folder shall contain all the information regarding the locations linked to this world. DO NOT rename folders or the mod won't be able to read them.
+
+locations are stored in .yml files, and every file can contain multiple locations. Locations must follow the template down below, where 'ID' is an actual number
+
+ID:
+  description:
+  icon:
+  teleport_to: X, Y, Z
+  rotation: (optional, horizontal rotation of the player in degrees. If declared, vertical rotation is set to 0 when teleporting; otherwise is not touched. Default `nil`)
+  cooldown: (optional, in seconds. Default `nil`)
+  requires: (optional privileges required to use the teleport: separate them with ", ", default `nil`)
+  hidden_by_default: (optional, default `nil`; put 'true' to hide the icon to players who don't have the required privileges)
+
+The ID indicates the position of the associated item in the grid (which scales according to the highest number declared), and empty spaces are generated automatically if the numbers of the items don't represent a full sequence.
+
+/icons is for... icons.
+
+/locale is for translation files, in case you want to geolocalise the name of menus and icons. Since Magic Compass 2.4, the mod supports .po/.pot files and it's highly recommended to use such extensions instead of writing files by hand in .tr format.
+* To update translations, use the po_translation_updater.py script inside this folder
+* To add a new language, go inside the `/locale` folder and create a new file following the filename.LANG.po convention, where LANG is the country code of the language. For instance, Spanish would be "filename.es.po". You must then run the updater script to populate the file.
+  * CURRENT LUANTI LIMITATION: .po locale files must be called "magic_compass_data" or they won't work, e.g. "magic_compass_data.it.po"
+
+/menu is for customising the locations formspec
+* DO NOT rename files or they won't work, just override them with your custom image
+* The number after background images refers to the number of rows of the formspec. If you want to add, for instance, a background for when the formspec features 3 rows, just put a file called "magiccompass_gui_bg3.png"

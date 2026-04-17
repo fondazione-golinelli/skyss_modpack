@@ -1,0 +1,205 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 11:59+0100\n"
+"PO-Revision-Date: 2026-02-04 20:35+0000\n"
+"Language: parties.hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: init.lua:7 src/_load.lua:30
+msgid "Parties"
+msgstr "Buli"
+
+#: init.lua:8
+msgid "Team up with your friends and create a party!"
+msgstr ""
+
+#: src/_load.lua:30
+msgid "Notifications"
+msgstr ""
+
+#: src/_load.lua:32
+msgid "Party invite jingle"
+msgstr ""
+
+#: src/_load.lua:33
+msgid "Someone joins the party"
+msgstr "@1  csatlakozott a bulihoz"
+
+#: src/_load.lua:34
+msgid "Someone leaves the party"
+msgstr "Elhagytad a bulit"
+
+#: src/commands.lua:6
+msgid "manage parties"
+msgstr ""
+
+#: src/commands.lua:6 src/commands.lua:18
+msgid "Do `/party help` to see all the subcommands"
+msgstr ""
+
+#: src/commands.lua:10 src/commands.lua:30
+msgid "message"
+msgstr ""
+
+#: src/commands.lua:11 src/commands.lua:30
+msgid "sends a message in the party chat"
+msgstr ""
+
+#: src/commands.lua:24
+msgid "COMMANDS"
+msgstr ""
+
+#: src/commands.lua:25
+msgid "disbands your party"
+msgstr ""
+
+#: src/commands.lua:26 src/commands.lua:27 src/commands.lua:28
+msgid "player"
+msgstr ""
+
+#: src/commands.lua:26
+msgid "invites a player to join your party. It creates one if there is none"
+msgstr ""
+
+#: src/commands.lua:27
+msgid ""
+"accepts an invitation. If you've received more than one, specify `player`"
+msgstr ""
+
+#: src/commands.lua:28
+msgid "kicks a player from the party"
+msgstr "@1 Elhagyta a csapatot"
+
+#: src/commands.lua:29
+msgid "leaves the party you're in"
+msgstr "Elhagytad a bulit"
+
+#: src/commands.lua:67
+msgid "[!] You must enter a message after `/p`!"
+msgstr "[!] Be kell lépned egy buliba elöször"
+
+#: src/api.lua:26 src/api.lua:244 src/api.lua:294
+msgid "[!] Only the party leader can perform this action!"
+msgstr "[!] Ezt az akciót csak a pártvezető hajthatja végre!"
+
+#: src/api.lua:31
+msgid "[!] You can't invite yourself!"
+msgstr "[!] Nem hívhatod meg magad!"
+
+#: src/api.lua:36
+msgid "[!] This player is not online!"
+msgstr "[!] Ez a játékos nincs online!"
+
+#: src/api.lua:41 src/api.lua:111
+msgid "[!] The party has reached the maximum amount of players! (@1)"
+msgstr ""
+
+#: src/api.lua:46
+msgid "[!] This player is already in a party!"
+msgstr "[!] Ez a játékos már buliban van!"
+
+#: src/api.lua:51
+msgid "[!] You already have a pending invite from this player!"
+msgstr "[!] Nincs várakozó meghívód ettől a Játékostól!"
+
+#: src/api.lua:56
+msgid "[!] You've already invited this player!"
+msgstr "[!] Már meghívtad ezt a játékost!"
+
+#: src/api.lua:65
+msgid "Invite to @1 successfully sent"
+msgstr "A @1 meghívója sikeresen elküldve"
+
+#: src/api.lua:66
+msgid ""
+"@1 has invited you to a party, would you like to join? (/party join, or /"
+"party join @2 within 60 seconds)"
+msgstr ""
+
+#: src/api.lua:82
+msgid "[!] You have no pending invites!"
+msgstr "[!] Nincs várakozo meghívód!"
+
+#: src/api.lua:87
+msgid "[!] You have no pending invites from this player!"
+msgstr "[!] Nincs várakozó meghívód ettől a Játékostól!"
+
+#: src/api.lua:101
+msgid ""
+"[!] More players have invited you in their party: please specify the nick of "
+"the one you want to join!"
+msgstr ""
+
+#: src/api.lua:112
+msgid "@1 has tried to enter but the party is full"
+msgstr "@1  csatlakozott a bulihoz"
+
+#: src/api.lua:117
+msgid "[!] The party leader has disconnected!"
+msgstr "[!] A buli vezetője kilépett!"
+
+#: src/api.lua:126
+msgid ""
+"@1 has tried to enter but an external condition has prevented them from "
+"doing it"
+msgstr ""
+
+#: src/api.lua:143 src/api.lua:158
+msgid "@1 has joined another party"
+msgstr "@1 ist egy másik bulihoz csatlakozott"
+
+#: src/api.lua:154
+msgid "@1 has joined the party"
+msgstr "@1  csatlakozott a bulihoz"
+
+#: src/api.lua:168
+msgid "You've joined @1's party"
+msgstr "Csatlakoztál @1-nek a bulijába"
+
+#: src/api.lua:187 src/api.lua:239 src/api.lua:289 src/api.lua:350
+msgid "[!] You must enter a party first!"
+msgstr "[!] Be kell lépned egy buliba elöször"
+
+#: src/api.lua:211
+msgid "You've left the party"
+msgstr "Elhagytad a bulit"
+
+#: src/api.lua:217 src/api.lua:226
+msgid "@1 has left the party"
+msgstr "@1 Elhagyta a csapatot"
+
+#: src/api.lua:249
+msgid "[!] There is no player called @1 in your party!"
+msgstr "[!] Ez a játékos már buliban van!"
+
+#: src/api.lua:254
+msgid "[!] You can't kick yourself!"
+msgstr "[!] Nem hívhatod meg magad!"
+
+#: src/api.lua:276
+msgid "@1 has been kicked from the party"
+msgstr "@1  csatlakozott a bulihoz"
+
+#: src/api.lua:277
+msgid "@1 has kicked you from the party"
+msgstr "@1  csatlakozott a bulihoz"
+
+#: src/api.lua:302
+msgid "The party has been disbanded"
+msgstr "A buli feloszlott"
+
+#: src/api.lua:379
+msgid "@1 is the new party leader"
+msgstr "@1 Az új vezetője a bulinak"
+
+#: src/api.lua:447
+msgid "Party"
+msgstr "Buli"
+
+#: src/api.lua:458
+msgid "No answer from @1..."
+msgstr "@1-től nincs válasz..."

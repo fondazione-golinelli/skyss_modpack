@@ -1,0 +1,216 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 11:59+0100\n"
+"PO-Revision-Date: 2026-04-01 17:57+0000\n"
+"Last-Translator: VAI_PROG <vai_prog@noreply.codeberg.org>\n"
+"Language-Team: Russian <https://translate.codeberg.org/projects/zughy-"
+"friends-minetest/parties/ru/>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 5.16.2\n"
+
+#: init.lua:7 src/_load.lua:30
+msgid "Parties"
+msgstr "Партии"
+
+#: init.lua:8
+msgid "Team up with your friends and create a party!"
+msgstr "Объединяйся со своими друзьями и создавай пати!"
+
+#: src/_load.lua:30
+msgid "Notifications"
+msgstr "Уведомления"
+
+#: src/_load.lua:32
+msgid "Party invite jingle"
+msgstr "Звенит приглашение в пати"
+
+#: src/_load.lua:33
+msgid "Someone joins the party"
+msgstr "Кто-то присоединяется к пати"
+
+#: src/_load.lua:34
+msgid "Someone leaves the party"
+msgstr "Кто-то уходит из пати"
+
+#: src/commands.lua:6
+msgid "manage parties"
+msgstr "управляет партиями"
+
+#: src/commands.lua:6 src/commands.lua:18
+msgid "Do `/party help` to see all the subcommands"
+msgstr "Введи `/party help`, чтобы увидеть все подкоманды"
+
+#: src/commands.lua:10 src/commands.lua:30
+msgid "message"
+msgstr "сообщение"
+
+#: src/commands.lua:11 src/commands.lua:30
+msgid "sends a message in the party chat"
+msgstr "отправляет сообщение в пати чат"
+
+#: src/commands.lua:24
+msgid "COMMANDS"
+msgstr "КОМАНДЫ"
+
+#: src/commands.lua:25
+msgid "disbands your party"
+msgstr "распускает твою пати"
+
+#: src/commands.lua:26 src/commands.lua:27 src/commands.lua:28
+msgid "player"
+msgstr "игрок"
+
+#: src/commands.lua:26
+msgid "invites a player to join your party. It creates one if there is none"
+msgstr "приглашает игрока в твою пати. Создаёт, если её нет"
+
+#: src/commands.lua:27
+msgid ""
+"accepts an invitation. If you've received more than one, specify `player`"
+msgstr ""
+"принимает приглашение. Если получишь больше одного, укажи кто твой `игрок`"
+
+#: src/commands.lua:28
+msgid "kicks a player from the party"
+msgstr "выкидывает игрока из пати"
+
+#: src/commands.lua:29
+msgid "leaves the party you're in"
+msgstr "покидает пати, в которой ты состоишь"
+
+#: src/commands.lua:67
+msgid "[!] You must enter a message after `/p`!"
+msgstr "[!] Надо вводить сообщение после `/p`!"
+
+#: src/api.lua:26 src/api.lua:244 src/api.lua:294
+msgid "[!] Only the party leader can perform this action!"
+msgstr "[!] Только лидер пати может совершать это действие!"
+
+#: src/api.lua:31
+msgid "[!] You can't invite yourself!"
+msgstr "[!] Ты не можешь пригласить себя!"
+
+#: src/api.lua:36
+msgid "[!] This player is not online!"
+msgstr "[!] Этот игрок не в сети!"
+
+#: src/api.lua:41 src/api.lua:111
+msgid "[!] The party has reached the maximum amount of players! (@1)"
+msgstr "[!] Пати достигла максимального количества игроков! (@1)"
+
+#: src/api.lua:46
+msgid "[!] This player is already in a party!"
+msgstr "[!] Этот игрок уже в пати!"
+
+#: src/api.lua:51
+msgid "[!] You already have a pending invite from this player!"
+msgstr "[!] У вас уже есть ожидающее приглашение от этого игрока!"
+
+#: src/api.lua:56
+msgid "[!] You've already invited this player!"
+msgstr "[!] Этот игрок уже приглашён!"
+
+#: src/api.lua:65
+msgid "Invite to @1 successfully sent"
+msgstr "Приглашение игроку @1 было успешно отправлено"
+
+#: src/api.lua:66
+msgid ""
+"@1 has invited you to a party, would you like to join? (/party join, or /"
+"party join @2 within 60 seconds)"
+msgstr ""
+"Игрок @1 пригласил тебя в команду, присоединяешься? (/party join или /party "
+"join @2 в течение 60 секунд)"
+
+#: src/api.lua:82
+msgid "[!] You have no pending invites!"
+msgstr "[!] У тебя нет поступающих приглашений!"
+
+#: src/api.lua:87
+msgid "[!] You have no pending invites from this player!"
+msgstr "[!] У тебя нет поступающих приглашений от этого игрока!"
+
+#: src/api.lua:101
+msgid ""
+"[!] More players have invited you in their party: please specify the nick of "
+"the one you want to join!"
+msgstr ""
+"[!] Несколько игроков пригласили тебя в свои пати: пожалуйста, укажи ник "
+"одного, к которому ты хотел бы присоединиться!"
+
+#: src/api.lua:112
+msgid "@1 has tried to enter but the party is full"
+msgstr "Игрок @1 попробовал войти, но пати заполнена"
+
+#: src/api.lua:117
+msgid "[!] The party leader has disconnected!"
+msgstr "[!] Лидер пати отключился!"
+
+#: src/api.lua:126
+msgid ""
+"@1 has tried to enter but an external condition has prevented them from "
+"doing it"
+msgstr "Игрок @1 попробовал войти, но внешние условия помешали ему сделать это"
+
+#: src/api.lua:143 src/api.lua:158
+msgid "@1 has joined another party"
+msgstr "Игрок @1 присоединился к другой пати"
+
+#: src/api.lua:154
+msgid "@1 has joined the party"
+msgstr "Игрок @1 присоединился к пати"
+
+#: src/api.lua:168
+msgid "You've joined @1's party"
+msgstr "Ты присоединяешься к пати игрока @1"
+
+#: src/api.lua:187 src/api.lua:239 src/api.lua:289 src/api.lua:350
+msgid "[!] You must enter a party first!"
+msgstr "[!] Сначала надо войти в пати!"
+
+#: src/api.lua:211
+msgid "You've left the party"
+msgstr "Ты покидаешь пати"
+
+#: src/api.lua:217 src/api.lua:226
+msgid "@1 has left the party"
+msgstr "Игрок @1 покинул пати"
+
+#: src/api.lua:249
+msgid "[!] There is no player called @1 in your party!"
+msgstr "[!] Не существует игрока с именем @1 в твоей пати!"
+
+#: src/api.lua:254
+msgid "[!] You can't kick yourself!"
+msgstr "[!] Ты не можешь выкинуть себя!"
+
+#: src/api.lua:276
+msgid "@1 has been kicked from the party"
+msgstr "Игрок @1 был выкинут из пати"
+
+#: src/api.lua:277
+msgid "@1 has kicked you from the party"
+msgstr "Игрок @1 выкинул тебя из пати"
+
+#: src/api.lua:302
+msgid "The party has been disbanded"
+msgstr "Пати была распущена"
+
+#: src/api.lua:379
+msgid "@1 is the new party leader"
+msgstr "@1 — новый лидер пати"
+
+#: src/api.lua:447
+msgid "Party"
+msgstr "Пати"
+
+#: src/api.lua:458
+msgid "No answer from @1..."
+msgstr "Нет ответа от игрока @1..."

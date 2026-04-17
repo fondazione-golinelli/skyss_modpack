@@ -1,0 +1,79 @@
+# textdomain: audio_lib
+
+##[ init.lua ]##
+Library to easily manage sounds (accessibility options!)=Librería para fácilmente gestionar sonidos (opciones de accesibilidad)
+
+##[ src/GUI/gui_settings.lua ]##
+Used by:@n@1=Usado por: @n@1
+It only affects mods that use audio_lib=Sólo afecta los mods que usan audio_lib
+Main=Principal
+BGM=Música de fondo
+SFX=Efectos de sonido
+Accessibility=Accesibilidad
+Reset=Reiniciar
+Apply=Aplicar
+
+##[ src/GUI/gui_settings.lua ]##
+##[ src/items.lua ]##
+Audio Settings=Ajustes de sonido
+
+##[ src/commands.lua ]##
+Open the audio settings menu=Abrir los ajustes de sonido
+
+##[ src/register/MTG.lua ]##
+Cart moves=El carro se mueve
+Grass breaks=El pasto se rompe
+Chest closes=El cofre se cierra
+Chest opens=El cofre se abre
+Lapilli burst out=Lapilli estalló
+Chop chop=Picar picar
+Footsteps (gravel)=Pasos (grava)
+Footsteps (grass)=Pasos (pasto)
+Footsteps (dirt)=Pasos (tierra)
+Metal breaks=El metal se rompe
+Node breaks=El nodo se rompe
+Furnace crackles=El horno chispea
+Gravel breaks=La grava se rompe
+Ice breaks=El hielo se rompe
+Item evaporates=El objeto se evapora
+Node placed=Nodo colocado
+Hard node placed=Nodo duro colocado
+Metal node placed=Nodo metálico colocado
+Item breaks=El objeto se rompe
+Hit=Golpear
+Door closes=La puerta se cierra
+Door opens=La puerta se abre
+Fence gate closes=La puerta de la valla se cierra
+Fence gate opens=La puerta de la valla se abre
+Glass door closes=La puerta de vidrio se cierra
+Glass door opens=La puerta de vidrio se abre
+Steel door closes=La puerta de acero de cierra
+Steel door opens=La puerta de acreo se abre
+Lava boils=La lava hierve
+Water flows=El agua fluye
+Fire exstinguishes=El fuego se extingue
+Fire burns=El fuego quema
+Flint scratches=Arañazos del pedernal
+Fire roars=El fuego ruge
+Fire crackles=El fuego chispea
+Explosion=Explosión
+Fuse burns=El fusible se quema
+Fuse ignites=El fusible se enciende
+Steel bar door slams=Portazo
+Steel bar door creaks=La puerta de barras cruje
+
+##[ src/tests/bgm.lua ]##
+Audio Lib BGM test #1@n@n1. Play BGM #1 in loop.@n@nRight click to stop any BGM=Prueba de música de fondo de Audio Lib #1@n@n1. Reproduce la música de fondo #1 en bucle.@n@nClick derecho para interrumpir cualquier música de fondo
+Audio Lib BGM test #2@n@n1. Play BGM #1 for 1s@n2. Play BGM #2 for 3s, gain 0.3@n3. Play BGM #1 for 4s from where it stopped@n4. Stop BGM #1 after 2s=Prueba de música de fondo de Audio Lib #2@n@n1. Reproduce la música de fondo fondo #1 por 1s@n2. Reproduce la música de fondo #2 por 3s, volumen 0.3@n3. Reproduce la música de fondo fondo #1 por 4s de donde paró@n4. Interrumpe la música de fondo #1 después de 2s
+Audio Lib BGM test #3@n@n1. Play BGM #2 for 2s@n2. Gradually change (1s) gain to 0.5 for 3s@n3. Change gain to 1.4 for 2s@n4. Fade it out in 2s=Prueba de música de fondo de Audio lib #3@n@n1. Reproduce la música de fondo #2 por 2s@n2. Cambie gradualmente la ganancia (1s) a 0,5 para 3s@n3. Cambie la ganancia a 1,4 para 2s@n4. Desaparece en 2 segundos
+Starts changing volume=Inicia cambiando el volumen
+Starts fading=Comienza a desvanecerse
+
+##[ src/tests/custom_types.lua ]##
+Custom type test=Tipo de prueba personalizada
+Audio Lib custom sound test #1@n@n1. Play Custom Sound #1 to the player=Prueba de sonido personalizado de Audio Lib #1@n@n1. Reproduzca el sonido personalizado #1 al jugador
+
+##[ src/tests/sfx.lua ]##
+Audio Lib sfx test #1@n@n1. Play SFX #1 to the player=Prueba de efecto de sonido de Audio Lib #1@n@n1. Reproduzca efecto de sonido #1 al jugador
+Audio Lib sfx test #2@n@n1. Play SFX #1 at player's position@n2. Play SFX #1 again after 2 seconds, shifted by 30 nodes on the X axis from the player's position@n3.Play it again after 0.5s, but shifted by 30 nodes in the opposite direction@n4. Play it again after 0.4s, like in step #2=Prueba de efecto de sonido de Audio Lib #2@n@n1. Reproduzca el efecto de sonido #1 en la posición del jugador@n2. Reproduce el efecto de sonido #1 de nuevo después de 2 segundos, desplazado en 30 nodos en el eje X desde la posición del jugador@n3. Reprodúcelo de nuevo después de 0,5 s, pero desplazado en 30 nodos en la dirección opuesta@n4. Vuelve a reproducirlo después de 0,4 s, como en el paso #2
+Audio Lib sfx test #3@n@n1. Play SFX #1 three times as a non overlappable sound, in two different places at the same time@n2. You should only hear two sounds (the first one with the same position will be immediately interrupted)=

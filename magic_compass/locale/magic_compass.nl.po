@@ -1,0 +1,52 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 14:49+0100\n"
+"PO-Revision-Date: 2026-03-03 16:29+0000\n"
+"Last-Translator: Gusted <postmaster@gusted.xyz>\n"
+"Language-Team: Dutch <https://translate.codeberg.org/projects/zughy-friends-"
+"minetest/magic-compass/nl/>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15.2\n"
+
+#: init.lua:7 src/items.lua:7
+msgid "Magic Compass"
+msgstr "Magische kompas"
+
+#: init.lua:8
+msgid "Item to teleport into server-side defined locations"
+msgstr "Item om naar door de server gedefinieerde locaties te teleporteren"
+
+#: src/GUI/gui_compass.lua:138
+msgid "[!] You haven't got the requirements to teleport into this area!"
+msgstr ""
+"[!] Je voldoet niet aan de vereisten om naar dit gebied te teleporteren!"
+
+#: src/GUI/gui_compass.lua:145
+msgid ""
+"[!] You can't reteleport to this location so quickly! (seconds remaining: @1)"
+msgstr ""
+"[!] Je kunt niet zo snel naar deze locatie terugteleporteren! (resterende "
+"seconden: @1)"
+
+#: src/GUI/gui_compass.lua:152
+msgid "[!] Can't teleport whilst moving!"
+msgstr "[!] Je kunt niet teleporteren terwijl je beweegt!"
+
+#: src/_load.lua:76
+msgid "Teleport beeps"
+msgstr "Teleport piept"
+
+#: src/_load.lua:77
+msgid "Action forbidden"
+msgstr "Actie verboden"

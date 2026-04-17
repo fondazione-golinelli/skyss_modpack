@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 14:49+0100\n"
+"PO-Revision-Date: 2026-02-10 14:29+0000\n"
+"Last-Translator: Zughy <zughy@noreply.codeberg.org>\n"
+"Language-Team: Italian <https://translate.codeberg.org/projects/zughy-"
+"friends-minetest/magic-compass/it/>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15.2\n"
+
+#: init.lua:7 src/items.lua:7
+msgid "Magic Compass"
+msgstr "Bussola Magica"
+
+#: init.lua:8
+msgid "Item to teleport into server-side defined locations"
+msgstr "Oggetto per teletrasportarsi in luoghi predefinti dal server"
+
+#: src/GUI/gui_compass.lua:138
+msgid "[!] You haven't got the requirements to teleport into this area!"
+msgstr "[!] Non hai i requisiti necessari per teletrasportarti in quest'area!"
+
+#: src/GUI/gui_compass.lua:145
+msgid ""
+"[!] You can't reteleport to this location so quickly! (seconds remaining: @1)"
+msgstr ""
+"[!] Non puoi ritelerasportarti in questo luogo così velocemente! (secondi "
+"rimanenti: @1)"
+
+#: src/GUI/gui_compass.lua:152
+msgid "[!] Can't teleport whilst moving!"
+msgstr "[!] Non puoi telerasportarti mentre ti muovi!"
+
+#: src/_load.lua:76
+msgid "Teleport beeps"
+msgstr "Sibilo teletrasporto"
+
+#: src/_load.lua:77
+msgid "Action forbidden"
+msgstr "Azione vietata"

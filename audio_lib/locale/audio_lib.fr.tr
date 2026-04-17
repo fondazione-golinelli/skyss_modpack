@@ -1,0 +1,79 @@
+# textdomain: audio_lib
+
+##[ init.lua ]##
+Library to easily manage sounds (accessibility options!)=Bibliothèque logicielle pour facilement gêrer les sons (options d''accessibilité !)
+
+##[ src/GUI/gui_settings.lua ]##
+Used by:@n@1=Utilisé par :@n@1
+It only affects mods that use audio_lib=Cela n''affecte que les mods qui utilisent audio_lib
+Main=Principal
+BGM=Musique de fond
+SFX=SFX
+Accessibility=Accessibilité
+Reset=Remise à zéro
+Apply=Appliquer
+
+##[ src/GUI/gui_settings.lua ]##
+##[ src/items.lua ]##
+Audio Settings=Paramètres Audio
+
+##[ src/commands.lua ]##
+Open the audio settings menu=Ouvrir le menu des paramètres audio
+
+##[ src/register/MTG.lua ]##
+Cart moves=Déplacement du wagonnet
+Grass breaks=Coupures d''herbes
+Chest closes=Fermeture du coffre
+Chest opens=Ouverture du coffre
+Lapilli burst out=
+Chop chop=
+Footsteps (gravel)=Bruits de pas (gravier)
+Footsteps (grass)=Bruits de pas (herbe)
+Footsteps (dirt)=Bruits de pas (terre)
+Metal breaks=Cassage de métal
+Node breaks=Cassage d''un bloc
+Furnace crackles=Crépitements du four
+Gravel breaks=
+Ice breaks=Brisure de glace
+Item evaporates=Évaporation de l''objet
+Node placed=Placement d''un bloc
+Hard node placed=Placement d''un bloc dur
+Metal node placed=Placement d''un bloc de métal
+Item breaks=Cassure d''un objet
+Hit=Coup
+Door closes=Fermeture de porte
+Door opens=Ouverture de porte
+Fence gate closes=Fermeture de portillon
+Fence gate opens=Ouverture de portillon
+Glass door closes=Fermeture de porte de glace
+Glass door opens=Ouverture de porte de glace
+Steel door closes=Fermeture de porte en acier
+Steel door opens=Ouverture de porte en acier
+Lava boils=Ébullition de la lave
+Water flows=Écoulement de l''eau
+Fire exstinguishes=Extinction du feu
+Fire burns=
+Flint scratches=
+Fire roars=Rugissement du feu
+Fire crackles=Crépitement du feu
+Explosion=Explosion
+Fuse burns=
+Fuse ignites=
+Steel bar door slams=Claquement de porte à barreau en acier
+Steel bar door creaks=Craquement de porte à barreau en acier
+
+##[ src/tests/bgm.lua ]##
+Audio Lib BGM test #1@n@n1. Play BGM #1 in loop.@n@nRight click to stop any BGM=
+Audio Lib BGM test #2@n@n1. Play BGM #1 for 1s@n2. Play BGM #2 for 3s, gain 0.3@n3. Play BGM #1 for 4s from where it stopped@n4. Stop BGM #1 after 2s=
+Audio Lib BGM test #3@n@n1. Play BGM #2 for 2s@n2. Gradually change (1s) gain to 0.5 for 3s@n3. Change gain to 1.4 for 2s@n4. Fade it out in 2s=
+Starts changing volume=Commencer à changer le volume
+Starts fading=Commence à s`estomper
+
+##[ src/tests/custom_types.lua ]##
+Custom type test=Type de test personnalisé
+Audio Lib custom sound test #1@n@n1. Play Custom Sound #1 to the player=
+
+##[ src/tests/sfx.lua ]##
+Audio Lib sfx test #1@n@n1. Play SFX #1 to the player=
+Audio Lib sfx test #2@n@n1. Play SFX #1 at player's position@n2. Play SFX #1 again after 2 seconds, shifted by 30 nodes on the X axis from the player's position@n3.Play it again after 0.5s, but shifted by 30 nodes in the opposite direction@n4. Play it again after 0.4s, like in step #2=
+Audio Lib sfx test #3@n@n1. Play SFX #1 three times as a non overlappable sound, in two different places at the same time@n2. You should only hear two sounds (the first one with the same position will be immediately interrupted)=

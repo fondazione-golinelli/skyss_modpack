@@ -1,0 +1,56 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-16 13:44+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Check worldfolder/magic_compass to customise the mod!"
+msgstr ""
+
+msgid "I'm a normal teleport"
+msgstr ""
+
+msgid ""
+"Every single icon can have a cooldown. Like me, you can spam-click how much "
+"you want, I dare you"
+msgstr ""
+
+msgid ""
+"And now some cute animals in Italian to please you with a search on the "
+"internet: basettino, pangolino, coniglio ariete. Don't thank me"
+msgstr ""
+
+msgid "Also remember to change the textures in Textures"
+msgstr ""
+
+msgid ""
+"And how about privileges? We have those too. Like this, which doesn't work "
+"without the 'fly' and 'shout' privilege"
+msgstr ""
+
+msgid ""
+"Do you see me? That's because you have the 'fast' privilege. People who "
+"don't, they simply can't!"
+msgstr ""
+
+msgid ""
+"And if you can't see ME (you need the server privilege), being the only one "
+"in the row, you won't see this row nor all the empty rows before it. THIS IS "
+"THE TRUE POWER OF ADMINS, CAN YOU FEEL IT?!"
+msgstr ""
+
+msgid "Enjoy creating your teleports!"
+msgstr ""

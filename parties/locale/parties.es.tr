@@ -1,0 +1,61 @@
+# textdomain: parties
+# author(s): Dragonop, Zughy
+# reviewer(s):
+
+##[ init.lua ]##
+Team up with your friends and create a party!=¡Has equipo con tus amigos y crea un grupo!
+
+##[ init.lua ]##
+##[ src/_load.lua ]##
+Parties=Grupos
+
+##[ src/_load.lua ]##
+Notifications=Notificaciones
+Party invite jingle=Jingle de invitación al grupo
+Someone joins the party=Alguien se ha unido al grupo
+Someone leaves the party=Alguien se ha salido del grupo
+
+##[ src/api.lua ]##
+[!] Only the party leader can perform this action!=[!] ¡Solo el líder del grupo puede realizar esta acción!
+[!] You can't invite yourself!=[!] ¡No puedes invitarte a ti mismo!
+[!] This player is not online!=[!] ¡Este jugador no está conectado!
+[!] The party has reached the maximum amount of players! (@1)=[!] ¡El grupo ha alcanzado la máxima cantidad de jugadores! (@1)
+[!] This player is already in a party!=[!] ¡Este jugador ya está en un grupo!
+[!] You already have a pending invite from this player!=
+[!] You've already invited this player!=[!] ¡Ya has invitado a este jugador!
+Invite to @1 successfully sent=Invitación a @1 enviada con éxito
+@1 has invited you to a party, would you like to join? (/party join, or /party join @2 within 60 seconds)=@1 te ha invitado al grupo ¿Te gustaría unirte? (/party join, o /party join @2 dentro de 60 segundos)
+[!] You have no pending invites!=[!] ¡No tienes invitaciones pendientes!
+[!] You have no pending invites from this player!=[!] ¡No tienes invitaciones pendientes de este jugador!
+[!] More players have invited you in their party: please specify the nick of the one you want to join!=[!] Más jugadores te han invitado en sus grupo: por favor especifica el nombre del jugador al que quieres unirte!
+@1 has tried to enter but the party is full=@1 ha intentado entrar pero el grupo está lleno
+[!] The party leader has disconnected!=[!] ¡El líder del grupo se ha desconectado!
+@1 has tried to enter but an external condition has prevented them from doing it=@1 ha intentado entrar pero una condición externa lo ha impedido hacerlo
+@1 has joined another party=@1 se ha unido a otro grupo
+@1 has joined the party=@1 se ha unido al grupo
+You've joined @1's party=Te has unido al grupo de @1
+[!] You must enter a party first!=[!] ¡Debes unirte a un grupo primero!
+You've left the party=Has dejado el grupo
+@1 has left the party=@1 ha dejado el grupo
+[!] There is no player called @1 in your party!=[!] ¡No hay ningún jugador en tu grupo llamado @1!
+[!] You can't kick yourself!=[!] ¡No te puedes expulsar a ti mismo!
+@1 has been kicked from the party=@1 ha sido expulsado del grupo
+@1 has kicked you from the party=@1 te ha expulsado del grupo
+The party has been disbanded=El grupo ha sido disuelto
+@1 is the new party leader=@1 es el nuevo líder del grupo
+Party=Grupo
+No answer from @1...=Sin respuesta de @1...
+
+##[ src/commands.lua ]##
+manage parties=Gestionar grupos
+Do `/party help` to see all the subcommands=Pon `/party help` para ver todos los subcomandos
+message=mensaje
+sends a message in the party chat=envía un mensaje en el chat grupal
+COMMANDS=COMANDOS
+disbands your party=disolver tu grupo
+player=jugador
+invites a player to join your party. It creates one if there is none=invita a un jugador a tu grupo. Crea uno si no existe
+accepts an invitation. If you've received more than one, specify `player`=acepta una invitación. Si has recibido más de una, especifica el `jugador`
+kicks a player from the party=expulsa un jugador del grupo
+leaves the party you're in=abandona el grupo en el que estás
+[!] You must enter a message after `/p`!=[!] ¡Tienes que colocar un mensaje después de `/p`!

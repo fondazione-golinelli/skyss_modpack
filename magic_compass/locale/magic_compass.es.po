@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-09 14:49+0100\n"
+"PO-Revision-Date: 2026-02-09 13:48+0000\n"
+"Language: magic_compass.es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: init.lua:7 src/items.lua:7
+msgid "Magic Compass"
+msgstr "Brújula Mágica"
+
+#: init.lua:8
+msgid "Item to teleport into server-side defined locations"
+msgstr ""
+"Elemento para teletransportarse a ubicaciones definidas dentro del servidor"
+
+#: src/GUI/gui_compass.lua:138
+msgid "[!] You haven't got the requirements to teleport into this area!"
+msgstr "[!] ¡No tienes los permisos para teletransportarte a esta área!"
+
+#: src/GUI/gui_compass.lua:145
+msgid ""
+"[!] You can't reteleport to this location so quickly! (seconds remaining: @1)"
+msgstr ""
+"[!] ¡No puedes reteletransportarte a esta ubicación tan rápido! (segundos "
+"restantes: @1)"
+
+#: src/GUI/gui_compass.lua:152
+msgid "[!] Can't teleport whilst moving!"
+msgstr "[!] ¡No puedes teletransportarte mientras te mueves!"
+
+#: src/_load.lua:76
+msgid "Teleport beeps"
+msgstr "El teletransporte emite un pitido"
+
+#: src/_load.lua:77
+msgid "Action forbidden"
+msgstr "Acción prohibida"
