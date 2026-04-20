@@ -250,4 +250,57 @@ minetest.register_on_leaveplayer(function(player)
     -- Keep frozen_players[name] so it re-applies if they reconnect to this server
 end)
 
+-- ── Proxy Command Stubs (for /help visibility) ──────────────────────────────
+-- These are intercepted by the mt-multiserver-proxy classrooms plugin.
+-- Handlers below only run on direct connections that bypass the proxy.
+
+local function proxy_only(name)
+    minetest.chat_send_player(name, minetest.colorize("#FF6600",
+        "[Classrooms] Connect via the proxy to use this command."))
+end
+
+minetest.register_chatcommand("classes", {
+    description = "Open teacher dashboard",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("admin", {
+    description = "Open admin dashboard",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("lobby", {
+    description = "Go back to the lobby",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("freeze", {
+    description = "Freeze a student or class",
+    params = "<student_name|class_name>",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("unfreeze", {
+    description = "Unfreeze a student or class",
+    params = "<student_name|class_name>",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("teacher_add", {
+    description = "Register a new teacher",
+    params = "<username>",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("teacher_remove", {
+    description = "Unregister a teacher",
+    params = "<username>",
+    func = function(name) proxy_only(name) end,
+})
+
+minetest.register_chatcommand("teacher_list", {
+    description = "List all registered teachers",
+    func = function(name) proxy_only(name) end,
+})
+
 minetest.log("action", "[classrooms_bridge] Loaded successfully.")
