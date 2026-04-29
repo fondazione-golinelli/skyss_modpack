@@ -120,6 +120,42 @@ function handlers.tp_to(data)
     end
 end
 
+function handlers.set_gamemode(data)
+    local name = data.player
+    local gamemode = data.gamemode
+    if not name or not gamemode then return end
+    if gamemode ~= "creative" and gamemode ~= "survival" then return end
+
+    local player = minetest.get_player_by_name(name)
+    if not player then return end
+
+    if mcl_gamemode and mcl_gamemode.set_gamemode then
+        mcl_gamemode.set_gamemode(player, gamemode)
+        minetest.chat_send_player(name, minetest.colorize("#00CC66",
+            "[Teacher] Your game mode is now " .. gamemode .. "."))
+    else
+        minetest.log("warning", "[classrooms_bridge] mcl_gamemode API is not available")
+    end
+end
+
+function handlers.capture_spawnpoint(data)
+    local name = data.player
+    local request_id = data.request_id
+    if not name or not request_id then return end
+
+    local player = minetest.get_player_by_name(name)
+    if not player then return end
+
+    if channel and channel:is_writeable() then
+        channel:send_all(minetest.write_json({
+            action = "spawnpoint_captured",
+            player = name,
+            request_id = request_id,
+            pos = player:get_pos(),
+        }))
+    end
+end
+
 function handlers.broadcast(data)
     local players = data.players
     local message = data.message
