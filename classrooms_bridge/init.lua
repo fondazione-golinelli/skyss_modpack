@@ -20,6 +20,149 @@ end)
 
 local handlers = {}
 
+local function write_settings(context)
+    local ok = minetest.settings:write()
+    if ok then
+        minetest.log("action", "[classrooms_bridge] Wrote luanti.conf after " .. context)
+    else
+        minetest.log("warning", "[classrooms_bridge] Failed to write luanti.conf after " .. context)
+    end
+    return ok
+end
+
+local APPROVED_CONFIG_KEYS = {
+    enable_damage = true,
+    enable_pvp = true,
+    mcl_enable_hunger = true,
+    mobs_spawn = true,
+    only_peaceful_mobs = true,
+    mcl_explosions_griefing = true,
+    static_spawnpoint = true,
+    classrooms_spawn_yaw = true,
+    classrooms_spawn_pitch = true,
+}
+
+local CONFIG_KEY_ORDER = {
+    "enable_damage",
+    "enable_pvp",
+    "mcl_enable_hunger",
+    "mobs_spawn",
+    "only_peaceful_mobs",
+    "mcl_explosions_griefing",
+    "static_spawnpoint",
+    "classrooms_spawn_yaw",
+    "classrooms_spawn_pitch",
+}
+
+local function pending_settings_path()
+    local dir = minetest.get_mod_storage()
+    minetest.log("action", "[classrooms_bridge] Using mod storage path: " .. dir)
+    minetest.mkdir(dir)
+    return dir .. "/instance_settings.conf"
+end
+
+local function read_pending_settings()
+    local path = pending_settings_path()
+    local settings = {}
+    local file = io.open(path, "r")
+    if not file then
+        return settings
+    end
+
+    for line in file:lines() do
+        local key, value = line:match("^%s*([%w_]+)%s*=%s*(.-)%s*$")
+        if key and APPROVED_CONFIG_KEYS[key] then
+            settings[key] = value
+        end
+    end
+    file:close()
+    return settings
+end
+
+local function write_config_settings(settings, context)
+    if type(settings) ~= "table" then
+        return 0
+    end
+
+    local pending = read_pending_settings()
+    local count = 0
+    for key, value in pairs(settings) do
+        if type(key) == "string" and APPROVED_CONFIG_KEYS[key] then
+            pending[key] = tostring(value)
+            count = count + 1
+        end
+    end
+
+    local lines = {}
+    for _, key in ipairs(CONFIG_KEY_ORDER) do
+        if pending[key] ~= nil then
+            table.insert(lines, key .. " = " .. pending[key])
+        end
+    end
+
+    if minetest.safe_file_write(pending_settings_path(), table.concat(lines, "\n") .. "\n") then
+        minetest.log("action", "[classrooms_bridge] Wrote pending instance settings after " .. context .. " (" .. count .. " values)")
+    else
+        minetest.log("warning", "[classrooms_bridge] Failed to write pending instance settings after " .. context)
+    end
+    return count
+end
+
+local function send_bridge_message(payload, context)
+    if not channel then
+        minetest.log("warning", "[classrooms_bridge] Cannot send " .. context .. ": mod channel is not joined")
+        return false
+    end
+
+    local message = minetest.write_json(payload)
+    local ok, err = pcall(function()
+        channel:send_all(message)
+    end)
+    if ok then
+        minetest.log("action", "[classrooms_bridge] Sent " .. context .. ": " .. message)
+    else
+        minetest.log("warning", "[classrooms_bridge] Failed to send " .. context .. ": " .. tostring(err))
+    end
+    return ok
+end
+
+local function get_classroom_spawn()
+    local pos = minetest.settings:get_pos("static_spawnpoint")
+    if not pos then
+        return nil
+    end
+
+    return {
+        pos = pos,
+        yaw = tonumber(minetest.settings:get("classrooms_spawn_yaw")),
+        pitch = tonumber(minetest.settings:get("classrooms_spawn_pitch")),
+    }
+end
+
+local function apply_classroom_spawn(player)
+    local spawn = get_classroom_spawn()
+    if not spawn then
+        return
+    end
+
+    player:set_pos(spawn.pos)
+    if spawn.yaw then
+        player:set_look_horizontal(spawn.yaw)
+    end
+    if spawn.pitch then
+        player:set_look_vertical(spawn.pitch)
+    end
+end
+
+local function apply_classroom_spawn_later(name, delay)
+    minetest.after(delay, function()
+        local player = minetest.get_player_by_name(name)
+        if player then
+            apply_classroom_spawn(player)
+        end
+    end)
+end
+
 function handlers.freeze(data)
     local name = data.player
     if not name then return end
@@ -146,14 +289,47 @@ function handlers.capture_spawnpoint(data)
     local player = minetest.get_player_by_name(name)
     if not player then return end
 
-    if channel and channel:is_writeable() then
-        channel:send_all(minetest.write_json({
-            action = "spawnpoint_captured",
-            player = name,
-            request_id = request_id,
-            pos = player:get_pos(),
-        }))
+    local pos = player:get_pos()
+    local yaw = player:get_look_horizontal()
+    local pitch = player:get_look_vertical()
+    local pos_string = string.format("(%.2f,%.2f,%.2f)", pos.x, pos.y, pos.z)
+    minetest.settings:set("static_spawnpoint", pos_string)
+    minetest.settings:set("classrooms_spawn_yaw", tostring(yaw))
+    minetest.settings:set("classrooms_spawn_pitch", tostring(pitch))
+    write_config_settings({
+        static_spawnpoint = pos_string,
+        classrooms_spawn_yaw = yaw,
+        classrooms_spawn_pitch = pitch,
+    }, "capture_spawnpoint")
+
+    send_bridge_message({
+        action = "spawnpoint_captured",
+        player = name,
+        request_id = request_id,
+        pos = pos,
+        pos_string = pos_string,
+        yaw = yaw,
+        pitch = pitch,
+    }, "spawnpoint_captured")
+end
+
+function handlers.set_settings(data)
+    local config_settings = data.config_settings or data.settings
+    local runtime_settings = data.runtime_settings or {}
+
+    write_config_settings(config_settings, "set_settings")
+
+    local runtime_count = 0
+    for key, value in pairs(runtime_settings) do
+        if type(key) == "string" then
+            minetest.settings:set(key, tostring(value))
+            runtime_count = runtime_count + 1
+        end
     end
+    if runtime_count > 0 then
+        write_settings("runtime set_settings")
+    end
+    minetest.log("action", "[classrooms_bridge] Applied runtime settings after set_settings (" .. runtime_count .. " values)")
 end
 
 function handlers.broadcast(data)
@@ -176,12 +352,10 @@ function handlers.broadcast(data)
 end
 
 function handlers.ping(data)
-    if channel and channel:is_writeable() then
-        channel:send_all(minetest.write_json({
-            action = "pong",
-            server = minetest.get_server_status().description,
-        }))
-    end
+    send_bridge_message({
+        action = "pong",
+        server = minetest.get_server_status().description,
+    }, "pong")
 end
 
 -- ── Mod Channel Message Receiver ────────────────────────────────────────────
@@ -263,6 +437,8 @@ end)
 
 minetest.register_on_joinplayer(function(player)
     local name = player:get_player_name()
+    apply_classroom_spawn_later(name, 0.4)
+
     if frozen_players[name] then
         minetest.after(0.2, function()
             local p = minetest.get_player_by_name(name)
@@ -276,6 +452,11 @@ minetest.register_on_joinplayer(function(player)
             end
         end)
     end
+end)
+
+minetest.register_on_respawnplayer(function(player)
+    apply_classroom_spawn_later(player:get_player_name(), 0.4)
+    return false
 end)
 
 -- ── Cleanup on leave ────────────────────────────────────────────────────────
