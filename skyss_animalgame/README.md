@@ -16,12 +16,19 @@ Build a room and add one player spawn point. At match start, the mod captures th
 ## Gameplay
 
 - Each totem is two blocks tall: a base block with a clickable button on top, plus a clickable static animal icon and visible name label.
-- The player starts with 10 seconds to answer.
+- Each question starts with a short listening moment before the countdown begins.
+- The player can click the "Hear again" bell between the totems to replay the current animal sound.
+- Timer, replay hints, and answer feedback are shown at the top of the screen.
+- The player starts with 10 seconds to answer after the listening moment.
 - Each correct answer increases the score and starts a new question.
 - The answer time shrinks as the score increases, down to a minimum of 4 seconds.
-- A wrong answer or timeout ends the game.
-- The final score is shown before `arena_lib` returns the player to the hub.
+- A wrong answer or timeout ends the game and shows the correct animal highlighted before the final score.
+- The final score stays on screen for a few seconds before `arena_lib` returns the player to the hub.
 
 ## Assets
 
-When Mineclonia `mobs_mc` is enabled, the mod reuses its animal sounds and spawn-icon textures. If `mobs_mc` is unavailable, the minigame still loads with colored placeholder animal cubes, but the real sound quiz needs the Mineclonia animal sounds.
+When Mineclonia `mobs_mc` is enabled, the mod reuses its animal sounds and spawn-icon textures. When `animalworld` is enabled, the quiz pool also includes additional animals such as bear, camel, crocodile, elephant, fox, frog, goose, hyena, koala, marmot, monkey, moose, otter, owl, seal, eagle, tapir, tiger, yak, and zebra.
+
+When Mineclonia `mcl_bells` is enabled, the replay control uses the bell model.
+
+The minigame requires at least four available animals from enabled source mods.

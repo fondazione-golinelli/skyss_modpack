@@ -1,0 +1,103 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 18:46+0100\n"
+"PO-Revision-Date: 2026-02-22 22:29+0000\n"
+"Last-Translator: birdlover32767 <birdlover32767@noreply.codeberg.org>\n"
+"Language-Team: Turkish <https://translate.codeberg.org/projects/zughy-"
+"friends-minetest/a-e-s-custom-mods/aes-server-guide/tr/>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.15.2\n"
+
+#: src/commands.lua:4
+msgid "Show an introduction to the server"
+msgstr "Sunucuya tanıtım göster"
+
+#: src/commands.lua:17
+msgid "Show the rules of the server"
+msgstr "Sunucunun kurallarını göster"
+
+#: src/first_steps.lua:33
+msgid ""
+"Use your free hand to hit an arena sign and enter a minigame (/quit to leave)"
+msgstr ""
+"Boş elinle bir arena tabelasına tıkla ve bir mini oyuna gir (çıkmak "
+"istersen /quit)"
+
+#: src/first_steps.lua:34
+msgid "Use the compass to teleport and reach places more quickly"
+msgstr "Işınlanmak ve daha hızlı yerlere ulaşmak için pusulayı kullan"
+
+#: src/first_steps.lua:35
+msgid ""
+"Complete many challenges and unlock content to make your adventure more "
+"magical!"
+msgstr ""
+"Maceranı daha sihirli yapmak için birçok meydan okumayı tamamla ve "
+"içeriklerin kilidini aç!"
+
+#: src/first_steps.lua:37
+msgid "LET'S GO!"
+msgstr "HAYDİ, BAŞLAYALIM!"
+
+#: src/nodes.lua:19 src/nodes.lua:75
+msgid "Rules"
+msgstr "Kurallar"
+
+#: src/nodes.lua:49 src/nodes.lua:89
+msgid "About"
+msgstr "Hakkında"
+
+#: src/values.lua:28
+msgid "OUR VALUES"
+msgstr "BİZİM DEĞERLERİMİZ"
+
+#: src/values.lua:29
+msgid "EMPATHY"
+msgstr "EMPATİ"
+
+#: src/values.lua:30
+msgid ""
+"Games shouldn't hurt people: we refuse any sort of suffering that might "
+"generate from making games - whether is players' or devs'. Things like "
+"gambling, manipulation and exploitation don't belong here."
+msgstr ""
+"Oyunlar insanlara zarar vermemeli: asla oyun yapımından çıkan acılara izin "
+"vermeyiz - oyuncuların ya da yapımcıların olsa. Burası kumar, manipülasyon "
+"ve sömürge gibi şeylerin yeri değil."
+
+#: src/values.lua:31
+msgid "SKILL-BASED"
+msgstr "YETENEK-BAZLI"
+
+#: src/values.lua:32
+msgid "People's wallets shouldn't make them stronger: say no to pay to win!"
+msgstr ""
+"İnsanların cüzdanları onları daha güçlü yapmamalı: kazanmak için harcama "
+"yapmaya hayır de!"
+
+#: src/values.lua:33
+msgid "PRIVACY"
+msgstr "GİZLİLİK"
+
+#: src/values.lua:34
+msgid ""
+"We don't collect data about you (but we do collect data about minigames, "
+"@1have a look@2!)"
+msgstr ""
+"Sizin hakkınızda bilgi toplamıyoruz (ancak mini oyunlar hakkında bilgi "
+"topluyoruz, @1bir göz atın@2!)"
+
+#: src/values.lua:35
+msgid "FREE SOFTWARE"
+msgstr "ÖZGÜR YAZILIM"
+
+#: src/values.lua:36
+msgid "Our code and assets belong to everyone: @1check it out@2!"
+msgstr ""
+"Bizim kodlarımız, resimlerimiz ve seslerimiz herkese ait: @1ona bir bak@2!"

@@ -1,0 +1,98 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 18:46+0100\n"
+"PO-Revision-Date: 2026-02-08 17:46+0000\n"
+"Language: aes_serverguide.de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/commands.lua:4
+msgid "Show an introduction to the server"
+msgstr "Eine Einführung zum Server anzeigen"
+
+#: src/commands.lua:17
+msgid "Show the rules of the server"
+msgstr "Die Serverregeln anzeigen"
+
+#: src/first_steps.lua:33
+msgid ""
+"Use your free hand to hit an arena sign and enter a minigame (/quit to leave)"
+msgstr ""
+"Benutze deine freie Hand, um ein Arenaschild zu hauen und ein Minispiel zu "
+"betreten (/quit zum Verlassen)"
+
+#: src/first_steps.lua:34
+msgid "Use the compass to teleport and reach places more quickly"
+msgstr ""
+"Benutze den Kompass, um dich zu teleportieren und Orte schnell zu erreichen"
+
+#: src/first_steps.lua:35
+msgid ""
+"Complete many challenges and unlock content to make your adventure more "
+"magical!"
+msgstr ""
+"Schließe viele Herausforderungen ab, und schalte Dinge frei, um ein "
+"magisches Abenteuer zu erleben!"
+
+#: src/first_steps.lua:37
+msgid "LET'S GO!"
+msgstr "LOS GEHT’S!"
+
+#: src/nodes.lua:19 src/nodes.lua:75
+msgid "Rules"
+msgstr "Regeln"
+
+#: src/nodes.lua:49 src/nodes.lua:89
+msgid "About"
+msgstr "Über"
+
+#: src/values.lua:28
+msgid "OUR VALUES"
+msgstr "UNSERE WERTE"
+
+#: src/values.lua:29
+msgid "EMPATHY"
+msgstr "EMPATHIE"
+
+#: src/values.lua:30
+msgid ""
+"Games shouldn't hurt people: we refuse any sort of suffering that might "
+"generate from making games - whether is players' or devs'. Things like "
+"gambling, manipulation and exploitation don't belong here."
+msgstr ""
+"Spiele sollten Leute nicht verletzen: Wir lehnen jede Art des Leids, das aus "
+"der Erschaffung von Spielen resultiert, ab – ob für Spieler oder Entwickler. "
+"Dinge wie Glücksspiel, Manipulation und Ausnutzung gehören hier nicht hin."
+
+#: src/values.lua:31
+msgid "SKILL-BASED"
+msgstr "ERFAHRUNGSBASIERT"
+
+#: src/values.lua:32
+msgid "People's wallets shouldn't make them stronger: say no to pay to win!"
+msgstr ""
+"Der eigene Geldbeutel sollte einen nicht stärker machen: Sag nein zu „Pay to "
+"win“!"
+
+#: src/values.lua:33
+msgid "PRIVACY"
+msgstr "PRIVATSPÄHRE"
+
+#: src/values.lua:34
+msgid ""
+"We don't collect data about you (but we do collect data about minigames, "
+"@1have a look@2!)"
+msgstr ""
+"Wir sammeln keine Daten über dich (aber wir sammeln Daten über Minispiele, "
+"@1schau hier@2!)"
+
+#: src/values.lua:35
+msgid "FREE SOFTWARE"
+msgstr "FREIE SOFTWARE"
+
+#: src/values.lua:36
+msgid "Our code and assets belong to everyone: @1check it out@2!"
+msgstr "Unser Code und unsere Mediendaten gehören allen: @1sehe selbst@2!"

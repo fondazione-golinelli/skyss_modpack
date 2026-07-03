@@ -1,0 +1,106 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 18:46+0100\n"
+"PO-Revision-Date: 2026-04-09 07:57+0000\n"
+"Last-Translator: philip123I <philip123i@noreply.codeberg.org>\n"
+"Language-Team: Dutch <https://translate.codeberg.org/projects/zughy-friends-"
+"minetest/a-e-s-custom-mods/aes-server-guide/nl/>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.16.2\n"
+
+#: src/commands.lua:4
+msgid "Show an introduction to the server"
+msgstr "Toon een introductie van de server"
+
+#: src/commands.lua:17
+msgid "Show the rules of the server"
+msgstr "Toon de regels van de server"
+
+#: src/first_steps.lua:33
+msgid ""
+"Use your free hand to hit an arena sign and enter a minigame (/quit to leave)"
+msgstr ""
+"Gebruik je vrije hand om op een arena-bord te slaan en een minigame te "
+"starten (typ /quit om af te sluiten)."
+
+#: src/first_steps.lua:34
+msgid "Use the compass to teleport and reach places more quickly"
+msgstr "Gebruik het kompas om te teleporteren en plaatsen sneller te bereiken"
+
+#: src/first_steps.lua:35
+msgid ""
+"Complete many challenges and unlock content to make your adventure more "
+"magical!"
+msgstr ""
+"Voltooi veel uitdagingen en ontgrendel inhoud om je avontuur magischer te "
+"maken!"
+
+#: src/first_steps.lua:37
+msgid "LET'S GO!"
+msgstr "LET'S GO!"
+
+#: src/nodes.lua:19 src/nodes.lua:75
+msgid "Rules"
+msgstr "Regels"
+
+#: src/nodes.lua:49 src/nodes.lua:89
+msgid "About"
+msgstr "over"
+
+#: src/values.lua:28
+msgid "OUR VALUES"
+msgstr "ONZE WAARDEN"
+
+#: src/values.lua:29
+msgid "EMPATHY"
+msgstr "EMPATHIE"
+
+#: src/values.lua:30
+msgid ""
+"Games shouldn't hurt people: we refuse any sort of suffering that might "
+"generate from making games - whether is players' or devs'. Things like "
+"gambling, manipulation and exploitation don't belong here."
+msgstr ""
+"Games mogen mensen geen pijn doen we weigeren elke vorm van lijden die zou "
+"kunnen voortkomen uit het maken van games - of dat nu van spelers of van "
+"ontwikkelaars is. Zaken als gokken, manipulatie en uitbuiting horen hier "
+"niet thuis."
+
+#: src/values.lua:31
+msgid "SKILL-BASED"
+msgstr "Op basis van je niveau"
+
+#: src/values.lua:32
+msgid "People's wallets shouldn't make them stronger: say no to pay to win!"
+msgstr "Winnen doe je met skills, niet met geld!"
+
+#: src/values.lua:33
+msgid "PRIVACY"
+msgstr "PRIVACY"
+
+#: src/values.lua:34
+msgid ""
+"We don't collect data about you (but we do collect data about minigames, "
+"@1have a look@2!)"
+msgstr ""
+"We verzamelen geen gegevens over jou (maar wel gegevens over minigames, "
+"@1kijk even@2!)"
+
+#: src/values.lua:35
+msgid "FREE SOFTWARE"
+msgstr "GRATIS SOFTWARE"
+
+#: src/values.lua:36
+msgid "Our code and assets belong to everyone: @1check it out@2!"
+msgstr "Onze code is van iedereen: @1bekijk het eens@2!"

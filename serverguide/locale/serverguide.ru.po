@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 18:46+0100\n"
+"PO-Revision-Date: 2026-02-08 17:46+0000\n"
+"Language: aes_serverguide.ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/commands.lua:4
+msgid "Show an introduction to the server"
+msgstr "Показать краткое описание сервера"
+
+#: src/commands.lua:17
+msgid "Show the rules of the server"
+msgstr "Показать правила сервера"
+
+#: src/first_steps.lua:33
+msgid ""
+"Use your free hand to hit an arena sign and enter a minigame (/quit to leave)"
+msgstr ""
+"Используйте свою свободную руку чтобы ударить по табличке арены и войти в "
+"мини-игру (/quit чтобы уйти)"
+
+#: src/first_steps.lua:34
+msgid "Use the compass to teleport and reach places more quickly"
+msgstr ""
+"Используйте компас, чтобы телепортироваться и добираться быстрее до нужных "
+"мест"
+
+#: src/first_steps.lua:35
+msgid ""
+"Complete many challenges and unlock content to make your adventure more "
+"magical!"
+msgstr ""
+"Пройдите множество испытаний и разблокируйте контент, чтобы сделать ваше "
+"приключение еще более волшебным!"
+
+#: src/first_steps.lua:37
+msgid "LET'S GO!"
+msgstr "ПОГНАЛИ!"
+
+#: src/nodes.lua:19 src/nodes.lua:75
+msgid "Rules"
+msgstr "Правила"
+
+#: src/nodes.lua:49 src/nodes.lua:89
+msgid "About"
+msgstr "Подробнее"
+
+#: src/values.lua:28
+msgid "OUR VALUES"
+msgstr "НАШИ ЦЕННОСТИ"
+
+#: src/values.lua:29
+msgid "EMPATHY"
+msgstr "СОЧУВСТВИЕ"
+
+#: src/values.lua:30
+msgid ""
+"Games shouldn't hurt people: we refuse any sort of suffering that might "
+"generate from making games - whether is players' or devs'. Things like "
+"gambling, manipulation and exploitation don't belong here."
+msgstr ""
+"Игры не должны причинять боль людям: мы отказываемся от любых страданий, "
+"которые могут возникнуть при создании игр, будь то игроки или разработчики. "
+"Такие вещи, как азартные игры, манипулирование и эксплуатация, здесь "
+"неуместны."
+
+#: src/values.lua:31
+msgid "SKILL-BASED"
+msgstr "ОСНОВАННЫЙ НА НАВЫКАХ"
+
+#: src/values.lua:32
+msgid "People's wallets shouldn't make them stronger: say no to pay to win!"
+msgstr ""
+"Кошельки людей не должны делать их сильнее: скажите \"нет\" pay-to-win!"
+
+#: src/values.lua:33
+msgid "PRIVACY"
+msgstr "КОНФИДЕНЦИАЛЬНОСТЬ"
+
+#: src/values.lua:34
+msgid ""
+"We don't collect data about you (but we do collect data about minigames, "
+"@1have a look@2!)"
+msgstr ""
+"Мы не собираем данные о вас (но мы собираем данные о мини-играх, "
+"@1посмотрите@2!)"
+
+#: src/values.lua:35
+msgid "FREE SOFTWARE"
+msgstr "ОТКРЫТЫЙ ИСХОДНЫЙ КОД"
+
+#: src/values.lua:36
+msgid "Our code and assets belong to everyone: @1check it out@2!"
+msgstr "Наш код и ресурсы принадлежат всем: @1чекните@2!"

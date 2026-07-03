@@ -1,0 +1,107 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Luanti Mod\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-08 18:46+0100\n"
+"PO-Revision-Date: 2026-02-22 22:29+0000\n"
+"Last-Translator: Monapp <monapp@noreply.codeberg.org>\n"
+"Language-Team: French <https://translate.codeberg.org/projects/zughy-friends-"
+"minetest/a-e-s-custom-mods/aes-server-guide/fr/>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 5.15.2\n"
+
+#: src/commands.lua:4
+msgid "Show an introduction to the server"
+msgstr "Montrer la présentation du serveur"
+
+#: src/commands.lua:17
+msgid "Show the rules of the server"
+msgstr "Montrer les règles du serveur"
+
+#: src/first_steps.lua:33
+msgid ""
+"Use your free hand to hit an arena sign and enter a minigame (/quit to leave)"
+msgstr ""
+"Utilisez votre main libre pour toucher un panneau d'arène et entrer dans un "
+"mini-jeu (/quit pour quitter)"
+
+#: src/first_steps.lua:34
+msgid "Use the compass to teleport and reach places more quickly"
+msgstr ""
+"Utilisez la boussole pour vous téléporter et atteindre votre destination "
+"plus rapidement"
+
+#: src/first_steps.lua:35
+msgid ""
+"Complete many challenges and unlock content to make your adventure more "
+"magical!"
+msgstr ""
+"Terminez plein de défis et débloquez du contenu pour rendre votre aventure "
+"plus magique !!"
+
+#: src/first_steps.lua:37
+msgid "LET'S GO!"
+msgstr "C''EST PARTI !"
+
+#: src/nodes.lua:19 src/nodes.lua:75
+msgid "Rules"
+msgstr "Règles"
+
+#: src/nodes.lua:49 src/nodes.lua:89
+msgid "About"
+msgstr "À propos"
+
+#: src/values.lua:28
+msgid "OUR VALUES"
+msgstr "NOS VALEURS"
+
+#: src/values.lua:29
+msgid "EMPATHY"
+msgstr "EMPATHIE"
+
+#: src/values.lua:30
+msgid ""
+"Games shouldn't hurt people: we refuse any sort of suffering that might "
+"generate from making games - whether is players' or devs'. Things like "
+"gambling, manipulation and exploitation don't belong here."
+msgstr ""
+"Les jeux ne doivent pas blesser : nous refusons toute forme de souffrance "
+"pouvant découler de la création de jeux, qu'il s'agisse de celle des joueurs "
+"ou des développeurs. Les paris, la manipulation et l'exploitation n'ont pas "
+"leur place ici."
+
+#: src/values.lua:31
+msgid "SKILL-BASED"
+msgstr "BASÉ SUR LES COMPÉTENCES"
+
+#: src/values.lua:32
+msgid "People's wallets shouldn't make them stronger: say no to pay to win!"
+msgstr ""
+"Les portefeuilles ne doivent pas rendrent plus fort : dites non au pay-to-"
+"win !"
+
+#: src/values.lua:33
+msgid "PRIVACY"
+msgstr "CONFIDENTIALITÉ"
+
+#: src/values.lua:34
+msgid ""
+"We don't collect data about you (but we do collect data about minigames, "
+"@1have a look@2!)"
+msgstr ""
+"Nous ne collectons pas de donnée sur vous (mais nous collectons des données "
+"sur les mini-jeux, @1regardez@2 !)"
+
+#: src/values.lua:35
+msgid "FREE SOFTWARE"
+msgstr "LOGICIEL LIBRE"
+
+#: src/values.lua:36
+msgid "Our code and assets belong to everyone: @1check it out@2!"
+msgstr ""
+"Notre code et nos assets appartiennent à tout le monde : @1jettes-y un "
+"oeil@2 !"
