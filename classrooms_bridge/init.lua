@@ -128,6 +128,123 @@ local function send_bridge_message(payload, context)
     return ok
 end
 
+local TEACHER_PANEL_ITEM = "classrooms_bridge:teacher_panel"
+local teacher_access = {}
+
+local function request_teacher_panel(user)
+    if not user or not user:is_player() then return end
+    local name = user:get_player_name()
+    if not teacher_access[name] then return end
+
+    send_bridge_message({
+        action = "open_classes",
+        player = name,
+    }, "open_classes")
+end
+
+minetest.register_craftitem(TEACHER_PANEL_ITEM, {
+    description = "Class Panel",
+    inventory_image = "default_book.png",
+    stack_max = 1,
+    groups = { not_in_creative_inventory = 1 },
+    on_place = function(itemstack, placer)
+        request_teacher_panel(placer)
+        return itemstack
+    end,
+    on_secondary_use = function(itemstack, user)
+        request_teacher_panel(user)
+        return itemstack
+    end,
+    on_drop = function(itemstack)
+        return itemstack
+    end,
+})
+
+local function remove_teacher_panel_items(player)
+    local inv = player:get_inventory()
+    if not inv then return end
+
+    local size = inv:get_size("main")
+    for index = 1, size do
+        if inv:get_stack("main", index):get_name() == TEACHER_PANEL_ITEM then
+            inv:set_stack("main", index, "")
+        end
+    end
+end
+
+local function ensure_teacher_panel_item(player)
+    local inv = player:get_inventory()
+    if not inv then return end
+
+    local size = inv:get_size("main")
+    if size < 1 then return end
+
+    local first = inv:get_stack("main", 1)
+    if first:get_name() == TEACHER_PANEL_ITEM then
+        first:set_count(1)
+        inv:set_stack("main", 1, first)
+        return
+    end
+
+    -- Prefer swapping an existing panel item into slot 1 so no player item is
+    -- displaced unnecessarily.
+    for index = 2, size do
+        local stack = inv:get_stack("main", index)
+        if stack:get_name() == TEACHER_PANEL_ITEM then
+            inv:set_stack("main", index, first)
+            inv:set_stack("main", 1, ItemStack(TEACHER_PANEL_ITEM))
+            return
+        end
+    end
+
+    inv:set_stack("main", 1, ItemStack(TEACHER_PANEL_ITEM))
+    if not first:is_empty() then
+        local leftover = inv:add_item("main", first)
+        if not leftover:is_empty() then
+            minetest.add_item(player:get_pos(), leftover)
+        end
+    end
+end
+
+local function set_teacher_access(player, enabled)
+    local name = player:get_player_name()
+    if enabled then
+        teacher_access[name] = true
+        ensure_teacher_panel_item(player)
+    else
+        teacher_access[name] = nil
+        remove_teacher_panel_items(player)
+    end
+end
+
+minetest.register_allow_player_inventory_action(function(player, action, _, info)
+    if not teacher_access[player:get_player_name()] then return end
+
+    if action == "move" then
+        if (info.from_list == "main" and info.from_index == 1)
+                or (info.to_list == "main" and info.to_index == 1) then
+            return 0
+        end
+    elseif (action == "put" or action == "take")
+            and info.listname == "main" and info.index == 1 then
+        return 0
+    end
+end)
+
+local teacher_item_timer = 0
+minetest.register_globalstep(function(dtime)
+    teacher_item_timer = teacher_item_timer + dtime
+    if teacher_item_timer < 1 then return end
+    teacher_item_timer = 0
+
+    for name in pairs(teacher_access) do
+        local player = minetest.get_player_by_name(name)
+        if player then
+            ensure_teacher_panel_item(player)
+        end
+    end
+end)
+
 local function get_classroom_spawn()
     local pos = minetest.settings:get_pos("static_spawnpoint")
     if not pos then
@@ -290,6 +407,8 @@ function handlers.set_teacher_defaults(data)
     local player = minetest.get_player_by_name(name)
     if not player then return end
 
+    set_teacher_access(player, true)
+
     local privs = minetest.get_player_privs(name)
     privs.fly = true
     privs.fast = true
@@ -309,6 +428,8 @@ function handlers.clear_teacher_defaults(data)
     local player = minetest.get_player_by_name(name)
     if not player then return end
 
+    set_teacher_access(player, true)
+
     local privs = minetest.get_player_privs(name)
     privs.fly = nil
     privs.fast = nil
@@ -316,6 +437,18 @@ function handlers.clear_teacher_defaults(data)
 
     if mcl_gamemode and mcl_gamemode.set_gamemode then
         mcl_gamemode.set_gamemode(player, "survival")
+    end
+end
+
+function handlers.clear_teacher_access(data)
+    local name = data.player
+    if not name then return end
+
+    local player = minetest.get_player_by_name(name)
+    if player then
+        set_teacher_access(player, false)
+    else
+        teacher_access[name] = nil
     end
 end
 
@@ -494,6 +627,12 @@ end)
 
 minetest.register_on_respawnplayer(function(player)
     apply_classroom_spawn_later(player:get_player_name(), 0.4)
+    if teacher_access[player:get_player_name()] then
+        minetest.after(0, function()
+            local current = minetest.get_player_by_name(player:get_player_name())
+            if current then ensure_teacher_panel_item(current) end
+        end)
+    end
     return false
 end)
 
@@ -502,6 +641,7 @@ end)
 minetest.register_on_leaveplayer(function(player)
     local name = player:get_player_name()
     watching_players[name] = nil
+    teacher_access[name] = nil
     -- Keep frozen_players[name] so it re-applies if they reconnect to this server
 end)
 
