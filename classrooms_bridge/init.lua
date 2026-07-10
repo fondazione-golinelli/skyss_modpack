@@ -4,6 +4,9 @@
 
 local CHANNEL_NAME = "classrooms:cmd"
 local channel = nil
+-- This API is only valid while the mod is loading. Cache the path so later
+-- mod-channel callbacks can persist restart-required instance settings.
+local MOD_DATA_PATH = minetest.get_mod_data_path()
 
 -- Runtime state (not persisted — proxy re-sends on reconnect/server switch)
 local frozen_players = {}   -- { [player_name] = true }
@@ -36,6 +39,7 @@ local APPROVED_CONFIG_KEYS = {
     mcl_enable_hunger = true,
     mobs_spawn = true,
     only_peaceful_mobs = true,
+    enable_fire = true,
     mcl_explosions_griefing = true,
     static_spawnpoint = true,
     classrooms_spawn_yaw = true,
@@ -48,6 +52,7 @@ local CONFIG_KEY_ORDER = {
     "mcl_enable_hunger",
     "mobs_spawn",
     "only_peaceful_mobs",
+    "enable_fire",
     "mcl_explosions_griefing",
     "static_spawnpoint",
     "classrooms_spawn_yaw",
@@ -55,10 +60,7 @@ local CONFIG_KEY_ORDER = {
 }
 
 local function pending_settings_path()
-    local dir = minetest.get_mod_storage()
-    minetest.log("action", "[classrooms_bridge] Using mod storage path: " .. dir)
-    minetest.mkdir(dir)
-    return dir .. "/instance_settings.conf"
+    return MOD_DATA_PATH .. "/instance_settings.conf"
 end
 
 local function read_pending_settings()
@@ -278,6 +280,42 @@ function handlers.set_gamemode(data)
             "[Teacher] Your game mode is now " .. gamemode .. "."))
     else
         minetest.log("warning", "[classrooms_bridge] mcl_gamemode API is not available")
+    end
+end
+
+function handlers.set_teacher_defaults(data)
+    local name = data.player
+    if not name then return end
+
+    local player = minetest.get_player_by_name(name)
+    if not player then return end
+
+    local privs = minetest.get_player_privs(name)
+    privs.fly = true
+    privs.fast = true
+    minetest.set_player_privs(name, privs)
+
+    if mcl_gamemode and mcl_gamemode.set_gamemode then
+        mcl_gamemode.set_gamemode(player, "creative")
+    else
+        minetest.log("warning", "[classrooms_bridge] mcl_gamemode API is not available")
+    end
+end
+
+function handlers.clear_teacher_defaults(data)
+    local name = data.player
+    if not name then return end
+
+    local player = minetest.get_player_by_name(name)
+    if not player then return end
+
+    local privs = minetest.get_player_privs(name)
+    privs.fly = nil
+    privs.fast = nil
+    minetest.set_player_privs(name, privs)
+
+    if mcl_gamemode and mcl_gamemode.set_gamemode then
+        mcl_gamemode.set_gamemode(player, "survival")
     end
 end
 
