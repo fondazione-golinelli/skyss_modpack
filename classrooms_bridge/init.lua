@@ -144,11 +144,16 @@ end
 
 minetest.register_craftitem(TEACHER_PANEL_ITEM, {
     description = "Class Panel",
-    inventory_image = "default_book.png",
+    inventory_image = "classrooms_bridge_teacher_panel.png",
+    wield_image = "classrooms_bridge_teacher_panel.png",
     stack_max = 1,
     groups = { not_in_creative_inventory = 1 },
     on_place = function(itemstack, placer)
         request_teacher_panel(placer)
+        return itemstack
+    end,
+    on_use = function(itemstack, user)
+        request_teacher_panel(user)
         return itemstack
     end,
     on_secondary_use = function(itemstack, user)
@@ -156,7 +161,7 @@ minetest.register_craftitem(TEACHER_PANEL_ITEM, {
         return itemstack
     end,
     on_drop = function(itemstack)
-        return itemstack
+        return ItemStack("")
     end,
 })
 
@@ -340,6 +345,64 @@ function handlers.unwatch(data)
     watching_players[name] = nil
     minetest.chat_send_player(name, minetest.colorize("#00CC66",
         "[Teacher] You can look around freely again."))
+end
+
+function handlers.set_world_time(data)
+    local name = data.player
+    if not name then return end
+
+    local preset = data.preset or "day"
+    local mapping = {
+        day = 0.25,
+        evening = 0.6,
+        night = 0.0,
+    }
+
+    local time_value = data.time
+    if type(time_value) ~= "number" then
+        time_value = mapping[preset]
+    end
+
+    if data.stop_time then
+        minetest.settings:set("time_speed", "0")
+        minetest.chat_send_player(name, minetest.colorize("#FFD700",
+            "[Teacher] Time is now frozen at the current setting."))
+    else
+        if type(time_value) == "number" then
+            minetest.set_timeofday(time_value)
+        end
+        minetest.settings:set("time_speed", "1")
+        minetest.chat_send_player(name, minetest.colorize("#FFD700",
+            "[Teacher] Time has been updated to the selected preset."))
+    end
+
+    write_settings("set_world_time")
+end
+
+function handlers.set_world_weather(data)
+    local name = data.player
+    if not name then return end
+
+    local preset = data.preset or data.weather or "sunny"
+    local weather = data.weather or preset
+    local target = "none"
+
+    if weather == "rain" then
+        target = "rain"
+    elseif weather == "sunny" then
+        target = "none"
+    end
+
+    if mcl_weather and mcl_weather.change_weather then
+        mcl_weather.change_weather(target, nil, name)
+    elseif minetest.set_weather then
+        minetest.set_weather(target)
+    else
+        minetest.log("warning", "[classrooms_bridge] No weather API is available to change the world weather")
+    end
+
+    minetest.chat_send_player(name, minetest.colorize("#FFD700",
+        "[Teacher] Weather has been updated to the selected preset."))
 end
 
 function handlers.gather(data)
