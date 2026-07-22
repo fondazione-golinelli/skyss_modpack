@@ -484,6 +484,16 @@ function handlers.set_teacher_defaults(data)
     end
 end
 
+function handlers.set_teacher_access(data)
+    local name = data.player
+    if not name then return end
+
+    local player = minetest.get_player_by_name(name)
+    if player then
+        set_teacher_access(player, true)
+    end
+end
+
 function handlers.clear_teacher_defaults(data)
     local name = data.player
     if not name then return end
