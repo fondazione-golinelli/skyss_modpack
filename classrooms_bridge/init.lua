@@ -129,7 +129,9 @@ local function send_bridge_message(payload, context)
 end
 
 local TEACHER_PANEL_ITEM = "classrooms_bridge:teacher_panel"
+local VISITOR_RETURN_ITEM = "classrooms_bridge:return_hub"
 local teacher_access = {}
+local visitor_state = {}
 
 local function request_teacher_panel(user)
     if not user or not user:is_player() then return end
@@ -165,19 +167,54 @@ minetest.register_craftitem(TEACHER_PANEL_ITEM, {
     end,
 })
 
-local function remove_teacher_panel_items(player)
+local function request_return_hub(user)
+    if not user or not user:is_player() then return end
+    local name = user:get_player_name()
+    if not visitor_state[name] then return end
+
+    send_bridge_message({
+        action = "return_hub",
+        player = name,
+    }, "return_hub")
+end
+
+minetest.register_craftitem(VISITOR_RETURN_ITEM, {
+    description = "Return to HUB",
+    inventory_image = "classrooms_bridge_teacher_panel.png",
+    wield_image = "classrooms_bridge_teacher_panel.png",
+    range = 0,
+    stack_max = 1,
+    groups = { not_in_creative_inventory = 1 },
+    on_place = function(itemstack, placer)
+        request_return_hub(placer)
+        return itemstack
+    end,
+    on_use = function(itemstack, user)
+        request_return_hub(user)
+        return itemstack
+    end,
+    on_secondary_use = function(itemstack, user)
+        request_return_hub(user)
+        return itemstack
+    end,
+    on_drop = function(itemstack)
+        return itemstack
+    end,
+})
+
+local function remove_managed_items(player, item_name)
     local inv = player:get_inventory()
     if not inv then return end
 
     local size = inv:get_size("main")
     for index = 1, size do
-        if inv:get_stack("main", index):get_name() == TEACHER_PANEL_ITEM then
+        if inv:get_stack("main", index):get_name() == item_name then
             inv:set_stack("main", index, "")
         end
     end
 end
 
-local function ensure_teacher_panel_item(player)
+local function ensure_managed_item(player, item_name)
     local inv = player:get_inventory()
     if not inv then return end
 
@@ -185,7 +222,7 @@ local function ensure_teacher_panel_item(player)
     if size < 1 then return end
 
     local first = inv:get_stack("main", 1)
-    if first:get_name() == TEACHER_PANEL_ITEM then
+    if first:get_name() == item_name then
         first:set_count(1)
         inv:set_stack("main", 1, first)
         return
@@ -195,20 +232,32 @@ local function ensure_teacher_panel_item(player)
     -- displaced unnecessarily.
     for index = 2, size do
         local stack = inv:get_stack("main", index)
-        if stack:get_name() == TEACHER_PANEL_ITEM then
+        if stack:get_name() == item_name then
             inv:set_stack("main", index, first)
-            inv:set_stack("main", 1, ItemStack(TEACHER_PANEL_ITEM))
+            inv:set_stack("main", 1, ItemStack(item_name))
             return
         end
     end
 
-    inv:set_stack("main", 1, ItemStack(TEACHER_PANEL_ITEM))
+    inv:set_stack("main", 1, ItemStack(item_name))
     if not first:is_empty() then
         local leftover = inv:add_item("main", first)
         if not leftover:is_empty() then
             minetest.add_item(player:get_pos(), leftover)
         end
     end
+end
+
+local function ensure_teacher_panel_item(player)
+    ensure_managed_item(player, TEACHER_PANEL_ITEM)
+end
+
+local function ensure_visitor_return_item(player)
+    local inv = player:get_inventory()
+    if not inv or inv:get_size("main") < 1 then return end
+
+    remove_managed_items(player, VISITOR_RETURN_ITEM)
+    inv:set_stack("main", 1, ItemStack(VISITOR_RETURN_ITEM))
 end
 
 local function set_teacher_access(player, enabled)
@@ -218,12 +267,13 @@ local function set_teacher_access(player, enabled)
         ensure_teacher_panel_item(player)
     else
         teacher_access[name] = nil
-        remove_teacher_panel_items(player)
+        remove_managed_items(player, TEACHER_PANEL_ITEM)
     end
 end
 
 minetest.register_allow_player_inventory_action(function(player, action, _, info)
-    if not teacher_access[player:get_player_name()] then return end
+    local name = player:get_player_name()
+    if not teacher_access[name] and not visitor_state[name] then return end
 
     if action == "move" then
         if (info.from_list == "main" and info.from_index == 1)
@@ -246,6 +296,146 @@ minetest.register_globalstep(function(dtime)
         local player = minetest.get_player_by_name(name)
         if player then
             ensure_teacher_panel_item(player)
+        end
+    end
+    for name in pairs(visitor_state) do
+        local player = minetest.get_player_by_name(name)
+        if player then
+            ensure_visitor_return_item(player)
+        end
+    end
+end)
+
+local function set_visitor_defaults(player)
+    local name = player:get_player_name()
+    if not visitor_state[name] then
+        local privs = minetest.get_player_privs(name)
+        local inv = player:get_inventory()
+        local slot_one = ""
+        if inv and inv:get_size("main") >= 1 then
+            slot_one = inv:get_stack("main", 1):to_string()
+        end
+        visitor_state[name] = {
+            gamemode = mcl_gamemode and mcl_gamemode.get_gamemode
+                and mcl_gamemode.get_gamemode(player) or "survival",
+            fly = privs.fly == true,
+            fast = privs.fast == true,
+            noclip = privs.noclip == true,
+            interact = privs.interact == true,
+            return_interact_enabled = false,
+            slot_one = slot_one,
+        }
+    end
+
+    local privs = minetest.get_player_privs(name)
+    privs.fly = true
+    privs.fast = true
+    privs.noclip = true
+    privs.interact = nil
+    minetest.set_player_privs(name, privs)
+
+    if mcl_gamemode and mcl_gamemode.set_gamemode then
+        mcl_gamemode.set_gamemode(player, "survival")
+    end
+    ensure_visitor_return_item(player)
+    minetest.chat_send_player(name, minetest.colorize("#00CCFF",
+        "[Classrooms] Spectator visit enabled. Fly, fast, and noclip are available; use the slot 1 item to return to the HUB."))
+end
+
+local function update_visitor_return_access(player)
+    local name = player:get_player_name()
+    local saved = visitor_state[name]
+    if not saved then return end
+
+    local should_enable = player:get_wielded_item():get_name() == VISITOR_RETURN_ITEM
+    if saved.return_interact_enabled == should_enable then return end
+
+    local privs = minetest.get_player_privs(name)
+    privs.interact = should_enable and true or nil
+    minetest.set_player_privs(name, privs)
+    saved.return_interact_enabled = should_enable
+end
+
+local function clear_visitor_defaults(player, is_leaving)
+    local name = player:get_player_name()
+    local saved = visitor_state[name]
+    remove_managed_items(player, VISITOR_RETURN_ITEM)
+    if not saved then return end
+    -- Disable visitor callbacks before restoring anything. In particular,
+    -- Mineclonia may already have removed its player/HUD state when our
+    -- on_leaveplayer callback runs.
+    visitor_state[name] = nil
+
+    local inv = player:get_inventory()
+    if inv and inv:get_size("main") >= 1 then
+        inv:set_stack("main", 1, ItemStack(saved.slot_one or ""))
+    end
+
+    local privs = minetest.get_player_privs(name)
+    privs.fly = saved.fly and true or nil
+    privs.fast = saved.fast and true or nil
+    privs.noclip = saved.noclip and true or nil
+    privs.interact = saved.interact and true or nil
+    minetest.set_player_privs(name, privs)
+
+    local restored_gamemode = saved.gamemode or "survival"
+    if is_leaving then
+        -- Never call mcl_gamemode.set_gamemode() from on_leaveplayer. Its
+        -- callbacks rebuild the inventory formspec, but mcl_player may already
+        -- have deleted the model data needed by that rebuild.
+        player:get_meta():set_string("gamemode", restored_gamemode)
+    elseif mcl_gamemode and mcl_gamemode.set_gamemode then
+        if not mcl_gamemode.get_gamemode
+                or mcl_gamemode.get_gamemode(player) ~= restored_gamemode then
+            mcl_gamemode.set_gamemode(player, restored_gamemode)
+        end
+    end
+end
+
+-- Protection-capable games check this function before digging, placing, and
+-- node interaction. Keep all portal visitors protected regardless of position.
+minetest.register_on_mods_loaded(function()
+    local previous_is_protected = minetest.is_protected
+    minetest.is_protected = function(pos, name)
+        if visitor_state[name] then
+            return true
+        end
+        return previous_is_protected(pos, name)
+    end
+end)
+
+-- Visitors cannot take damage or damage another connected player.
+minetest.register_on_player_hpchange(function(player, hp_change)
+    if hp_change < 0 and visitor_state[player:get_player_name()] then
+        return 0
+    end
+    return hp_change
+end, true)
+
+minetest.register_on_punchplayer(function(player, hitter)
+    local player_name = player and player:get_player_name() or ""
+    local hitter_name = hitter and hitter:is_player() and hitter:get_player_name() or ""
+    if visitor_state[player_name] or visitor_state[hitter_name] then
+        return true
+    end
+end)
+
+minetest.register_on_item_pickup(function(itemstack, picker)
+    if picker and visitor_state[picker:get_player_name()] then
+        return itemstack
+    end
+end)
+
+local visitor_priv_timer = 0
+minetest.register_globalstep(function(dtime)
+    visitor_priv_timer = visitor_priv_timer + dtime
+    if visitor_priv_timer < 0.1 then return end
+    visitor_priv_timer = 0
+
+    for name in pairs(visitor_state) do
+        local player = minetest.get_player_by_name(name)
+        if player then
+            update_visitor_return_access(player)
         end
     end
 end)
@@ -486,6 +676,28 @@ function handlers.set_teacher_defaults(data)
     end
 end
 
+function handlers.set_visitor_defaults(data)
+    local name = data.player
+    if not name then return end
+
+    local player = minetest.get_player_by_name(name)
+    if player then
+        set_visitor_defaults(player)
+    end
+end
+
+function handlers.clear_visitor_defaults(data)
+    local name = data.player
+    if not name then return end
+
+    local player = minetest.get_player_by_name(name)
+    if player then
+        clear_visitor_defaults(player)
+    else
+        visitor_state[name] = nil
+    end
+end
+
 function handlers.set_teacher_access(data)
     local name = data.player
     if not name then return end
@@ -713,6 +925,12 @@ minetest.register_on_respawnplayer(function(player)
             if current then ensure_teacher_panel_item(current) end
         end)
     end
+    if visitor_state[player:get_player_name()] then
+        minetest.after(0, function()
+            local current = minetest.get_player_by_name(player:get_player_name())
+            if current then set_visitor_defaults(current) end
+        end)
+    end
     return false
 end)
 
@@ -720,6 +938,12 @@ end)
 
 minetest.register_on_leaveplayer(function(player)
     local name = player:get_player_name()
+    local restored, restore_error = pcall(clear_visitor_defaults, player, true)
+    if not restored then
+        visitor_state[name] = nil
+        minetest.log("error", "[classrooms_bridge] Failed to restore portal visitor "
+            .. name .. " during leave: " .. tostring(restore_error))
+    end
     watching_players[name] = nil
     teacher_access[name] = nil
     -- Keep frozen_players[name] so it re-applies if they reconnect to this server
