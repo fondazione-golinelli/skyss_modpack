@@ -1,0 +1,97 @@
+local http = ...
+
+local toJson = function(res) return res.json() end
+
+mtt.register("Promise.http GET", function(callback)
+    Promise.http(http, "https://api.chucknorris.io/jokes/random"):next(function(res)
+        return res.json()
+    end):next(function(joke)
+        assert(type(joke.value) == "string")
+        callback()
+    end):catch(function(e)
+        callback(e)
+    end)
+end)
+
+mtt.register("Promise.http GET with async/await", function()
+    return Promise.async(function(await)
+        local joke = await(Promise.http(http, "https://api.chucknorris.io/jokes/random"):next(toJson))
+        assert(type(joke.value) == "string")
+    end)
+end)
+
+mtt.register("Promise.json GET with async/await", function()
+    return Promise.async(function(await)
+        local joke = await(Promise.json(http, "https://api.chucknorris.io/jokes/random"))
+        assert(type(joke.value) == "string")
+    end)
+end)
+
+mtt.register("Promise.http/all GET", function(callback)
+    local p1 = Promise.http(http, "https://api.chucknorris.io/jokes/random"):next(toJson)
+    local p2 = Promise.http(http, "https://api.chucknorris.io/jokes/random"):next(toJson)
+
+    Promise.all(p1, p2):next(function(values)
+        assert(#values == 2)
+        assert(type(values[1].value) == "string")
+        assert(type(values[2].value) == "string")
+        callback()
+    end):catch(function(e)
+        callback(e)
+    end)
+end)
+
+mtt.register("Promise.http GET timeout", function(callback)
+    -- non-routeable address
+    -- https://stackoverflow.com/questions/100841/artificially-create-a-connection-timeout-error
+    Promise.http(http, "http://10.255.255.1", {
+        timeout = 1
+    }):next(function()
+        callback("unexpeced success")
+    end):catch(function(e)
+        assert(e == Promise.HTTP_TIMEOUT)
+        callback()
+    end)
+end)
+
+mtt.register("Promise.http GET not found", function(callback)
+    Promise.http(http, "https://httpbun.com/status/404"):next(function(res)
+        assert(res)
+        assert(res.code == 404)
+        callback()
+    end):catch(function(e)
+        callback(e)
+    end)
+end)
+
+mtt.register("Promise.http GET internal error", function(callback)
+    Promise.http(http, "https://httpbun.com/status/500"):next(function(res)
+        assert(res)
+        assert(res.code == 500)
+        callback()
+    end):catch(function(e)
+        callback(e)
+    end)
+end)
+
+mtt.register("Promise.json GET internal error", function(callback)
+    Promise.json(http, "https://httpbun.com/status/500"):next(function()
+        callback("unexpected success")
+    end, function(e)
+        assert(e == "unexpected status-code: 500")
+        callback()
+    end)
+end)
+
+mtt.register("Promise.http POST", function(callback)
+    local opts = { method = "POST", data = { x=1 }}
+    Promise.http(http, "https://postman-echo.com/post", opts):next(function(res)
+        return res.json()
+    end):next(function(data)
+        assert(type(data) == "table")
+        assert(data.json and data.json.x == 1)
+        callback()
+    end):catch(function(e)
+        callback(e)
+    end)
+end)

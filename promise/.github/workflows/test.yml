@@ -1,0 +1,17 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: buckaroobanzay/mtt@main
+      with:
+        modname: promise
+        enable_coverage: "true"
+        git_dependencies: |
+          https://github.com/BuckarooBanzay/mtt
+          https://github.com/OgelGames/fakelib
+        additional_config: |
+          secure.http_mods = promise
+    - uses: coverallsapp/github-action@v1

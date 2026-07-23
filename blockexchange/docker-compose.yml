@@ -1,0 +1,56 @@
+version: "3.6"
+
+services:
+ postgres:
+  image: postgres:16.1
+  restart: always
+  environment:
+   POSTGRES_PASSWORD: enter
+  volumes:
+   - "postgres:/var/lib/postgresql/data"
+
+ bx:
+  image: blockexchange/blockexchange
+  depends_on:
+   - postgres
+  environment:
+   - PGUSER=postgres
+   - PGPASSWORD=enter
+   - PGHOST=postgres
+   - PGDATABASE=postgres
+   - PGPORT=5432
+   - LOGLEVEL=debug
+   - BLOCKEXCHANGE_NAME=My-Blockexchange
+   - BLOCKEXCHANGE_OWNER=yourname
+   - BLOCKEXCHANGE_KEY=abcdefSecretKey
+   - BLOCKEXCHANGE_COOKIE_PATH=/
+   - BLOCKEXCHANGE_COOKIE_DOMAIN=localhost
+   - BLOCKEXCHANGE_COOKIE_SECURE=false
+   - BLOCKEXCHANGE_TEST_DATA=true
+   - BASE_URL=http://localhost:8080
+  ports:
+   - "8080:8080"
+
+ mtt:
+  image: ghcr.io/buckaroobanzay/mtt:latest
+  depends_on:
+   - bx
+  volumes:
+   - "./:/github/workspace"
+  environment:
+   INPUT_MODNAME: "blockexchange"
+   INPUT_TEST_MODE: "mod"
+   INPUT_MAPGEN: "singlenode"
+   INPUT_GIT_GAME_REPO: "https://github.com/minetest/minetest_game"
+   INPUT_GIT_DEPENDENCIES: |
+    https://github.com/OgelGames/fakelib
+    https://github.com/BuckarooBanzay/placeholder
+    https://github.com/BuckarooBanzay/mtzip
+    https://github.com/mt-mods/promise
+   INPUT_ADDITIONAL_CONFIG: |
+    secure.http_mods = blockexchange
+    Promise.http_debug = true
+    blockexchange.url = http://bx:8080
+
+volumes:
+  postgres: {}

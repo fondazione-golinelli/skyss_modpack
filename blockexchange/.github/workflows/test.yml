@@ -1,0 +1,17 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v6
+    - name: test
+      run: |
+        docker compose up -d postgres
+        sleep 5
+        docker compose up -d bx
+        docker compose up --exit-code-from mtt
+        docker compose down -v

@@ -7,6 +7,14 @@ local channel = nil
 -- This API is only valid while the mod is loading. Cache the path so later
 -- mod-channel callbacks can persist restart-required instance settings.
 local MOD_DATA_PATH = minetest.get_mod_data_path()
+-- Luanti only grants this API when request_http_api() is called directly from
+-- the mod's top-level scope. Pass the private handle into the integration
+-- chunk; calling request_http_api() from that nested chunk is rejected even
+-- when classrooms_bridge is correctly listed in secure.http_mods.
+local classrooms_http = minetest.request_http_api and minetest.request_http_api()
+local blockexchange_loader = assert(loadfile(
+    minetest.get_modpath("classrooms_bridge") .. "/blockexchange.lua"))
+local blockexchange_integration = blockexchange_loader(classrooms_http)
 
 -- Runtime state (not persisted — proxy re-sends on reconnect/server switch)
 local frozen_players = {}   -- { [player_name] = true }
@@ -663,6 +671,7 @@ function handlers.set_teacher_defaults(data)
     if not player then return end
 
     set_teacher_access(player, true)
+    blockexchange_integration.set_access(player, data.blockexchange_access ~= false)
 
     local privs = minetest.get_player_privs(name)
     privs.fly = true
@@ -716,6 +725,7 @@ function handlers.clear_teacher_defaults(data)
     if not player then return end
 
     set_teacher_access(player, true)
+    blockexchange_integration.set_access(player, false)
 
     local privs = minetest.get_player_privs(name)
     privs.fly = nil
@@ -734,8 +744,10 @@ function handlers.clear_teacher_access(data)
     local player = minetest.get_player_by_name(name)
     if player then
         set_teacher_access(player, false)
+        blockexchange_integration.set_access(player, false)
     else
         teacher_access[name] = nil
+        blockexchange_integration.clear_player(name)
     end
 end
 
@@ -922,7 +934,10 @@ minetest.register_on_respawnplayer(function(player)
     if teacher_access[player:get_player_name()] then
         minetest.after(0, function()
             local current = minetest.get_player_by_name(player:get_player_name())
-            if current then ensure_teacher_panel_item(current) end
+            if current then
+                ensure_teacher_panel_item(current)
+                blockexchange_integration.ensure_item(current)
+            end
         end)
     end
     if visitor_state[player:get_player_name()] then
@@ -946,6 +961,7 @@ minetest.register_on_leaveplayer(function(player)
     end
     watching_players[name] = nil
     teacher_access[name] = nil
+    blockexchange_integration.clear_player(name)
     -- Keep frozen_players[name] so it re-applies if they reconnect to this server
 end)
 
