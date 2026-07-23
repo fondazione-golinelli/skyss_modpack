@@ -368,8 +368,10 @@ function handlers.set_world_time(data)
         minetest.chat_send_player(name, minetest.colorize("#FFD700",
             "[Teacher] Time is now frozen at the current setting."))
     else
-        if type(time_value) == "number" then
+        if type(time_value) == "number" and time_value >= 0 and time_value <= 1 then
             minetest.set_timeofday(time_value)
+        elseif time_value ~= nil and time_value ~= -1 then
+            minetest.log("warning", "[classrooms_bridge] Ignoring invalid time-of-day value: " .. tostring(time_value))
         end
         minetest.settings:set("time_speed", "1")
         minetest.chat_send_player(name, minetest.colorize("#FFD700",
@@ -619,7 +621,12 @@ minetest.register_on_modchannel_message(function(channel_name, sender, message)
 
     local handler = handlers[action]
     if handler then
-        handler(data)
+        -- A bad backend API call must never escape the mod-channel callback:
+        -- uncaught callback errors are fatal and disconnect every player.
+        local handled, handler_error = pcall(handler, data)
+        if not handled then
+            minetest.log("error", "[classrooms_bridge] Action '" .. tostring(action) .. "' failed: " .. tostring(handler_error))
+        end
     else
         minetest.log("warning", "[classrooms_bridge] Unknown action: " .. tostring(action))
     end
