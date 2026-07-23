@@ -23,6 +23,13 @@ Arena panels
 * `hub.HUD_ignore(mod, arena_name)`: stops updating the status of the specified arena (e.g. to avoid render an arena even if it's in progress)
 * `hub.HUD_unignore(mod, arena_name)`: go back to updating the status of the specified arena
 
+## 5. HUB protection
 
-## 5. About the author(s)
+- Regular users cannot dig or place nodes in the HUB.
+- Users with `hub_admin`, `server`, or `protection_bypass` retain normal build
+  access, subject to any other protection mod.
+- The existing HUB inventory callback also prevents regular users from moving
+  or dropping HUB-managed items.
+
+## 6. About the author(s)
 I'm Zughy (Marco), a professional Italian pixel artist who fights for FOSS and digital ethics. If this mod spared you a lot of time and you want to support me somehow, please consider donating on [Liberapay](https://liberapay.com/Zughy/). Also, this project wouldn't have been possible if it hadn't been for some friends who helped me testing through: `Giov4`, `MrFreeman`, `_Zaizen_` and `Xx_Crazyminer_xX`
