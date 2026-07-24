@@ -17,6 +17,7 @@ local EXCHANGE_URL = minetest.settings:get("classrooms.blockexchange_url")
 local http = ...
 local access = {}
 local views = {}
+local storage = minetest.get_mod_storage()
 
 local integration = {}
 
@@ -82,6 +83,40 @@ local function bx_available()
         and type(blockexchange.set_pos) == "function"
 end
 
+local function claims_for(name)
+    if not bx_available() or type(blockexchange.get_claims) ~= "function" then
+        return nil
+    end
+    return blockexchange.get_claims(name)
+end
+
+local function marker_key(name)
+    return "blockexchange_original_priv_" .. name
+end
+
+local function grant_upload_privilege(name)
+    local key = marker_key(name)
+    if storage:get_string(key) == "" then
+        local original = minetest.get_player_privs(name).blockexchange == true
+        storage:set_string(key, original and "true" or "false")
+    end
+
+    local privs = minetest.get_player_privs(name)
+    privs.blockexchange = true
+    minetest.set_player_privs(name, privs)
+end
+
+local function restore_upload_privilege(name)
+    local key = marker_key(name)
+    local original = storage:get_string(key)
+    if original == "" then return end
+
+    local privs = minetest.get_player_privs(name)
+    privs.blockexchange = original == "true" and true or nil
+    minetest.set_player_privs(name, privs)
+    storage:set_string(key, "")
+end
+
 local function table_escape(value)
     -- string.gsub returns both the resulting string and a replacement count.
     -- Store the result first so callers (notably table.insert) receive exactly
@@ -119,13 +154,102 @@ local function render(name)
         "label[0.45,0.85;",
         minetest.formspec_escape(EXCHANGE_URL),
         "]",
-        "field[0.45,1.45;7.65,0.65;bx_query;Search structures;",
-        minetest.formspec_escape(view.query),
-        "]",
-        "button[8.3,1.45;1.45,0.65;bx_search;Search]",
-        "button[9.9,1.45;1.45,0.65;bx_refresh;Refresh]",
-        "button_exit[11.5,1.45;1.25,0.65;bx_close;Close]",
+        "button[8.05,0.35;1.55,0.65;bx_tab_browse;Browse]",
+        "button[9.75,0.35;1.55,0.65;bx_tab_share;Share]",
+        "button_exit[11.5,0.35;1.25,0.65;bx_close;Close]",
     }
+
+    if view.tab == "share" then
+        table.insert(fs, "label[0.45,1.55;Share a structure]")
+        local claims = claims_for(name)
+        if not claims or not claims.username then
+            table.insert(fs, "textarea[0.45,2.0;12.3,1.25;;;")
+            table.insert(fs, minetest.formspec_escape(
+                "Create an access token on your BlockExchange profile, then sign in here. "
+                .. "The access token is exchanged by BlockExchange and is not stored."))
+            table.insert(fs, "]")
+            table.insert(fs, "field[0.45,3.55;4.0,0.65;bx_login_username;BlockExchange username;")
+            table.insert(fs, minetest.formspec_escape(view.login_username or ""))
+            table.insert(fs, "]")
+            table.insert(fs, "pwdfield[4.7,3.55;4.0,0.65;bx_access_token;Access token]")
+            table.insert(fs, "button[8.95,3.55;1.7,0.65;bx_login;Sign in]")
+            table.insert(fs, "button_url[10.9,3.55;1.85,0.65;bx_profile;Open profile;")
+            table.insert(fs, minetest.formspec_escape(EXCHANGE_URL .. "/profile"))
+            table.insert(fs, "]")
+            table.insert(fs, "textarea[0.45,4.55;12.3,1.2;;;")
+            table.insert(fs, minetest.formspec_escape(
+                "Your Luanti teacher name and BlockExchange username may be different. "
+                .. "Use the username shown on your BlockExchange profile."))
+            table.insert(fs, "]")
+            if view.login_status then
+                table.insert(fs, "textarea[0.45,5.8;12.3,0.8;;;")
+                table.insert(fs, minetest.formspec_escape(view.login_status))
+                table.insert(fs, "]")
+            end
+        else
+            local pos1 = blockexchange.get_pos and blockexchange.get_pos(1, name)
+            local pos2 = blockexchange.get_pos and blockexchange.get_pos(2, name)
+            local pos1_label = pos1 and minetest.pos_to_string(pos1) or "Not set"
+            local pos2_label = pos2 and minetest.pos_to_string(pos2) or "Not set"
+
+            table.insert(fs, "label[0.45,2.05;Signed in as ")
+            table.insert(fs, minetest.formspec_escape(claims.username))
+            table.insert(fs, "]")
+            table.insert(fs, "button[10.9,1.75;1.85,0.65;bx_logout;Sign out]")
+            table.insert(fs, "button[0.45,2.75;2.2,0.65;bx_pos1;Set corner 1]")
+            table.insert(fs, "label[2.9,2.98;")
+            table.insert(fs, minetest.formspec_escape(pos1_label))
+            table.insert(fs, "]")
+            table.insert(fs, "button[0.45,3.65;2.2,0.65;bx_pos2;Set corner 2]")
+            table.insert(fs, "label[2.9,3.88;")
+            table.insert(fs, minetest.formspec_escape(pos2_label))
+            table.insert(fs, "]")
+
+            if pos1 and pos2 then
+                local minp = vector.new(
+                    math.min(pos1.x, pos2.x),
+                    math.min(pos1.y, pos2.y),
+                    math.min(pos1.z, pos2.z))
+                local maxp = vector.new(
+                    math.max(pos1.x, pos2.x),
+                    math.max(pos1.y, pos2.y),
+                    math.max(pos1.z, pos2.z))
+                table.insert(fs, "label[0.45,4.55;Selected volume: ")
+                table.insert(fs, minetest.formspec_escape(format_size({
+                    size_x = maxp.x - minp.x + 1,
+                    size_y = maxp.y - minp.y + 1,
+                    size_z = maxp.z - minp.z + 1,
+                })))
+                table.insert(fs, "]")
+            end
+
+            table.insert(fs, "field[0.45,5.55;6.6,0.65;bx_schema_name;Structure name;")
+            table.insert(fs, minetest.formspec_escape(view.schema_name or ""))
+            table.insert(fs, "]")
+            table.insert(fs, "button[7.3,5.55;2.5,0.65;bx_upload;Upload structure]")
+            table.insert(fs, "button_url[10.05,5.55;2.7,0.65;bx_search_page;Open web library;")
+            table.insert(fs, minetest.formspec_escape(EXCHANGE_URL .. "/search"))
+            table.insert(fs, "]")
+
+            local upload_status = view.upload_status
+                or "Set opposite corners, choose a name, then upload."
+            if view.uploading then
+                upload_status = "Upload in progress. Follow the BlockExchange HUD."
+            end
+            table.insert(fs, "textarea[0.45,6.65;12.3,1.25;;;")
+            table.insert(fs, minetest.formspec_escape(upload_status))
+            table.insert(fs, "]")
+        end
+
+        minetest.show_formspec(name, FORM_NAME, table.concat(fs))
+        return
+    end
+
+    table.insert(fs, "field[0.45,1.45;7.65,0.65;bx_query;Search structures;")
+    table.insert(fs, minetest.formspec_escape(view.query))
+    table.insert(fs, "]")
+    table.insert(fs, "button[8.3,1.45;1.45,0.65;bx_search;Search]")
+    table.insert(fs, "button[9.9,1.45;1.45,0.65;bx_refresh;Refresh]")
 
     if not bx_available() then
         table.insert(fs, "textarea[0.45,2.45;12.3,2.2;;BlockExchange unavailable;")
@@ -359,6 +483,136 @@ local function load_structure(name, selected)
         end)
 end
 
+local function login(name, username, access_token)
+    local view = views[name]
+    if not view or view.login_pending then return end
+
+    username = tostring(username or ""):match("^%s*(.-)%s*$")
+    access_token = tostring(access_token or ""):match("^%s*(.-)%s*$")
+    view.login_username = username
+    if username == "" or access_token == "" then
+        view.login_status = "Enter both your BlockExchange username and access token."
+        safe_render(name, "login validation")
+        return
+    end
+
+    view.login_pending = true
+    view.login_status = "Signing in…"
+    safe_render(name, "login start")
+
+    blockexchange.api.get_token(username, access_token)
+        :next(function(token)
+            local current = views[name]
+            if not current or not access[name] then return end
+
+            local claims = blockexchange.parse_token(token)
+            if not claims or not claims.user_uid or not claims.username then
+                current.login_pending = false
+                current.login_status = "BlockExchange returned an invalid login token."
+                safe_render(name, "login response")
+                return
+            end
+
+            local settings = blockexchange.get_player_settings(name)
+            settings.token = token
+            blockexchange.set_player_settings(name, settings)
+            current.login_pending = false
+            current.login_status = nil
+            notify(name, "Signed in as " .. claims.username .. ".", "#00CC66")
+            safe_render(name, "login success")
+        end)
+        :catch(function(err)
+            local current = views[name]
+            if current then
+                current.login_pending = false
+                current.login_status = "Sign-in failed: " .. tostring(err)
+                safe_render(name, "login failure")
+            end
+        end)
+end
+
+local function logout(name)
+    local settings = blockexchange.get_player_settings(name)
+    settings.token = nil
+    blockexchange.set_player_settings(name, settings)
+    local view = views[name]
+    if view then
+        view.login_status = "Signed out."
+    end
+    notify(name, "Signed out.", "#00CC66")
+end
+
+local function set_corner(name, corner)
+    local player = minetest.get_player_by_name(name)
+    if not player then return end
+
+    local pos = vector.round(player:get_pos())
+    blockexchange.set_pos(corner, name, pos)
+    notify(name, "Corner " .. corner .. " set to " .. minetest.pos_to_string(pos) .. ".",
+        "#00CC66")
+end
+
+local function upload_structure(name, schema_name)
+    local view = views[name]
+    if not view or view.uploading then return end
+
+    schema_name = tostring(schema_name or ""):match("^%s*(.-)%s*$")
+    view.schema_name = schema_name
+
+    if not claims_for(name) then
+        view.upload_status = "Sign in to BlockExchange before uploading."
+        safe_render(name, "upload validation")
+        return
+    end
+    if not blockexchange.validate_name(schema_name) then
+        view.upload_status =
+            "Names may contain only letters, numbers, hyphens, underscores, and periods."
+        safe_render(name, "upload validation")
+        return
+    end
+
+    local pos1 = blockexchange.get_pos and blockexchange.get_pos(1, name)
+    local pos2 = blockexchange.get_pos and blockexchange.get_pos(2, name)
+    if not pos1 or not pos2 then
+        view.upload_status = "Set both opposite corners before uploading."
+        safe_render(name, "upload validation")
+        return
+    end
+    if not blockexchange.check_size(pos1, pos2) then
+        view.upload_status = "The selected volume exceeds BlockExchange's "
+            .. tostring(blockexchange.max_size) .. "-node axis limit."
+        safe_render(name, "upload validation")
+        return
+    end
+
+    view.uploading = true
+    view.upload_status = "Uploading " .. schema_name .. "…"
+    safe_render(name, "upload start")
+    notify(name, "Uploading " .. schema_name .. ". Progress appears in the BlockExchange HUD.")
+
+    blockexchange.save(name, pos1, pos2, schema_name)
+        :next(function(result)
+            local current = views[name]
+            if current then
+                current.uploading = false
+                current.upload_status = "Published " .. schema_name .. " with "
+                    .. tostring(result.total_parts or 0) .. " parts ("
+                    .. tostring(result.total_size or 0) .. " bytes)."
+                safe_render(name, "upload success")
+            end
+            notify(name, "Published " .. schema_name .. " successfully.", "#00CC66")
+        end)
+        :catch(function(err)
+            local current = views[name]
+            if current then
+                current.uploading = false
+                current.upload_status = "Upload failed: " .. tostring(err)
+                safe_render(name, "upload failure")
+            end
+            notify(name, "Upload failed: " .. tostring(err), "#FF5555")
+        end)
+end
+
 minetest.register_craftitem(ITEM_NAME, {
     description = "BlockExchange Library",
     inventory_image = "classrooms_bridge_teacher_panel.png^[colorize:#00A6A6:155",
@@ -392,6 +646,46 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
     if fields.bx_close or fields.quit then
         views[name] = nil
+        return true
+    end
+
+    if fields.bx_tab_share then
+        view.tab = "share"
+        safe_render(name, "share tab")
+        return true
+    elseif fields.bx_tab_browse then
+        view.tab = "browse"
+        if #view.rows == 0 and bx_available() and http then
+            fetch_rows(name)
+        else
+            safe_render(name, "browse tab")
+        end
+        return true
+    end
+
+    if view.tab == "share" then
+        if fields.bx_schema_name ~= nil then
+            view.schema_name = fields.bx_schema_name
+        end
+        if fields.bx_login_username ~= nil then
+            view.login_username = fields.bx_login_username
+        end
+
+        if fields.bx_login then
+            login(name, fields.bx_login_username, fields.bx_access_token)
+            return true
+        elseif fields.bx_logout then
+            logout(name)
+        elseif fields.bx_pos1 then
+            set_corner(name, 1)
+        elseif fields.bx_pos2 then
+            set_corner(name, 2)
+        elseif fields.bx_upload then
+            upload_structure(name, fields.bx_schema_name)
+            return true
+        end
+
+        safe_render(name, "share field handling")
         return true
     end
 
@@ -471,10 +765,12 @@ function integration.set_access(player, enabled)
     local name = player:get_player_name()
     if enabled then
         access[name] = true
+        grant_upload_privilege(name)
         ensure_item(player)
     else
         access[name] = nil
         views[name] = nil
+        restore_upload_privilege(name)
         remove_item(player)
     end
 end
@@ -486,6 +782,7 @@ end
 function integration.clear_player(name)
     access[name] = nil
     views[name] = nil
+    restore_upload_privilege(name)
 end
 
 return integration
