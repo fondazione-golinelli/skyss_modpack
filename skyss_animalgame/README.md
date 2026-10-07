@@ -1,34 +1,62 @@
-# Skyss Animal Game
+# Versi degli animali
 
-`skyss_animalgame` is a single-player `arena_lib` minigame where the player hears an animal sound, then chooses the matching animal from four answer totems.
+Minigioco `arena_lib` per un giocatore su Luanti/Mineclonia. Davanti al giocatore compare un palco con quattro podi colorati (rosso, blu, giallo, verde). Su ogni podio c'è un animale 3D con il suo nome. Si sente il verso di uno dei quattro: il giocatore deve cliccare l'animale giusto prima che scada il tempo.
 
-## Arena Setup
+## Come si gioca
 
-Create and enable an arena with the usual `arena_lib` tools:
+- **Ascolta**: ogni turno inizia con un breve momento di ascolto. Il verso parte da solo e dalla campana al centro del palco escono delle note musicali.
+- **Scegli**: clic destro o sinistro sull'animale (o sul suo podio). Si può rispondere anche durante l'ascolto.
+- **Riascolta**: clicca la campana ("Riascolta") per sentire di nuovo il verso, quante volte vuoi.
+- **Tempo**: all'inizio ci sono 10 secondi per rispondere. Ogni 2 punti si perde un secondo, fino a un minimo di 4. La barra nell'HUD passa da verde a giallo a rosso, e negli ultimi 3 secondi si sente un ticchettio.
+- **Vite**: si parte con 3 cuori. Una risposta sbagliata o un tempo scaduto costano un cuore. L'animale giusto viene evidenziato in verde, saltella e fa di nuovo il suo verso, poi si passa al turno successivo.
+- **Fine**: quando i cuori finiscono, la partita termina con il punteggio finale. Se è un nuovo record dell'arena partono i fuochi d'artificio.
+- Gli animali escono da un mazzo mescolato: tutti compaiono prima di ripetersi, e mai due volte di fila.
 
-```text
-/arenas create skyss_animalgame <arena_name> 1 1
-/arenas edit skyss_animalgame <arena_name>
+L'HUD in alto a destra (lontano dalla chat) mostra il turno, il punteggio, i cuori, la serie di risposte giuste consecutive, la barra del tempo, il record dell'arena e la serie migliore.
+
+## Preparazione dell'arena
+
+1. Abilita `skyss_animalgame` insieme ad `arena_lib`. Per gli animali servono `mobs_mc` (Mineclonia) e/o `animalworld`.
+2. Crea l'arena: `/arenas create skyss_animalgame <nome> 1 1`, poi `/arenas edit skyss_animalgame <nome>`.
+3. Definisci la regione (`pos1`/`pos2`, obbligatoria perché la mappa viene ripristinata) e **un punto di spawn**. Guarda nella direzione in cui vuoi il palco quando salvi lo spawn.
+4. Lascia libero lo spazio davanti allo spawn: il palco viene costruito a **5 blocchi** di distanza, largo 11 blocchi (podi a -5, -2, +2, +5 dal centro, campana al centro), all'altezza dei piedi del giocatore.
+5. Salva la mappa e abilita l'arena.
+
+La direzione dello spawn viene arrotondata all'asse più vicino. Il palco resta uguale per tutta la partita, cambiano solo gli animali. Alla fine i blocchi originali vengono ripristinati.
+
+Se mancano gli animali (meno di 4 disponibili) o lo spawn, la partita termina subito con un messaggio in chat e un avviso nel log del server.
+
+## Animali
+
+- Con `mobs_mc`: maiale, mucca, pecora, gallina, cavallo, gatto, lupo.
+- Con `animalworld`: orso, cinghiale, cammello, coccodrillo, elefante, volpe, rana, oca, iena, koala, marmotta, scimmia, alce, lontra, gufo, foca, aquila di mare di Steller, tapiro, tigre, yak, zebra.
+
+Modello, texture e animazione vengono letti dalla registrazione del mob. Gli animali hanno la loro grandezza naturale. Quelli più alti di 1,3 blocchi (elefante, cammello, alce, zebra) vengono rimpiccioliti. Quelli più bassi di 0,45 blocchi (rana, lontra, marmotta) vengono ingranditi fino a 2 volte, per restare visibili e cliccabili. Se il modello non è disponibile si usa l'icona piatta dell'uovo spawner.
+
+Le collisionbox di `animalworld` sono spesso molto più piccole del modello (il koala dichiara 0,2 blocchi ma è alto 0,74). Per questo ogni animale di `animalworld` ha nella tabella `ANIMALS` un campo `height` con l'altezza reale misurata sul modello `.b3d`. Il comando è `python3 tools/measure_models.py <modello.b3d>`, che dà il risultato in decimi di blocco. Per i mob di Mineclonia basta la collisionbox.
+
+Per aggiungere un animale basta una riga nella tabella `ANIMALS` di `init.lua` (entità, suono, icona e, se serve, `height`) e il nome nei file di traduzione.
+
+## Dettagli tecnici
+
+- Lo stato della partita vive in una tabella interna per arena, non nei campi dell'arena salvati da `arena_lib`.
+- Animali e campana sono entità non persistenti e legate al turno da un token: un clic su un animale di un turno precedente viene ignorato.
+- I parametri di gioco (vite, tempi, distanza e larghezza del palco, scala degli animali) sono costanti in cima a `init.lua`.
+- Il record per arena è salvato nel mod storage.
+- Suoni e particelle usano gli asset di Mineclonia quando sono presenti. Con `mcl_bells` la campana usa il modello 3D di Mineclonia.
+
+## Lingue
+
+Tutti i testi visibili ai giocatori (HUD, chat, nomi degli animali, etichette) seguono la lingua del client Luanti di ciascun giocatore. Traduzioni incluse: italiano, spagnolo, tedesco, polacco e ungherese. Per le altre lingue si usa l'inglese.
+
+Le chiavi sono le stringhe inglesi passate a `S()` in `init.lua`. Le traduzioni si modificano direttamente in `locale/skyss_animalgame.<lingua>.tr`. Per aggiungere una lingua, copia `locale/template.txt` in `skyss_animalgame.<codice>.tr` e compila le righe dopo `=`. Se aggiungi una stringa nel codice, aggiungila anche al template e a ogni file `.tr`.
+
+## Asset
+
+Le texture sono generate da `tools/gen_assets.py` (Python 3 + Pillow):
+
+```bash
+python3 tools/gen_assets.py
 ```
 
-Build a room and add one player spawn point. At match start, the mod captures the player's position and horizontal facing, snaps the facing to the nearest room axis, places the four answer totems in a single line in front of that start point, and reuses those same positions for every question.
-
-## Gameplay
-
-- Each totem is two blocks tall: a base block with a clickable button on top, plus a clickable static animal icon and visible name label.
-- Each question starts with a short listening moment before the countdown begins.
-- The player can click the "Hear again" bell between the totems to replay the current animal sound.
-- Timer, replay hints, and answer feedback are shown at the top of the screen.
-- The player starts with 10 seconds to answer after the listening moment.
-- Each correct answer increases the score and starts a new question.
-- The answer time shrinks as the score increases, down to a minimum of 4 seconds.
-- A wrong answer or timeout ends the game and shows the correct animal highlighted before the final score.
-- The final score stays on screen for a few seconds before `arena_lib` returns the player to the hub.
-
-## Assets
-
-When Mineclonia `mobs_mc` is enabled, the mod reuses its animal sounds and spawn-icon textures. When `animalworld` is enabled, the quiz pool also includes additional animals such as bear, camel, crocodile, elephant, fox, frog, goose, hyena, koala, marmot, monkey, moose, otter, owl, seal, eagle, tapir, tiger, yak, and zebra.
-
-When Mineclonia `mcl_bells` is enabled, the replay control uses the bell model.
-
-The minigame requires at least four available animals from enabled source mods.
+Lo script genera i podi (le fasce colorate sono maschere bianche, colorate dal mod per ogni podio), le particelle (scintille, note musicali, fumo), i cuori dell'HUD, la campana di riserva e l'icona del minigioco.
