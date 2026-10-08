@@ -43,6 +43,7 @@ local function normalize(list)
                 min_z = math.min(min_z, max_z), max_z = math.max(min_z, max_z),
                 allowed = allowed,
                 ref_y = tonumber(z.ref_y),
+                tp = type(z.tp) == "table" and tonumber(z.tp.x) and z.tp or nil,
                 mission = type(z.mission) == "table" and z.mission or nil,
             })
         end

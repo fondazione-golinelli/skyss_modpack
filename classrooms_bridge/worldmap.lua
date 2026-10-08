@@ -16,7 +16,7 @@ local FORM = "classrooms_bridge:map"
 local ITEM = "classrooms_bridge:map"
 local TOOL = "map"
 local VIEW = 9.6          -- viewport size in formspec units
-local GRID = 20           -- clickable cells per side
+local GRID = 20           -- clickable cells per side at zoom ×1
 local ZOOMS = { 1, 2, 4, 8 }
 local MAX_MARKERS = 30
 local BEAM_RANGE = 80
@@ -89,17 +89,51 @@ local function add_marker(kind, name, x, y, z)
 end
 
 -- ── View state ───────────────────────────────────────────────────────────────
+--
+-- At zoom ×1 the whole map fits the viewport. At higher zooms the map is
+-- drawn at full zoomed size inside two nested scroll containers, so panning
+-- (mouse wheel, dragging the scrollbars) happens on the client without
+-- redrawing. Scroll events only update the stored view; the form is redrawn
+-- when the view leaves the band covered by the clickable grid.
 
-local views = {} -- [name] = { cx, cz, zoom, sel, name_text }
+local views = {} -- [name] = { cx, cz, zoom, sel, name_text, band, list_scroll }
 
 local W = MAP and (MAP.max_x - MAP.min_x + 1) or 1
 local D = MAP and (MAP.max_z - MAP.min_z + 1) or 1
 local EXTENT = math.max(W, D)
-local PX = MAP and (MAP.width / W) or 1
+local SCROLL_FACTOR = 0.1
+local CELL = VIEW / 24     -- size of a clickable selection cell
+local BAND_MARGIN = VIEW * 0.3 -- selection cells kept around the view when zoomed
+-- Scrollbar thumb length as a share of the bar. A short thumb leaves a long
+-- track, so dragging it moves the map close to 1:1 with the mouse at ×2.
+local THUMB_SHARE = 0.06
 
 local function clamp(v, lo, hi)
     if lo > hi then return (lo + hi) / 2 end
     return math.max(lo, math.min(hi, v))
+end
+
+-- Content size in formspec units at a zoom level.
+local function content_size(zoom)
+    local c = VIEW * zoom
+    return c * W / EXTENT, c * D / EXTENT
+end
+
+local function node_to_content(x, z, zoom)
+    local cw, ch = content_size(zoom)
+    return (x - MAP.min_x) / W * cw, (MAP.max_z + 1 - z) / D * ch
+end
+
+local function content_to_node(px, py, zoom)
+    local cw, ch = content_size(zoom)
+    return math.floor(MAP.min_x + px / cw * W), math.floor(MAP.max_z + 1 - py / ch * D)
+end
+
+-- Scroll offsets (content units) that centre the view on (cx, cz).
+local function scroll_for(v)
+    local cw, ch = content_size(v.zoom)
+    local px, py = node_to_content(v.cx, v.cz, v.zoom)
+    return clamp(px - VIEW / 2, 0, math.max(0, cw - VIEW)), clamp(py - VIEW / 2, 0, math.max(0, ch - VIEW))
 end
 
 local function view_of(player)
@@ -107,13 +141,10 @@ local function view_of(player)
     local v = views[name]
     if not v then
         local pos = player:get_pos()
-        v = { cx = pos.x, cz = pos.z, zoom = 2, name_text = "" }
+        v = { cx = pos.x, cz = pos.z, zoom = 2, name_text = "", list_scroll = 0 }
         views[name] = v
     end
-    local e = EXTENT / v.zoom
-    v.cx = clamp(v.cx, MAP.min_x + e / 2, MAP.max_x + 1 - e / 2)
-    v.cz = clamp(v.cz, MAP.min_z + e / 2, MAP.max_z + 1 - e / 2)
-    return v, e
+    return v
 end
 
 -- ── Formspec ─────────────────────────────────────────────────────────────────
@@ -124,114 +155,153 @@ local C = { bg = "#141a2a", header = "#0f3460", accent = "#e94560", card = "#202
 local function esc(s) return minetest.formspec_escape(tostring(s)) end
 local function colored(color, text) return esc(minetest.colorize(color, text)) end
 
-local function distance_text(player, m)
+local function distance_to(player, x, z)
     local p = player:get_pos()
-    local d = math.floor(math.sqrt((p.x - m.x) ^ 2 + (p.z - m.z) ^ 2) + 0.5)
+    local d = math.floor(math.sqrt((p.x - x) ^ 2 + (p.z - z) ^ 2) + 0.5)
     return d >= 1000 and string.format("%.1f km", d / 1000) or (d .. " m")
 end
 
-local function show(player)
-    local name = player:get_player_name()
-    local staff = is_staff(name)
-    local v, e = view_of(player)
-    local wx0, wz1 = v.cx - e / 2, v.cz + e / 2
-    local ox, oy = 0.3, 1.25
-    local function fx(x) return ox + (x - wx0) / e * VIEW end
-    local function fy(z) return oy + (wz1 - z) / e * VIEW end
-    local function inside(x, z) return x >= wx0 and x <= wx0 + e and z <= wz1 and z >= wz1 - e end
+local function distance_text(player, m)
+    return distance_to(player, m.x, m.z)
+end
 
-    local fs = {
-        "formspec_version[6]size[16.9,11.15]",
-        "bgcolor[" .. C.bg .. ";true]",
-        "box[0,0;16.9,11.15;" .. C.bg .. "]",
-        "style_type[button;bgcolor=" .. C.button .. ";border=false;textcolor=" .. C.light .. "]",
-        "style_type[label;textcolor=" .. C.light .. "]",
-        "box[0,0;16.9,1.0;" .. C.header .. "]box[0,1.0;16.9,0.05;" .. C.accent .. "]",
-        "label[0.35,0.35;" .. colored(C.light, "World map") .. "]",
-        "label[0.35,0.72;" .. colored(C.muted, staff and "Click the map to select a point"
-            or "Zones, waypoints and teleport points") .. "]",
-        "image_button_exit[16.05,0.17;0.66,0.66;clear.png;map_close;]",
-    }
-
-    -- Map picture: the visible window cropped from the template texture.
-    local x0 = math.floor((wx0 - MAP.min_x) * PX + 0.5)
-    local y0 = math.floor((MAP.max_z + 1 - wz1) * PX + 0.5)
-    local size = math.max(1, math.floor(e * PX + 0.5))
-    local texture = ("[combine:%dx%d:%d,%d=%s"):format(size, size, -x0, -y0, TEXTURE)
-    table.insert(fs, ("box[%g,%g;%g,%g;#1b2033]"):format(ox, oy, VIEW, VIEW))
-    table.insert(fs, ("image[%g,%g;%g,%g;%s]"):format(ox, oy, VIEW, VIEW, esc(texture)))
-
-    -- Zones.
+-- Zones the player may teleport to from the list: staff all, students the
+-- zones of their own group.
+local function teleport_zones(name, staff)
+    local list = {}
     for _, zone in ipairs(zones.list()) do
-        local x1, x2 = math.max(zone.min_x, wx0), math.min(zone.max_x + 1, wx0 + e)
-        local z1, z2 = math.max(zone.min_z, wz1 - e), math.min(zone.max_z + 1, wz1)
-        if x1 < x2 and z1 < z2 then
-            local bx, by = fx(x1), fy(z2)
-            local bw, bh = (x2 - x1) / e * VIEW, (z2 - z1) / e * VIEW
-            local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
-            local mine = zone.allowed and zone.allowed[name]
-            local t = mine and 0.09 or 0.05
-            table.insert(fs, ("box[%g,%g;%g,%g;%s50]"):format(bx, by, bw, bh, color))
-            table.insert(fs, ("box[%g,%g;%g,%g;%s]"):format(bx, by, bw, t, color))
-            table.insert(fs, ("box[%g,%g;%g,%g;%s]"):format(bx, by + bh - t, bw, t, color))
-            table.insert(fs, ("box[%g,%g;%g,%g;%s]"):format(bx, by, t, bh, color))
-            table.insert(fs, ("box[%g,%g;%g,%g;%s]"):format(bx + bw - t, by, t, bh, color))
-            local who = zone.open and "everyone" or (zone.group and ("group " .. zone.group) or "teachers only")
-            table.insert(fs, ("tooltip[%g,%g;%g,%g;%s]"):format(bx, by, bw, bh,
-                esc(zone.name .. " (" .. who .. ")" .. (mine and " · your group" or ""))))
-            if bw > 1.0 and bh > 0.4 then
-                table.insert(fs, ("label[%g,%g;%s]"):format(bx + 0.1, by + 0.22, colored(color, zone.name)))
-            end
+        if zone.tp and (staff or (zone.allowed and zone.allowed[name])) then
+            table.insert(list, zone)
         end
     end
+    return list
+end
 
-    -- Other players (staff only), then markers, then me.
+local show -- forward
+
+show = function(player)
+    local name = player:get_player_name()
+    local staff = is_staff(name)
+    local v = view_of(player)
+    local zoom = v.zoom
+    local cw, ch = content_size(zoom)
+    local sx, sy = scroll_for(v)
+    local ox, oy = 0.3, 1.25
+    local zoomed = zoom > 1
+
+    local fs = {
+        "formspec_version[6]size[17.2,11.25]",
+        "bgcolor[" .. C.bg .. ";true]",
+        "box[0,0;17.2,11.25;" .. C.bg .. "]",
+        "style_type[button;bgcolor=" .. C.button .. ";border=false;textcolor=" .. C.light .. "]",
+        "style_type[label;textcolor=" .. C.light .. "]",
+        "box[0,0;17.2,1.0;" .. C.header .. "]box[0,1.0;17.2,0.05;" .. C.accent .. "]",
+        "label[0.35,0.35;" .. colored(C.light, "World map") .. "]",
+        "label[0.35,0.72;" .. colored(C.muted, zoomed
+            and "Mouse wheel and scrollbars move the map · click to select a point"
+            or "Click the map to select a point") .. "]",
+        "image_button_exit[16.35,0.17;0.66,0.66;clear.png;map_close;]",
+        ("box[%g,%g;%g,%g;#1b2033]"):format(ox, oy, VIEW, VIEW),
+    }
+
+    if zoomed then
+        local max_x = math.max(0, math.ceil((cw - VIEW) / SCROLL_FACTOR))
+        local max_y = math.max(0, math.ceil((ch - VIEW) / SCROLL_FACTOR))
+        local step = math.max(1, math.floor(VIEW / 10 / SCROLL_FACTOR))
+        table.insert(fs, ("scrollbaroptions[min=0;max=%d;smallstep=%d;largestep=%d;thumbsize=%d]"):format(
+            max_y, step, step * 4, math.max(1, math.floor((max_y + 1) * THUMB_SHARE))))
+        table.insert(fs, ("scrollbar[%g,%g;0.3,%g;vertical;map_sv;%d]"):format(ox + VIEW + 0.05, oy, VIEW,
+            math.floor(sy / SCROLL_FACTOR + 0.5)))
+        table.insert(fs, ("scrollbaroptions[min=0;max=%d;smallstep=%d;largestep=%d;thumbsize=%d]"):format(
+            max_x, step, step * 4, math.max(1, math.floor((max_x + 1) * THUMB_SHARE))))
+        table.insert(fs, ("scrollbar[%g,%g;%g,0.3;horizontal;map_sh;%d]"):format(ox, oy + VIEW + 0.05, VIEW,
+            math.floor(sx / SCROLL_FACTOR + 0.5)))
+        -- The innermost container receives the mouse wheel: make it vertical.
+        table.insert(fs, ("scroll_container[%g,%g;%g,%g;map_sh;horizontal;%g]"):format(ox, oy, VIEW, VIEW, SCROLL_FACTOR))
+        table.insert(fs, ("scroll_container[0,0;%g,%g;map_sv;vertical;%g]"):format(cw, VIEW, SCROLL_FACTOR))
+    else
+        table.insert(fs, ("container[%g,%g]"):format(ox, oy))
+    end
+
+    -- Everything below is in content coordinates.
+    local function pos(x, z) return node_to_content(x, z, zoom) end
+    table.insert(fs, ("image[0,0;%g,%g;%s]"):format(cw, ch, TEXTURE))
+
+    for _, zone in ipairs(zones.list()) do
+        local x1, y1 = pos(zone.min_x, zone.max_z + 1)
+        local x2, y2 = pos(zone.max_x + 1, zone.min_z)
+        local bw, bh = x2 - x1, y2 - y1
+        local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
+        local mine = zone.allowed and zone.allowed[name]
+        local t = mine and 0.09 or 0.05
+        table.insert(fs, ("box[%g,%g;%g,%g;%s50]"):format(x1, y1, bw, bh, color))
+        table.insert(fs, ("box[%g,%g;%g,%g;%s]box[%g,%g;%g,%g;%s]"):format(x1, y1, bw, t, color, x1, y2 - t, bw, t, color))
+        table.insert(fs, ("box[%g,%g;%g,%g;%s]box[%g,%g;%g,%g;%s]"):format(x1, y1, t, bh, color, x2 - t, y1, t, bh, color))
+        if bw > 1.0 and bh > 0.4 then
+            table.insert(fs, ("label[%g,%g;%s]"):format(x1 + 0.1, y1 + 0.22, colored(color, zone.name)))
+        end
+    end
     if staff then
         for _, other in ipairs(minetest.get_connected_players()) do
-            local p = other:get_pos()
-            if other ~= player and inside(p.x, p.z) then
-                table.insert(fs, ("box[%g,%g;0.16,0.16;#ffffffdd]"):format(fx(p.x) - 0.08, fy(p.z) - 0.08))
-                table.insert(fs, ("tooltip[%g,%g;0.3,0.3;%s]"):format(fx(p.x) - 0.15, fy(p.z) - 0.15,
-                    esc(other:get_player_name())))
+            if other ~= player then
+                local p = other:get_pos()
+                local px, py = pos(p.x, p.z)
+                table.insert(fs, ("box[%g,%g;0.16,0.16;#ffffffdd]"):format(px - 0.08, py - 0.08))
             end
         end
     end
     for _, m in ipairs(markers) do
-        if inside(m.x, m.z) then
-            local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
-                or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
-            local s = 0.5
-            local yoff = m.kind == "teleport" and s / 2 or s
-            table.insert(fs, ("image[%g,%g;%g,%g;%s]"):format(fx(m.x) - s / 2, fy(m.z) - yoff, s, s, esc(icon)))
-            table.insert(fs, ("tooltip[%g,%g;%g,%g;%s]"):format(fx(m.x) - s / 2, fy(m.z) - yoff, s, s,
-                esc((m.kind == "teleport" and "Teleport point: " or "Waypoint: ") .. m.name)))
-        end
+        local px, py = pos(m.x, m.z)
+        local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
+            or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
+        local yoff = m.kind == "teleport" and 0.25 or 0.5
+        table.insert(fs, ("image[%g,%g;0.5,0.5;%s]"):format(px - 0.25, py - yoff, esc(icon)))
+    end
+    -- Zone teleport points: staff every zone, students their group's zones.
+    for _, zone in ipairs(teleport_zones(name, staff)) do
+        local px, py = pos(zone.tp.x, zone.tp.z)
+        local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
+        table.insert(fs, ("image[%g,%g;0.45,0.45;%s]"):format(px - 0.225, py - 0.225,
+            esc("classrooms_bridge_map_tp.png^[multiply:" .. color)))
     end
     local me = player:get_pos()
-    if inside(me.x, me.z) then
-        table.insert(fs, ("image[%g,%g;0.42,0.42;classrooms_bridge_map_me.png]"):format(fx(me.x) - 0.21, fy(me.z) - 0.21))
-    end
-    if v.sel and inside(v.sel.x, v.sel.z) then
-        local sx, sy = fx(v.sel.x), fy(v.sel.z)
+    local mx, my = pos(me.x, me.z)
+    table.insert(fs, ("image[%g,%g;0.42,0.42;classrooms_bridge_map_me.png]"):format(mx - 0.21, my - 0.21))
+    if v.sel then
+        local px, py = pos(v.sel.x, v.sel.z)
         table.insert(fs, ("box[%g,%g;0.5,0.04;#ffffff]box[%g,%g;0.04,0.5;#ffffff]"):format(
-            sx - 0.25, sy - 0.02, sx - 0.02, sy - 0.25))
+            px - 0.25, py - 0.02, px - 0.02, py - 0.25))
     end
 
-    -- Invisible click grid.
-    table.insert(fs, "style_type[image_button;border=false;bgcolor=#00000000;bgimg_hovered="
-        .. esc("[fill:1x1:#ffffff22") .. "]")
-    local cell = VIEW / GRID
-    for j = 0, GRID - 1 do
-        for i = 0, GRID - 1 do
-            table.insert(fs, ("image_button[%g,%g;%g,%g;blank.png;mc_%d_%d;]"):format(
-                ox + i * cell, oy + j * cell, cell, cell, i, j))
+    -- Selection grid: small cells over the whole map at ×1, over the view
+    -- plus a margin when zoomed.
+    v.band, v.cell = nil, nil
+    do
+        table.insert(fs, "style_type[image_button;border=false;bgcolor=#00000000;bgimg_hovered="
+            .. esc("[fill:1x1:#ffffff22") .. "]")
+        local i0, i1, j0, j1
+        if zoomed then
+            i0 = math.max(0, math.floor((sx - BAND_MARGIN) / CELL))
+            i1 = math.min(math.ceil(cw / CELL) - 1, math.floor((sx + VIEW + BAND_MARGIN) / CELL))
+            j0 = math.max(0, math.floor((sy - BAND_MARGIN) / CELL))
+            j1 = math.min(math.ceil(ch / CELL) - 1, math.floor((sy + VIEW + BAND_MARGIN) / CELL))
+            v.band = { x0 = i0 * CELL, x1 = (i1 + 1) * CELL, y0 = j0 * CELL, y1 = (j1 + 1) * CELL }
+        else
+            i0, i1, j0, j1 = 0, math.ceil(cw / CELL) - 1, 0, math.ceil(ch / CELL) - 1
+        end
+        v.cell = CELL
+        for j = j0, j1 do
+            for i = i0, i1 do
+                table.insert(fs, ("image_button[%g,%g;%g,%g;blank.png;mc_%d_%d;]"):format(i * CELL, j * CELL, CELL, CELL, i, j))
+            end
         end
     end
+    table.insert(fs, zoomed and "scroll_container_end[]scroll_container_end[]" or "container_end[]")
 
     -- Side panel.
-    local px0 = 10.2
+    local px0 = 10.5
     table.insert(fs, ("box[%g,1.25;6.4,2.35;%s]"):format(px0, C.card))
-    table.insert(fs, ("label[%g,1.55;%s]"):format(px0 + 0.2, colored(C.muted, "ZOOM ×" .. v.zoom)))
+    table.insert(fs, ("label[%g,1.55;%s]"):format(px0 + 0.2, colored(C.muted, "ZOOM ×" .. zoom)))
     table.insert(fs, ("button[%g,1.3;0.8,0.55;map_zoom_out;-]button[%g,1.3;0.8,0.55;map_zoom_in;+]"):format(px0 + 2.2, px0 + 3.05))
     table.insert(fs, ("button[%g,1.3;1.6,0.55;map_me;Me]"):format(px0 + 4.6))
     table.insert(fs, "tooltip[map_me;Center the map on your position]")
@@ -239,9 +309,8 @@ local function show(player)
     table.insert(fs, ("button[%g,2.55;0.9,0.5;map_w;W]button[%g,2.55;0.9,0.5;map_e;E]"):format(px0 + 0.45, px0 + 2.35))
     table.insert(fs, ("button[%g,3.1;0.9,0.5;map_s;S]"):format(px0 + 1.4))
     table.insert(fs, ("label[%g,2.8;%s]"):format(px0 + 3.6, colored(C.muted,
-        ("Position: %d, %d"):format(math.floor(me.x + 0.5), math.floor(me.z + 0.5)))))
+        ("You: %d, %d"):format(math.floor(me.x + 0.5), math.floor(me.z + 0.5)))))
 
-    -- Selected point.
     table.insert(fs, ("box[%g,3.75;6.4,%g;%s]"):format(px0, staff and 2.35 or 1.25, C.card))
     if v.sel then
         table.insert(fs, ("label[%g,4.05;%s]"):format(px0 + 0.2, colored(C.light,
@@ -260,38 +329,58 @@ local function show(player)
         table.insert(fs, ("label[%g,4.25;%s]"):format(px0 + 0.2, colored(C.muted, "Click the map to select a point.")))
     end
 
-    -- Points list.
+    -- Places list: markers, then zones the player can teleport to.
     local list_y = staff and 6.25 or 5.15
-    table.insert(fs, ("box[%g,%g;6.4,%g;%s]"):format(px0, list_y, 10.95 - list_y, C.card))
-    table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.28, colored(C.muted, "WAYPOINTS AND TELEPORT POINTS")))
-    if #markers == 0 then
+    local list_h = 10.95 - list_y
+    table.insert(fs, ("box[%g,%g;6.4,%g;%s]"):format(px0, list_y, list_h, C.card))
+    table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.28, colored(C.muted, "PLACES")))
+    local rows = {}
+    for _, m in ipairs(markers) do table.insert(rows, { marker = m }) end
+    for _, zone in ipairs(teleport_zones(name, staff)) do table.insert(rows, { zone = zone }) end
+    if #rows == 0 then
         table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.75, colored(C.muted,
             staff and "None yet: select a point on the map." or "Your teacher has not placed any yet.")))
     end
-    local ly = list_y + 0.5
-    local max_rows = math.floor((10.85 - ly) / 0.55)
-    for i, m in ipairs(markers) do
-        if i > max_rows then break end
-        local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
-            or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
-        table.insert(fs, ("box[%g,%g;6.2,0.5;%s]"):format(px0 + 0.1, ly, C.row))
-        table.insert(fs, ("image[%g,%g;0.4,0.4;%s]"):format(px0 + 0.15, ly + 0.05, esc(icon)))
-        local label = m.name
-        if #label > 16 then label = label:sub(1, 15) .. "…" end
-        table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.65, ly + 0.25, colored(C.light, label)))
-        table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 2.75, ly + 0.25, colored(C.muted, distance_text(player, m))))
-        table.insert(fs, ("button[%g,%g;0.95,0.42;map_show_%d;Show]"):format(px0 + 3.85, ly + 0.04, m.id))
-        if m.kind == "teleport" or staff then
-            table.insert(fs, ("style[map_tp_%d;bgcolor=%s]button[%g,%g;0.75,0.42;map_tp_%d;Go]"):format(
-                m.id, C.primary, px0 + 4.85, ly + 0.04, m.id))
-            table.insert(fs, ("tooltip[map_tp_%d;Teleport there]"):format(m.id))
-        end
-        if staff then
-            table.insert(fs, ("image_button[%g,%g;0.42,0.42;clear.png;map_del_%d;]"):format(px0 + 5.7, ly + 0.04, m.id))
-            table.insert(fs, ("tooltip[map_del_%d;Remove]"):format(m.id))
-        end
-        ly = ly + 0.55
+    local area_y, area_h = list_y + 0.5, list_h - 0.6
+    local content_h = #rows * 0.55
+    if content_h > area_h then
+        table.insert(fs, ("scrollbaroptions[min=0;max=%d;smallstep=5;largestep=20]"):format(
+            math.ceil((content_h - area_h) / SCROLL_FACTOR)))
+        table.insert(fs, ("scrollbar[%g,%g;0.25,%g;vertical;map_list;%d]"):format(px0 + 6.1, area_y, area_h, v.list_scroll))
     end
+    table.insert(fs, ("scroll_container[%g,%g;6.05,%g;map_list;vertical;%g]"):format(px0 + 0.05, area_y, area_h, SCROLL_FACTOR))
+    for i, row in ipairs(rows) do
+        local ly = (i - 1) * 0.55
+        table.insert(fs, ("box[0.05,%g;5.95,0.5;%s]"):format(ly, C.row))
+        local label, dist, go, show_key, del
+        if row.marker then
+            local m = row.marker
+            local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
+                or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
+            table.insert(fs, ("image[0.1,%g;0.4,0.4;%s]"):format(ly + 0.05, esc(icon)))
+            label, dist = m.name, distance_text(player, m)
+            go = (m.kind == "teleport" or staff) and ("map_tp_" .. m.id) or nil
+            show_key, del = "map_show_" .. m.id, staff and ("map_del_" .. m.id) or nil
+        else
+            local zone = row.zone
+            local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
+            table.insert(fs, ("box[0.15,%g;0.3,0.3;%s]"):format(ly + 0.1, color))
+            label, dist = "Zone: " .. zone.name, distance_to(player, zone.tp.x, zone.tp.z)
+            go, show_key = "map_ztp_" .. zone.id, "map_zshow_" .. zone.id
+        end
+        if #label > 13 then label = label:sub(1, 12) .. "…" end
+        table.insert(fs, ("label[0.6,%g;%s]"):format(ly + 0.25, colored(C.light, label)))
+        table.insert(fs, ("label[2.75,%g;%s]"):format(ly + 0.25, colored(C.muted, dist)))
+        table.insert(fs, ("button[3.75,%g;0.95,0.42;%s;Show]"):format(ly + 0.04, show_key))
+        if go then
+            table.insert(fs, ("style[%s;bgcolor=%s]button[4.75,%g;0.75,0.42;%s;Go]tooltip[%s;Teleport there]"):format(
+                go, C.primary, ly + 0.04, go, go))
+        end
+        if del then
+            table.insert(fs, ("image_button[5.55,%g;0.42,0.42;clear.png;%s;]tooltip[%s;Remove]"):format(ly + 0.04, del, del))
+        end
+    end
+    table.insert(fs, "scroll_container_end[]")
 
     minetest.show_formspec(name, FORM, table.concat(fs))
 end
@@ -309,18 +398,89 @@ end
 
 local last_tp = {}
 
-local function teleport(player, x, y, z)
+local function teleport(player, x, y, z, yaw)
     player:set_pos({ x = x, y = y + 0.5, z = z })
+    if yaw then player:set_look_horizontal(yaw) end
+end
+
+-- Students: cooldown and freeze checks. Returns true when allowed.
+local function may_teleport(name, staff)
+    if staff then return true end
+    if is_frozen(name) then
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] You are frozen by the teacher."))
+        return false
+    end
+    local now = minetest.get_us_time() / 1e6
+    if last_tp[name] and now - last_tp[name] < TP_COOLDOWN then
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] Wait a moment before teleporting again."))
+        return false
+    end
+    last_tp[name] = now
+    return true
+end
+
+local function zone_by_id(id)
+    for _, zone in ipairs(zones.list()) do
+        if zone.id == id then return zone end
+    end
+end
+
+-- Updates the view centre from submitted scrollbar positions. Returns true
+-- when the event was only a scroll.
+local function apply_scroll(v, fields)
+    local scrolled = false
+    for _, key in ipairs({ "map_sh", "map_sv", "map_list" }) do
+        local value = fields[key]
+        if value then
+            local n = tonumber(value:match(":(%-?%d+)$") or "")
+            if n then
+                if key == "map_list" then
+                    v.list_scroll = n
+                elseif v.zoom > 1 then
+                    local off = n * SCROLL_FACTOR
+                    local cw, ch = content_size(v.zoom)
+                    local _, cur_y = node_to_content(v.cx, v.cz, v.zoom)
+                    local cur_x = node_to_content(v.cx, v.cz, v.zoom)
+                    if key == "map_sh" then cur_x = off + VIEW / 2 else cur_y = off + VIEW / 2 end
+                    cur_x, cur_y = clamp(cur_x, 0, cw), clamp(cur_y, 0, ch)
+                    v.cx, v.cz = content_to_node(cur_x, cur_y, v.zoom)
+                end
+            end
+            scrolled = scrolled or value:sub(1, 4) == "CHG:"
+        end
+    end
+    return scrolled
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= FORM or not MAP then return false end
     local name = player:get_player_name()
     local staff = is_staff(name)
-    local v, e = view_of(player)
+    local v = view_of(player)
     if fields.map_close or fields.quit then return true end
     if fields.map_name then v.name_text = fields.map_name end
 
+    -- Pure scroll: keep the client's view. When the view leaves the cells
+    -- of the selection grid, redraw once scrolling has stopped, so dragging a
+    -- scrollbar is never interrupted.
+    if apply_scroll(v, fields) then
+        local sx, sy = scroll_for(v)
+        local b = v.band
+        if not b or (sx >= b.x0 and sx + VIEW <= b.x1 and sy >= b.y0 and sy + VIEW <= b.y1) then
+            return true
+        end
+        local token = {}
+        v.redraw_token = token
+        minetest.after(0.6, function()
+            local current = minetest.get_player_by_name(name)
+            if current and views[name] and views[name].redraw_token == token then
+                show(current)
+            end
+        end)
+        return true
+    end
+
+    local e = EXTENT / v.zoom
     local step = e / 4
     if fields.map_zoom_in then
         for i, z in ipairs(ZOOMS) do if z == v.zoom and ZOOMS[i + 1] then v.zoom = ZOOMS[i + 1] break end end
@@ -363,12 +523,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     else
         for key in pairs(fields) do
             local i, j = key:match("^mc_(%d+)_(%d+)$")
-            if i then
-                local cell = e / GRID
-                v.sel = {
-                    x = math.floor(v.cx - e / 2 + (tonumber(i) + 0.5) * cell),
-                    z = math.floor(v.cz + e / 2 - (tonumber(j) + 0.5) * cell),
-                }
+            if i and v.cell then
+                local x, z = content_to_node((tonumber(i) + 0.5) * v.cell, (tonumber(j) + 0.5) * v.cell, v.zoom)
+                v.sel = { x = x, z = z }
+                if v.zoom > 1 then
+                    -- Keep the client's current scroll: don't recentre.
+                    local sx, sy = scroll_for(v)
+                    v.cx, v.cz = content_to_node(sx + VIEW / 2, sy + VIEW / 2, v.zoom)
+                end
                 break
             end
             local id = tonumber(key:match("^map_show_(%d+)$") or "")
@@ -377,21 +539,30 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                 if m then v.cx, v.cz, v.sel = m.x, m.z, { x = m.x, z = m.z } end
                 break
             end
+            id = tonumber(key:match("^map_zshow_(%d+)$") or "")
+            if id then
+                local zone = zone_by_id(id)
+                if zone and zone.tp then v.cx, v.cz, v.sel = zone.tp.x, zone.tp.z, { x = zone.tp.x, z = zone.tp.z } end
+                break
+            end
             id = tonumber(key:match("^map_tp_(%d+)$") or "")
             if id then
                 local m = marker_by_id(id)
-                local now = minetest.get_us_time() / 1e6
-                if m and (staff or m.kind == "teleport") then
-                    if not staff and is_frozen(name) then
-                        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] You are frozen by the teacher."))
-                    elseif not staff and last_tp[name] and now - last_tp[name] < TP_COOLDOWN then
-                        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] Wait a moment before teleporting again."))
-                    else
-                        last_tp[name] = now
-                        teleport(player, m.x, m.y, m.z)
-                        minetest.close_formspec(name, FORM)
-                        return true
-                    end
+                if m and (staff or m.kind == "teleport") and may_teleport(name, staff) then
+                    teleport(player, m.x, m.y, m.z)
+                    minetest.close_formspec(name, FORM)
+                    return true
+                end
+                break
+            end
+            id = tonumber(key:match("^map_ztp_(%d+)$") or "")
+            if id then
+                local zone = zone_by_id(id)
+                local allowed = zone and zone.tp and (staff or (zone.allowed and zone.allowed[name]))
+                if allowed and may_teleport(name, staff) then
+                    teleport(player, zone.tp.x, zone.tp.y, zone.tp.z, tonumber(zone.tp.yaw))
+                    minetest.close_formspec(name, FORM)
+                    return true
                 end
                 break
             end

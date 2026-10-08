@@ -528,7 +528,9 @@ local function announce_complete(zone, mission)
     for _, player in ipairs(minetest.get_connected_players()) do
         local name = player:get_player_name()
         if is_participant(mission, name) or is_staff(name) then
-            show_title(player, "Mission complete!", tostring(mission.title))
+            if zones.zone_at(player:get_pos()) == zone then
+                show_title(player, "Mission complete!", tostring(mission.title))
+            end
             minetest.chat_send_player(name, minetest.colorize("#7FD18B",
                 "[Mission] \"" .. tostring(mission.title) .. "\" completed in zone " .. zone.name .. "!"))
         end
@@ -593,11 +595,13 @@ local function step()
             for _, player in ipairs(players) do
                 local name = player:get_player_name()
                 local participant = is_participant(mission, name)
-                if participant or is_staff(name) then
+                -- The mission panel shows only while standing in its zone.
+                local inside = zones.zone_at(player:get_pos()) == zone
+                if inside and (participant or is_staff(name)) then
                     visible[name] = visible[name] or {}
                     table.insert(visible[name], { mission = mission, state = state, mine = participant })
                 end
-                if participant and zones.zone_at(player:get_pos()) == zone then
+                if participant and inside then
                     give_tools(player, mission)
                 end
             end
