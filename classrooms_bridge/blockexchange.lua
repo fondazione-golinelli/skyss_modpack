@@ -90,6 +90,57 @@ local function format_size(schema)
         tonumber(schema.size_z) or 0)
 end
 
+-- Layout helpers. Icons are Luanti client textures that the multiserver
+-- proxy also ships in every media pool.
+local C = {
+    bg = "#141a2a",
+    header = "#0f3460",
+    accent = "#e94560",
+    card = "#202a44",
+    button = "#34446a",
+    primary = "#2a8c7f",
+    tab_idle = "#26304c",
+    muted = "#aaaaaa",
+    light = "#f0f0f0",
+    ok = "#44ff44",
+    warn = "#ffcc00",
+}
+
+local function esc(text)
+    return minetest.formspec_escape(tostring(text or ""))
+end
+
+local function colored(color, text)
+    return esc(minetest.colorize(color, text))
+end
+
+local function label(fs, x, y, text, color)
+    table.insert(fs, ("label[%s,%s;%s]"):format(x, y, colored(color or C.light, text)))
+end
+
+local function styled_button(fs, x, y, w, h, name, text, color)
+    table.insert(fs, ("style[%s;bgcolor=%s]"):format(name, color or C.button))
+    table.insert(fs, ("button[%s,%s;%s,%s;%s;%s]"):format(x, y, w, h, name, esc(text)))
+end
+
+local function icon_button(fs, x, y, size, name, icon, tooltip)
+    table.insert(fs, ("image_button[%s,%s;%s,%s;%s;%s;]"):format(x, y, size, size, icon, name))
+    if tooltip then
+        table.insert(fs, ("tooltip[%s;%s]"):format(name, esc(tooltip)))
+    end
+end
+
+-- Numbered step marker; a done step shows a check mark instead.
+local function step_badge(fs, x, y, number, done)
+    if done then
+        table.insert(fs, ("box[%s,%s;0.55,0.55;%s]"):format(x, y, C.primary))
+        table.insert(fs, ("image[%s,%s;0.45,0.45;checkbox_64.png]"):format(x + 0.05, y + 0.05))
+    else
+        table.insert(fs, ("box[%s,%s;0.55,0.55;%s]"):format(x, y, C.button))
+        label(fs, x + 0.19, y + 0.28, tostring(number), C.warn)
+    end
+end
+
 local function render(name)
     if not access[name] then return end
 
@@ -104,152 +155,146 @@ local function render(name)
 
     local fs = {
         "formspec_version[6]",
-        "size[13.2,9.2]",
-        "bgcolor[#101820;true]",
-        "style[bx_home_link;font_size=15]",
-        "label[0.45,0.45;",
-        minetest.formspec_escape("BlockExchange Library"),
-        "]",
-        "hypertext[0.4,0.7;5.2,0.55;bx_home_link;",
-        "<global background=none margin=0 color=#2B6EA6 hovercolor=#174A73>",
-        "<action name=home url='",
-        minetest.formspec_escape(EXCHANGE_URL),
-        "'><u>",
-        minetest.formspec_escape(EXCHANGE_URL),
-        "</u></action>]",
-        "button[8.05,0.35;1.55,0.65;bx_tab_browse;Browse]",
-        "button[9.75,0.35;1.55,0.65;bx_tab_share;Share]",
-        "button_exit[11.5,0.35;1.25,0.65;bx_close;Close]",
+        "size[13.2,10.4]",
+        "bgcolor[" .. C.bg .. ";true]",
+        -- Paint over the game's formspec_prepend (Mineclonia background and
+        -- text colors).
+        "box[0,0;13.2,10.4;" .. C.bg .. "]",
+        "style_type[button,image_button;bgcolor=" .. C.button .. ";border=false;textcolor=" .. C.light .. "]",
+        "style_type[label,checkbox;textcolor=" .. C.light .. "]",
+        "style_type[field,pwdfield,textarea;textcolor=" .. C.light .. "]",
+        "box[0,0;13.2,1.05;" .. C.header .. "]",
+        "box[0,1.05;13.2,0.05;" .. C.accent .. "]",
     }
-    if view.tab == "share" then
-        table.insert(fs, "style[bx_tab_share;bgcolor=#3F6F8F]")
-    else
-        table.insert(fs, "style[bx_tab_browse;bgcolor=#3F6F8F]")
-    end
+    label(fs, 0.4, 0.35, "BlockExchange Library")
+    table.insert(fs, "style[bx_home_link;font_size=15]")
+    table.insert(fs, "hypertext[0.38,0.55;6.5,0.45;bx_home_link;"
+        .. "<global background=none margin=0 color=#8fb8de hovercolor=#c5dcf0>"
+        .. "<action name=home url='" .. esc(EXCHANGE_URL) .. "'><u>"
+        .. esc(EXCHANGE_URL) .. "</u></action>]")
+    table.insert(fs, "image_button_exit[12.35,0.2;0.65,0.65;clear.png;bx_close;]")
+    table.insert(fs, "tooltip[bx_close;Close]")
 
-    if view.tab == "share" then
-        table.insert(fs, "label[0.45,1.55;Share a structure]")
+    local sharing = view.tab == "share"
+    styled_button(fs, 0.35, 1.3, 3.2, 0.62, "bx_tab_browse", "Find & place",
+        sharing and C.tab_idle or C.accent)
+    styled_button(fs, 3.65, 1.3, 3.2, 0.62, "bx_tab_share", "Share a build",
+        sharing and C.accent or C.tab_idle)
+
+    if sharing then
         local claims = claims_for(name)
         if not claims or not claims.username then
-            table.insert(fs, "textarea[0.45,2.0;12.3,1.25;;;")
-            table.insert(fs, minetest.formspec_escape(
-                "Create an access token on your BlockExchange profile, then sign in here. "
-                .. "The access token is exchanged by BlockExchange and is not stored."))
-            table.insert(fs, "]")
-            table.insert(fs, "field[0.45,3.55;4.0,0.65;bx_login_username;BlockExchange username;")
-            table.insert(fs, minetest.formspec_escape(view.login_username or ""))
-            table.insert(fs, "]")
-            table.insert(fs, "pwdfield[4.7,3.55;4.0,0.65;bx_access_token;Access token]")
-            table.insert(fs, "button[8.95,3.55;1.7,0.65;bx_login;Sign in]")
-            table.insert(fs, "button_url[10.9,3.55;1.85,0.65;bx_profile;Open profile;")
-            table.insert(fs, minetest.formspec_escape(EXCHANGE_URL .. "/profile"))
-            table.insert(fs, "]")
-            table.insert(fs, "textarea[0.45,4.55;12.3,1.2;;;")
-            table.insert(fs, minetest.formspec_escape(
-                "Your Luanti teacher name and BlockExchange username may be different. "
-                .. "Use the username shown on your BlockExchange profile."))
-            table.insert(fs, "]")
+            table.insert(fs, "box[0.35,2.2;12.5,3.1;" .. C.card .. "]")
+            label(fs, 0.65, 2.55, "To share builds, connect your BlockExchange account once.")
+            step_badge(fs, 0.65, 3.0, 1, false)
+            label(fs, 1.4, 3.28, "Open your profile and create an access token.")
+            table.insert(fs, ("style[bx_profile;bgcolor=%s]"):format(C.button))
+            table.insert(fs, "button_url[9.3,2.95;3.3,0.62;bx_profile;Open my profile;"
+                .. esc(EXCHANGE_URL .. "/profile") .. "]")
+            step_badge(fs, 0.65, 3.95, 2, false)
+            label(fs, 1.4, 4.23, "Enter your BlockExchange username and the token.")
+            label(fs, 1.4, 4.7, "Your game name and BlockExchange name may differ.", C.muted)
+
+            table.insert(fs, "box[0.35,5.5;12.5,1.6;" .. C.card .. "]")
+            table.insert(fs, "field[0.65,6.15;4.6,0.65;bx_login_username;BlockExchange username;"
+                .. esc(view.login_username or "") .. "]")
+            table.insert(fs, "pwdfield[5.45,6.15;4.2,0.65;bx_access_token;Access token]")
+            styled_button(fs, 9.85, 6.15, 2.75, 0.65, "bx_login", "Sign in", C.primary)
             if view.login_status then
-                table.insert(fs, "textarea[0.45,5.8;12.3,0.8;;;")
-                table.insert(fs, minetest.formspec_escape(view.login_status))
-                table.insert(fs, "]")
+                table.insert(fs, "textarea[0.65,7.35;12.0,1.0;;;" .. esc(view.login_status) .. "]")
             end
+            label(fs, 0.65, 9.9, "The token is exchanged for a session and never stored.", C.muted)
         else
             local pos1 = blockexchange.get_pos and blockexchange.get_pos(1, name)
             local pos2 = blockexchange.get_pos and blockexchange.get_pos(2, name)
-            local pos1_label = pos1 and minetest.pos_to_string(pos1) or "Not set"
-            local pos2_label = pos2 and minetest.pos_to_string(pos2) or "Not set"
 
-            table.insert(fs, "label[0.45,2.05;Signed in as ")
-            table.insert(fs, minetest.formspec_escape(claims.username))
-            table.insert(fs, "]")
-            table.insert(fs, "button[10.9,1.75;1.85,0.65;bx_logout;Sign out]")
-            table.insert(fs, "button[0.45,2.75;2.2,0.65;bx_pos1;Set corner 1]")
-            table.insert(fs, "label[2.9,2.98;")
-            table.insert(fs, minetest.formspec_escape(pos1_label))
-            table.insert(fs, "]")
-            table.insert(fs, "button[0.45,3.65;2.2,0.65;bx_pos2;Set corner 2]")
-            table.insert(fs, "label[2.9,3.88;")
-            table.insert(fs, minetest.formspec_escape(pos2_label))
-            table.insert(fs, "]")
+            label(fs, 7.3, 1.61, "Signed in as " .. claims.username, C.muted)
+            icon_button(fs, 12.2, 1.3, 0.62, "bx_logout", "clear.png", "Sign out")
 
+            -- Step 1: corners.
+            table.insert(fs, "box[0.35,2.2;12.5,2.75;" .. C.card .. "]")
+            step_badge(fs, 0.65, 2.45, 1, pos1 ~= nil and pos2 ~= nil)
+            label(fs, 1.4, 2.73, "Stand on two opposite corners of your build and mark them.")
+            styled_button(fs, 0.65, 3.25, 2.9, 0.65, "bx_pos1", "Mark corner 1")
+            label(fs, 3.75, 3.58, pos1 and minetest.pos_to_string(pos1) or "not set",
+                pos1 and C.ok or C.muted)
+            styled_button(fs, 6.55, 3.25, 2.9, 0.65, "bx_pos2", "Mark corner 2")
+            label(fs, 9.65, 3.58, pos2 and minetest.pos_to_string(pos2) or "not set",
+                pos2 and C.ok or C.muted)
             if pos1 and pos2 then
-                local minp = vector.new(
-                    math.min(pos1.x, pos2.x),
-                    math.min(pos1.y, pos2.y),
-                    math.min(pos1.z, pos2.z))
-                local maxp = vector.new(
-                    math.max(pos1.x, pos2.x),
-                    math.max(pos1.y, pos2.y),
-                    math.max(pos1.z, pos2.z))
-                table.insert(fs, "label[0.45,4.55;Selected volume: ")
-                table.insert(fs, minetest.formspec_escape(format_size({
-                    size_x = maxp.x - minp.x + 1,
-                    size_y = maxp.y - minp.y + 1,
-                    size_z = maxp.z - minp.z + 1,
-                })))
-                table.insert(fs, "]")
+                label(fs, 0.65, 4.45, "Selected size: " .. format_size({
+                    size_x = math.abs(pos2.x - pos1.x) + 1,
+                    size_y = math.abs(pos2.y - pos1.y) + 1,
+                    size_z = math.abs(pos2.z - pos1.z) + 1,
+                }) .. " blocks", C.muted)
             end
 
-            table.insert(fs, "field[0.45,5.55;6.6,0.65;bx_schema_name;Structure name;")
-            table.insert(fs, minetest.formspec_escape(view.schema_name or ""))
-            table.insert(fs, "]")
-            table.insert(fs, "button[7.3,5.55;2.5,0.65;bx_upload;Upload structure]")
-            table.insert(fs, "button_url[10.05,5.55;2.7,0.65;bx_search_page;Open web library;")
-            table.insert(fs, minetest.formspec_escape(EXCHANGE_URL .. "/search"))
-            table.insert(fs, "]")
+            -- Step 2: name.
+            local named = (view.schema_name or "") ~= ""
+            table.insert(fs, "box[0.35,5.15;12.5,1.55;" .. C.card .. "]")
+            step_badge(fs, 0.65, 5.4, 2, named)
+            label(fs, 1.4, 5.68, "Give it a name (letters, numbers, - _ .)")
+            table.insert(fs, "field[1.4,5.95;11.2,0.6;bx_schema_name;;"
+                .. esc(view.schema_name or "") .. "]")
+            table.insert(fs, "field_close_on_enter[bx_schema_name;false]")
+
+            -- Step 3: publish.
+            table.insert(fs, "box[0.35,6.9;12.5,1.25;" .. C.card .. "]")
+            step_badge(fs, 0.65, 7.25, 3, false)
+            styled_button(fs, 1.4, 7.2, 4.2, 0.7, "bx_upload", "Publish to the library", C.primary)
+            table.insert(fs, ("style[bx_search_page;bgcolor=%s]"):format(C.button))
+            table.insert(fs, "button_url[8.6,7.2;4.0,0.7;bx_search_page;Open web library;"
+                .. esc(EXCHANGE_URL .. "/search") .. "]")
 
             local upload_status = view.upload_status
-                or "Set opposite corners, choose a name, then upload."
+                or "Mark both corners, choose a name, then publish."
             if view.uploading then
-                upload_status = "Upload in progress. Follow the BlockExchange HUD."
+                upload_status = "Uploading… follow the progress bar on screen."
             end
-            table.insert(fs, "textarea[0.45,6.65;12.3,1.25;;;")
-            table.insert(fs, minetest.formspec_escape(upload_status))
-            table.insert(fs, "]")
+            table.insert(fs, "textarea[0.35,8.4;12.5,1.6;;;" .. esc(upload_status) .. "]")
         end
 
         minetest.show_formspec(name, FORM_NAME, table.concat(fs))
         return
     end
 
-    table.insert(fs, "field[0.45,1.45;7.65,0.65;bx_query;Search structures;")
-    table.insert(fs, minetest.formspec_escape(view.query))
-    table.insert(fs, "]")
-    table.insert(fs, "button[8.3,1.45;1.45,0.65;bx_search;Search]")
-    table.insert(fs, "button[9.9,1.45;1.45,0.65;bx_refresh;Refresh]")
+    -- Find & place.
+    table.insert(fs, "field[0.35,2.2;10.85,0.7;bx_query;;" .. esc(view.query) .. "]")
+    table.insert(fs, "field_close_on_enter[bx_query;false]")
+    table.insert(fs, "tooltip[bx_query;Type a word (e.g. house, bridge) and press Enter]")
+    icon_button(fs, 11.35, 2.2, 0.7, "bx_search", "search.png", "Search")
+    icon_button(fs, 12.15, 2.2, 0.7, "bx_refresh", "refresh.png", "Reload the list")
 
     if not bx_available() then
-        table.insert(fs, "textarea[0.45,2.45;12.3,2.2;;BlockExchange unavailable;")
-        table.insert(fs, minetest.formspec_escape(
-            "The official blockexchange mod must be installed, enabled, online, and configured for "
+        table.insert(fs, "textarea[0.35,3.15;12.5,2.2;;BlockExchange unavailable;")
+        table.insert(fs, esc("The official blockexchange mod must be installed, enabled, online, and configured for "
             .. EXCHANGE_URL .. "."))
         table.insert(fs, "]")
     elseif not http then
-        table.insert(fs, "textarea[0.45,2.45;12.3,2.2;;Catalogue unavailable;")
-        table.insert(fs, minetest.formspec_escape(
-            "Add classrooms_bridge to secure.http_mods, then restart this instance."))
+        table.insert(fs, "textarea[0.35,3.15;12.5,2.2;;Catalogue unavailable;")
+        table.insert(fs, esc("Add classrooms_bridge to secure.http_mods, then restart this instance."))
         table.insert(fs, "]")
     elseif view.loading then
-        table.insert(fs, "label[0.55,2.6;Loading structures…]")
+        table.insert(fs, "image[0.45,3.2;0.5,0.5;refresh.png]")
+        label(fs, 1.15, 3.45, "Loading structures…", C.muted)
     elseif view.error then
-        table.insert(fs, "textarea[0.45,2.35;12.3,1.5;;Could not load structures;")
-        table.insert(fs, minetest.formspec_escape(view.error))
+        table.insert(fs, "textarea[0.35,3.15;12.5,1.5;;Could not load structures;")
+        table.insert(fs, esc(view.error))
         table.insert(fs, "]")
     elseif #view.rows == 0 then
-        table.insert(fs, "label[0.55,2.6;No structures found.]")
+        label(fs, 0.45, 3.45, "No structures found. Try another word.", C.muted)
     else
-        table.insert(fs, "box[0.45,2.25;12.3,0.5;#D7DDE2]")
-        table.insert(fs, "label[0.6,2.5;Owner]")
-        table.insert(fs, "label[3.6,2.5;Structure]")
-        table.insert(fs, "label[8.25,2.5;Dimensions]")
-        table.insert(fs, "label[10.85,2.5;Downloads]")
+        table.insert(fs, "box[0.35,3.1;12.5,0.5;#D7DDE2]")
+        table.insert(fs, "label[0.5,3.35;" .. colored("#1a1a2e", "Owner") .. "]")
+        table.insert(fs, "label[3.5,3.35;" .. colored("#1a1a2e", "Structure") .. "]")
+        table.insert(fs, "label[8.15,3.35;" .. colored("#1a1a2e", "Size") .. "]")
+        table.insert(fs, "label[10.75,3.35;" .. colored("#1a1a2e", "Downloads") .. "]")
         table.insert(fs, "tableoptions[background=#1B1B1B;border=true;highlight=#356A91;highlight_text=#FFFFFF]")
         table.insert(fs, "tablecolumns[text,width=15,padding=0.5;"
             .. "text,width=23,padding=0.5;"
             .. "text,width=13,align=center,padding=0.5;"
             .. "text,width=8,align=right,padding=0.5]")
-        table.insert(fs, "table[0.45,2.8;12.3,4.2;bx_structures;")
+        table.insert(fs, "table[0.35,3.65;12.5,3.2;bx_structures;")
         local first = true
         for _, row in ipairs(view.rows) do
             if not first then
@@ -269,22 +314,32 @@ local function render(name)
         table.insert(fs, "]")
     end
 
-    local page_label = "Page " .. tostring(view.page + 1)
-    table.insert(fs, "button[0.45,7.25;1.25,0.65;bx_prev;Previous]")
-    table.insert(fs, "label[1.95,7.48;" .. minetest.formspec_escape(page_label) .. "]")
-    table.insert(fs, "button[3.1,7.25;1.25,0.65;bx_next;Next]")
-    table.insert(fs, "button[5.05,7.25;2.15,0.65;bx_origin;Set origin]")
-    table.insert(fs, "button[7.45,7.25;2.15,0.65;bx_allocate;Allocate]")
-    table.insert(fs, "button[9.85,7.25;2.9,0.65;bx_load;Load structure]")
+    icon_button(fs, 0.35, 6.95, 0.55, "bx_prev", "prev_icon.png", "Previous page")
+    label(fs, 1.05, 7.22, "Page " .. tostring(view.page + 1), C.muted)
+    icon_button(fs, 2.15, 6.95, 0.55, "bx_next", "next_icon.png", "Next page")
 
+    -- Guided placement.
     local selected = view.rows[view.selected or 0]
-    local status = "Select a structure, set the origin, allocate to preview its bounds, then load."
-    if selected then
-        status = "Selected: " .. selected.username .. " / " .. selected.schema.name
-    end
-    table.insert(fs, "textarea[0.45,8.15;12.3,0.7;;;")
-    table.insert(fs, minetest.formspec_escape(status))
-    table.insert(fs, "]")
+    local origin = bx_available() and blockexchange.get_pos and blockexchange.get_pos(1, name)
+    table.insert(fs, "box[0.35,7.7;12.5,2.45;" .. C.card .. "]")
+
+    step_badge(fs, 0.6, 7.9, 1, selected ~= nil)
+    label(fs, 1.3, 8.05, "Pick a structure")
+    label(fs, 1.3, 8.45, selected and (selected.username .. " / " .. selected.schema.name)
+        or "Click a row in the list", selected and C.ok or C.muted)
+
+    step_badge(fs, 0.6, 9.0, 2, origin ~= nil)
+    label(fs, 1.3, 9.15, "Go to the start spot")
+    label(fs, 1.3, 9.55, origin and ("Start: " .. minetest.pos_to_string(origin)) or "Start not set",
+        origin and C.ok or C.muted)
+    styled_button(fs, 5.15, 8.95, 2.35, 0.65, "bx_origin", "Set start here")
+    table.insert(fs, "tooltip[bx_origin;The structure is built from your current position]")
+
+    step_badge(fs, 7.75, 7.9, 3, false)
+    label(fs, 8.45, 8.05, "Build it")
+    styled_button(fs, 8.45, 8.35, 4.15, 0.6, "bx_allocate", "Check the space")
+    table.insert(fs, "tooltip[bx_allocate;Shows how big it is and whether it fits, without building]")
+    styled_button(fs, 8.45, 9.05, 4.15, 0.75, "bx_load", "Build here", C.primary)
 
     minetest.show_formspec(name, FORM_NAME, table.concat(fs))
 end
@@ -587,9 +642,9 @@ local function upload_structure(name, schema_name)
 end
 
 minetest.register_craftitem(ITEM_NAME, {
-    description = "BlockExchange Library",
-    inventory_image = "classrooms_bridge_teacher_panel.png^[colorize:#00A6A6:155",
-    wield_image = "classrooms_bridge_teacher_panel.png^[colorize:#00A6A6:155",
+    description = "BlockExchange Library\n" .. minetest.colorize("#aaaaaa", "Use to place shared structures or share your builds"),
+    inventory_image = "classrooms_bridge_blockexchange.png",
+    wield_image = "classrooms_bridge_blockexchange.png",
     stack_max = 1,
     groups = { not_in_creative_inventory = 1 },
     on_place = function(itemstack, placer)

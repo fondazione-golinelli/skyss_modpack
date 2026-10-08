@@ -155,9 +155,9 @@ local function request_teacher_panel(user)
 end
 
 minetest.register_craftitem(TEACHER_PANEL_ITEM, {
-    description = "Class Panel",
-    inventory_image = "classrooms_bridge_teacher_panel.png",
-    wield_image = "classrooms_bridge_teacher_panel.png",
+    description = "Class Panel\n" .. minetest.colorize("#aaaaaa", "Use to open your class: students, worlds and rules"),
+    inventory_image = "classrooms_bridge_class_panel.png",
+    wield_image = "classrooms_bridge_class_panel.png",
     stack_max = 1,
     groups = { not_in_creative_inventory = 1 },
     on_place = function(itemstack, placer)
