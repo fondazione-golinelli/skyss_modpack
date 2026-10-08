@@ -241,15 +241,6 @@ show = function(player)
             table.insert(fs, ("label[%g,%g;%s]"):format(x1 + 0.1, y1 + 0.22, colored(color, zone.name)))
         end
     end
-    if staff then
-        for _, other in ipairs(minetest.get_connected_players()) do
-            if other ~= player then
-                local p = other:get_pos()
-                local px, py = pos(p.x, p.z)
-                table.insert(fs, ("box[%g,%g;0.16,0.16;#ffffffdd]"):format(px - 0.08, py - 0.08))
-            end
-        end
-    end
     for _, m in ipairs(markers) do
         local px, py = pos(m.x, m.z)
         local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
@@ -296,6 +287,39 @@ show = function(player)
             end
         end
     end
+
+    -- Other players (staff, when shown): above the click grid so hovering
+    -- shows the name and clicking selects their position.
+    v.players = {}
+    if staff and v.show_players ~= false then
+        local group_of = {}
+        for _, zone in ipairs(zones.list()) do
+            if zone.group and zone.allowed then
+                for member in pairs(zone.allowed) do
+                    group_of[member] = { name = zone.group, color = zone.color }
+                end
+            end
+        end
+        for _, other in ipairs(minetest.get_connected_players()) do
+            local other_name = other:get_player_name()
+            if other ~= player then
+                local p = other:get_pos()
+                local px, py = pos(p.x, p.z)
+                local group = group_of[other_name]
+                local color, info = "#ffffff", other_name
+                if is_staff(other_name) then
+                    color, info = "#ffd43b", other_name .. " (teacher)"
+                elseif group then
+                    color, info = group.color, other_name .. " · group " .. group.name
+                end
+                table.insert(v.players, { name = other_name, x = math.floor(p.x + 0.5), z = math.floor(p.z + 0.5) })
+                local field = "map_pl_" .. #v.players
+                table.insert(fs, ("image_button[%g,%g;0.42,0.42;%s;%s;]tooltip[%s;%s]"):format(
+                    px - 0.21, py - 0.21, esc("classrooms_bridge_map_student.png^[multiply:" .. color),
+                    field, field, esc(info)))
+            end
+        end
+    end
     table.insert(fs, zoomed and "scroll_container_end[]scroll_container_end[]" or "container_end[]")
 
     -- Side panel.
@@ -308,6 +332,12 @@ show = function(player)
     table.insert(fs, ("button[%g,2.0;0.9,0.5;map_n;N]"):format(px0 + 1.4))
     table.insert(fs, ("button[%g,2.55;0.9,0.5;map_w;W]button[%g,2.55;0.9,0.5;map_e;E]"):format(px0 + 0.45, px0 + 2.35))
     table.insert(fs, ("button[%g,3.1;0.9,0.5;map_s;S]"):format(px0 + 1.4))
+    if staff then
+        local shown = v.show_players ~= false
+        table.insert(fs, ("style[map_players;bgcolor=%s]button[%g,2.0;2.6,0.5;map_players;%s]"):format(
+            shown and C.primary or C.button, px0 + 3.6, shown and "Students: shown" or "Students: hidden"))
+        table.insert(fs, "tooltip[map_players;Show or hide the other players on the map]")
+    end
     table.insert(fs, ("label[%g,2.8;%s]"):format(px0 + 3.6, colored(C.muted,
         ("You: %d, %d"):format(math.floor(me.x + 0.5), math.floor(me.z + 0.5)))))
 
@@ -480,6 +510,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     end
 
+    if fields.map_players and staff then
+        v.show_players = v.show_players == false
+        show(player)
+        return true
+    end
+
     local e = EXTENT / v.zoom
     local step = e / 4
     if fields.map_zoom_in then
@@ -531,6 +567,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                     local sx, sy = scroll_for(v)
                     v.cx, v.cz = content_to_node(sx + VIEW / 2, sy + VIEW / 2, v.zoom)
                 end
+                break
+            end
+            local pl = tonumber(key:match("^map_pl_(%d+)$") or "")
+            if pl and staff and v.players and v.players[pl] then
+                local target = v.players[pl]
+                v.sel = { x = target.x, z = target.z }
+                v.name_text = target.name
                 break
             end
             local id = tonumber(key:match("^map_show_(%d+)$") or "")
