@@ -42,6 +42,8 @@ local function normalize(list)
                 min_x = math.min(min_x, max_x), max_x = math.max(min_x, max_x),
                 min_z = math.min(min_z, max_z), max_z = math.max(min_z, max_z),
                 allowed = allowed,
+                ref_y = tonumber(z.ref_y),
+                mission = type(z.mission) == "table" and z.mission or nil,
             })
         end
     end
@@ -80,6 +82,14 @@ local function zone_at(pos)
 end
 
 -- Returns the zone that forbids `name` from editing `pos`, if any.
+function zones_api.zone_at(pos)
+    return zone_at(pos)
+end
+
+function zones_api.list()
+    return zones
+end
+
 local function blocking_zone(pos, name)
     if not name or name == "" or #zones == 0 then return nil end
     local zone = zone_at(pos)
@@ -275,48 +285,114 @@ end
 -- ── Border glow and "Entered zone" notice ────────────────────────────────────
 
 local GLOW_RADIUS = 24
-local GLOW_ALPHA = "88"
+local SURFACE_SCAN = 12      -- nodes above/below the player searched for the ground
+local SURFACE_TTL = 8        -- seconds a column's surface height is cached
 local current_zone = {} -- [name] = zone id
 local notice_huds = {}  -- [name] = { ids, token }
+local surface_cache = {} -- ["x,z"] = { y, t, ref }
+local surface_cache_size = 0
 
+local function is_ground(name)
+    local def = minetest.registered_nodes[name]
+    if not def then return false end
+    return def.walkable or def.liquidtype == "source"
+end
+
+-- Height of the top face of the ground at a column, near `ref_y`.
+local function surface_y(x, z, ref_y)
+    local key = x .. "," .. z
+    local now = minetest.get_us_time() / 1e6
+    local cached = surface_cache[key]
+    if cached and now - cached.t < SURFACE_TTL and math.abs(cached.ref - ref_y) < 6 then
+        return cached.y
+    end
+    local found
+    for y = ref_y + SURFACE_SCAN, ref_y - SURFACE_SCAN, -1 do
+        local node = minetest.get_node_or_nil({ x = x, y = y, z = z })
+        if node and is_ground(node.name) then
+            found = y + 0.5
+            break
+        end
+    end
+    surface_cache_size = surface_cache_size + (cached and 0 or 1)
+    if surface_cache_size > 20000 then
+        surface_cache, surface_cache_size = {}, 0
+    end
+    surface_cache[key] = { y = found, t = now, ref = ref_y }
+    return found
+end
+
+-- One light-curtain emitter over a run of border columns at the same height.
+local function curtain(name, color, minpos, maxpos, length)
+    minetest.add_particlespawner({
+        amount = math.max(1, math.floor(length * 1.5)),
+        time = 1,
+        minpos = minpos,
+        maxpos = maxpos,
+        minvel = { x = 0, y = 0.5, z = 0 },
+        maxvel = { x = 0, y = 0.9, z = 0 },
+        minexptime = 1.2,
+        maxexptime = 2.0,
+        minsize = 2.5,
+        maxsize = 4,
+        vertical = true,
+        glow = 14,
+        texture = {
+            name = "classrooms_bridge_zone_glow.png^[multiply:" .. color,
+            scale = { x = 0.25, y = 1.6 },
+            alpha_tween = { 0.85, 0 },
+            blend = "add",
+        },
+        playername = name,
+    })
+end
+
+-- Light rising from the top of the border blocks near the player.
 local function glow_edges(player, pos)
     local name = player:get_player_name()
-    local px, pz = pos.x, pos.z
-    local y1, y2 = pos.y - 0.5, pos.y + 2.5
+    local px, pz = math.floor(pos.x + 0.5), math.floor(pos.z + 0.5)
+    local ref_y = math.floor(pos.y + 0.5)
     for _, zone in ipairs(zones) do
-        local color = (zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5") .. GLOW_ALPHA
-        local x1, x2 = zone.min_x - 0.5, zone.max_x + 0.5
-        local z1, z2 = zone.min_z - 0.5, zone.max_z + 0.5
-        local function edge(minpos, maxpos, length)
-            if length <= 0 then return end
-            minetest.add_particlespawner({
-                amount = math.max(2, math.floor(length * 0.8)),
-                time = 1,
-                minpos = minpos,
-                maxpos = maxpos,
-                minexptime = 0.9,
-                maxexptime = 1.6,
-                minsize = 1,
-                maxsize = 1.8,
-                texture = "[fill:2x2:" .. color,
-                glow = 10,
-                playername = name,
-            })
-        end
-        -- Only the part of each edge near the player.
-        local ex1, ex2 = math.max(x1, px - GLOW_RADIUS), math.min(x2, px + GLOW_RADIUS)
-        local ez1, ez2 = math.max(z1, pz - GLOW_RADIUS), math.min(z2, pz + GLOW_RADIUS)
-        if math.abs(pz - z1) <= GLOW_RADIUS then
-            edge({ x = ex1, y = y1, z = z1 }, { x = ex2, y = y2, z = z1 }, ex2 - ex1)
-        end
-        if math.abs(pz - z2) <= GLOW_RADIUS then
-            edge({ x = ex1, y = y1, z = z2 }, { x = ex2, y = y2, z = z2 }, ex2 - ex1)
-        end
-        if math.abs(px - x1) <= GLOW_RADIUS then
-            edge({ x = x1, y = y1, z = ez1 }, { x = x1, y = y2, z = ez2 }, ez2 - ez1)
-        end
-        if math.abs(px - x2) <= GLOW_RADIUS then
-            edge({ x = x2, y = y1, z = ez1 }, { x = x2, y = y2, z = ez2 }, ez2 - ez1)
+        local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
+        -- Each edge: fixed coordinate (just outside the zone) and a range.
+        local edges = {
+            { axis = "x", fixed = zone.min_z - 0.5, from = zone.min_x, to = zone.max_x, near = math.abs(pz - zone.min_z) },
+            { axis = "x", fixed = zone.max_z + 0.5, from = zone.min_x, to = zone.max_x, near = math.abs(pz - zone.max_z) },
+            { axis = "z", fixed = zone.min_x - 0.5, from = zone.min_z, to = zone.max_z, near = math.abs(px - zone.min_x) },
+            { axis = "z", fixed = zone.max_x + 0.5, from = zone.min_z, to = zone.max_z, near = math.abs(px - zone.max_x) },
+        }
+        for _, edge in ipairs(edges) do
+            if edge.near <= GLOW_RADIUS then
+                local center = edge.axis == "x" and px or pz
+                local a = math.max(edge.from, center - GLOW_RADIUS)
+                local b = math.min(edge.to, center + GLOW_RADIUS)
+                -- Ground under the border: the inner column of the zone.
+                local inner = edge.axis == "x"
+                    and (edge.fixed < zone.min_z and zone.min_z or zone.max_z)
+                    or (edge.fixed < zone.min_x and zone.min_x or zone.max_x)
+                local run_start, run_y
+                local function flush(last)
+                    if run_start and run_y then
+                        local p1, p2
+                        if edge.axis == "x" then
+                            p1 = { x = run_start - 0.5, y = run_y, z = edge.fixed }
+                            p2 = { x = last + 0.5, y = run_y + 0.05, z = edge.fixed }
+                        else
+                            p1 = { x = edge.fixed, y = run_y, z = run_start - 0.5 }
+                            p2 = { x = edge.fixed, y = run_y + 0.05, z = last + 0.5 }
+                        end
+                        curtain(name, color, p1, p2, last - run_start + 1)
+                    end
+                end
+                for i = a, b do
+                    local y = edge.axis == "x" and surface_y(i, inner, ref_y) or surface_y(inner, i, ref_y)
+                    if y ~= run_y then
+                        flush(i - 1)
+                        run_start, run_y = i, y
+                    end
+                end
+                flush(b)
+            end
         end
     end
 end

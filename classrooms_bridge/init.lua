@@ -149,7 +149,9 @@ local teacher_access = {}
 local world_tools_access = {}
 local visitor_state = {}
 -- Class staff (teachers, Assistance, admins) may always build inside zones.
-zones.set_staff_check(function(name) return teacher_access[name] == true end)
+local function is_staff(name) return teacher_access[name] == true end
+zones.set_staff_check(is_staff)
+local missions = assert(loadfile(MODPATH .. "/missions.lua"))(zones, send_bridge_message, is_staff)
 
 local function request_teacher_panel(user)
     if not user or not user:is_player() then return end
@@ -812,6 +814,22 @@ function handlers.show_zones(data)
     local player = data.player and minetest.get_player_by_name(data.player)
     if player then
         zones.show(player)
+    end
+end
+
+function handlers.mission_catalog_request(data)
+    if not data.player or not teacher_access[data.player] then return end
+    send_bridge_message({
+        action = "mission_catalog",
+        player = data.player,
+        catalog = missions.catalog_payload(),
+    }, "mission_catalog")
+end
+
+function handlers.give_delivery_chest(data)
+    local player = data.player and minetest.get_player_by_name(data.player)
+    if player and world_tools_access[data.player] then
+        missions.give_chest(player)
     end
 end
 
