@@ -5,16 +5,17 @@
 -- and schematic placement.
 
 local ITEM_NAME = "classrooms_bridge:blockexchange"
+local TOOL_ID = "blockexchange"
 local FORM_NAME = "classrooms_bridge:blockexchange"
-local ITEM_SLOT = 2
 local PAGE_SIZE = 20
 local EXCHANGE_URL = minetest.settings:get("classrooms.blockexchange_url")
     or minetest.settings:get("blockexchange.url")
     or "https://exchange.golinelli.live"
 
 -- Supplied privately by init.lua, where Luanti requires request_http_api() to
--- be called directly from the mod's top-level scope.
-local http = ...
+-- be called directly from the mod's top-level scope. The toolbar owns the
+-- dedicated hotbar slot of the library item.
+local http, toolbar = ...
 local access = {}
 local views = {}
 local storage = minetest.get_mod_storage()
@@ -30,49 +31,6 @@ end
 local function notify(name, message, color)
     minetest.chat_send_player(name, minetest.colorize(color or "#00CCFF",
         "[BlockExchange] " .. message))
-end
-
-local function remove_item(player)
-    local inv = player and player:get_inventory()
-    if not inv then return end
-
-    for index = 1, inv:get_size("main") do
-        if inv:get_stack("main", index):get_name() == ITEM_NAME then
-            inv:set_stack("main", index, "")
-        end
-    end
-end
-
-local function ensure_item(player)
-    if not player or not player:is_player() then return end
-    local name = player:get_player_name()
-    if not access[name] then return end
-
-    local inv = player:get_inventory()
-    if not inv or inv:get_size("main") < ITEM_SLOT then return end
-
-    local target = inv:get_stack("main", ITEM_SLOT)
-    if target:get_name() == ITEM_NAME then
-        target:set_count(1)
-        inv:set_stack("main", ITEM_SLOT, target)
-        return
-    end
-
-    for index = 1, inv:get_size("main") do
-        if index ~= ITEM_SLOT and inv:get_stack("main", index):get_name() == ITEM_NAME then
-            inv:set_stack("main", index, target)
-            inv:set_stack("main", ITEM_SLOT, ItemStack(ITEM_NAME))
-            return
-        end
-    end
-
-    inv:set_stack("main", ITEM_SLOT, ItemStack(ITEM_NAME))
-    if not target:is_empty() then
-        local leftover = inv:add_item("main", target)
-        if not leftover:is_empty() then
-            minetest.add_item(player:get_pos(), leftover)
-        end
-    end
 end
 
 local function bx_available()
@@ -148,16 +106,26 @@ local function render(name)
         "formspec_version[6]",
         "size[13.2,9.2]",
         "bgcolor[#101820;true]",
+        "style[bx_home_link;font_size=15]",
         "label[0.45,0.45;",
         minetest.formspec_escape("BlockExchange Library"),
         "]",
-        "label[0.45,0.85;",
+        "hypertext[0.4,0.7;5.2,0.55;bx_home_link;",
+        "<global background=none margin=0 color=#2B6EA6 hovercolor=#174A73>",
+        "<action name=home url='",
         minetest.formspec_escape(EXCHANGE_URL),
-        "]",
+        "'><u>",
+        minetest.formspec_escape(EXCHANGE_URL),
+        "</u></action>]",
         "button[8.05,0.35;1.55,0.65;bx_tab_browse;Browse]",
         "button[9.75,0.35;1.55,0.65;bx_tab_share;Share]",
         "button_exit[11.5,0.35;1.25,0.65;bx_close;Close]",
     }
+    if view.tab == "share" then
+        table.insert(fs, "style[bx_tab_share;bgcolor=#3F6F8F]")
+    else
+        table.insert(fs, "style[bx_tab_browse;bgcolor=#3F6F8F]")
+    end
 
     if view.tab == "share" then
         table.insert(fs, "label[0.45,1.55;Share a structure]")
@@ -271,12 +239,17 @@ local function render(name)
     elseif #view.rows == 0 then
         table.insert(fs, "label[0.55,2.6;No structures found.]")
     else
-        table.insert(fs, "label[0.6,2.35;Owner]")
-        table.insert(fs, "label[3.65,2.35;Structure]")
-        table.insert(fs, "label[6.7,2.35;Size]")
-        table.insert(fs, "label[9.75,2.35;Downloads]")
-        table.insert(fs, "tablecolumns[text;text;text;text]")
-        table.insert(fs, "table[0.45,2.65;12.3,4.35;bx_structures;")
+        table.insert(fs, "box[0.45,2.25;12.3,0.5;#D7DDE2]")
+        table.insert(fs, "label[0.6,2.5;Owner]")
+        table.insert(fs, "label[3.6,2.5;Structure]")
+        table.insert(fs, "label[8.25,2.5;Dimensions]")
+        table.insert(fs, "label[10.85,2.5;Downloads]")
+        table.insert(fs, "tableoptions[background=#1B1B1B;border=true;highlight=#356A91;highlight_text=#FFFFFF]")
+        table.insert(fs, "tablecolumns[text,width=15,padding=0.5;"
+            .. "text,width=23,padding=0.5;"
+            .. "text,width=13,align=center,padding=0.5;"
+            .. "text,width=8,align=right,padding=0.5]")
+        table.insert(fs, "table[0.45,2.8;12.3,4.2;bx_structures;")
         local first = true
         for _, row in ipairs(view.rows) do
             if not first then
@@ -631,10 +604,9 @@ minetest.register_craftitem(ITEM_NAME, {
         open_browser(user)
         return itemstack
     end,
-    on_drop = function()
-        return ItemStack("")
-    end,
+    on_drop = toolbar.on_drop,
 })
+toolbar.register_tool(TOOL_ID, ITEM_NAME, 2)
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= FORM_NAME then return false end
@@ -735,48 +707,18 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     return true
 end)
 
-minetest.register_allow_player_inventory_action(function(player, action, _, info)
-    if not access[player:get_player_name()] then return end
-
-    if action == "move" then
-        if (info.from_list == "main" and info.from_index == ITEM_SLOT)
-                or (info.to_list == "main" and info.to_index == ITEM_SLOT) then
-            return 0
-        end
-    elseif (action == "put" or action == "take")
-            and info.listname == "main" and info.index == ITEM_SLOT then
-        return 0
-    end
-end)
-
-local item_timer = 0
-minetest.register_globalstep(function(dtime)
-    item_timer = item_timer + dtime
-    if item_timer < 1 then return end
-    item_timer = 0
-
-    for name in pairs(access) do
-        ensure_item(minetest.get_player_by_name(name))
-    end
-end)
-
 function integration.set_access(player, enabled)
     if not player or not player:is_player() then return end
     local name = player:get_player_name()
     if enabled then
         access[name] = true
         grant_upload_privilege(name)
-        ensure_item(player)
     else
         access[name] = nil
         views[name] = nil
         restore_upload_privilege(name)
-        remove_item(player)
     end
-end
-
-function integration.ensure_item(player)
-    ensure_item(player)
+    toolbar.set_enabled(player, TOOL_ID, enabled)
 end
 
 function integration.clear_player(name)

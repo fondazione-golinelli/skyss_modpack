@@ -12,9 +12,10 @@ local MOD_DATA_PATH = minetest.get_mod_data_path()
 -- chunk; calling request_http_api() from that nested chunk is rejected even
 -- when classrooms_bridge is correctly listed in secure.http_mods.
 local classrooms_http = minetest.request_http_api and minetest.request_http_api()
-local blockexchange_loader = assert(loadfile(
-    minetest.get_modpath("classrooms_bridge") .. "/blockexchange.lua"))
-local blockexchange_integration = blockexchange_loader(classrooms_http)
+local MODPATH = minetest.get_modpath("classrooms_bridge")
+local toolbar = dofile(MODPATH .. "/toolbar.lua")
+local blockexchange_loader = assert(loadfile(MODPATH .. "/blockexchange.lua"))
+local blockexchange_integration = blockexchange_loader(classrooms_http, toolbar)
 
 -- Runtime state (not persisted — proxy re-sends on reconnect/server switch)
 local frozen_players = {}   -- { [player_name] = true }
@@ -137,6 +138,7 @@ local function send_bridge_message(payload, context)
 end
 
 local TEACHER_PANEL_ITEM = "classrooms_bridge:teacher_panel"
+local TEACHER_PANEL_TOOL = "teacher_panel"
 local VISITOR_RETURN_ITEM = "classrooms_bridge:return_hub"
 local teacher_access = {}
 local visitor_state = {}
@@ -170,10 +172,9 @@ minetest.register_craftitem(TEACHER_PANEL_ITEM, {
         request_teacher_panel(user)
         return itemstack
     end,
-    on_drop = function(itemstack)
-        return ItemStack("")
-    end,
+    on_drop = toolbar.on_drop,
 })
+toolbar.register_tool(TEACHER_PANEL_TOOL, TEACHER_PANEL_ITEM, 1)
 
 local function request_return_hub(user)
     if not user or not user:is_player() then return end
@@ -222,44 +223,6 @@ local function remove_managed_items(player, item_name)
     end
 end
 
-local function ensure_managed_item(player, item_name)
-    local inv = player:get_inventory()
-    if not inv then return end
-
-    local size = inv:get_size("main")
-    if size < 1 then return end
-
-    local first = inv:get_stack("main", 1)
-    if first:get_name() == item_name then
-        first:set_count(1)
-        inv:set_stack("main", 1, first)
-        return
-    end
-
-    -- Prefer swapping an existing panel item into slot 1 so no player item is
-    -- displaced unnecessarily.
-    for index = 2, size do
-        local stack = inv:get_stack("main", index)
-        if stack:get_name() == item_name then
-            inv:set_stack("main", index, first)
-            inv:set_stack("main", 1, ItemStack(item_name))
-            return
-        end
-    end
-
-    inv:set_stack("main", 1, ItemStack(item_name))
-    if not first:is_empty() then
-        local leftover = inv:add_item("main", first)
-        if not leftover:is_empty() then
-            minetest.add_item(player:get_pos(), leftover)
-        end
-    end
-end
-
-local function ensure_teacher_panel_item(player)
-    ensure_managed_item(player, TEACHER_PANEL_ITEM)
-end
-
 local function ensure_visitor_return_item(player)
     local inv = player:get_inventory()
     if not inv or inv:get_size("main") < 1 then return end
@@ -270,18 +233,15 @@ end
 
 local function set_teacher_access(player, enabled)
     local name = player:get_player_name()
-    if enabled then
-        teacher_access[name] = true
-        ensure_teacher_panel_item(player)
-    else
-        teacher_access[name] = nil
-        remove_managed_items(player, TEACHER_PANEL_ITEM)
-    end
+    teacher_access[name] = enabled or nil
+    toolbar.set_enabled(player, TEACHER_PANEL_TOOL, enabled)
 end
 
+-- Teacher tools have dedicated slots (see toolbar.lua); visitors keep the
+-- return item locked in slot 1.
 minetest.register_allow_player_inventory_action(function(player, action, _, info)
     local name = player:get_player_name()
-    if not teacher_access[name] and not visitor_state[name] then return end
+    if not visitor_state[name] then return end
 
     if action == "move" then
         if (info.from_list == "main" and info.from_index == 1)
@@ -294,18 +254,12 @@ minetest.register_allow_player_inventory_action(function(player, action, _, info
     end
 end)
 
-local teacher_item_timer = 0
+local visitor_item_timer = 0
 minetest.register_globalstep(function(dtime)
-    teacher_item_timer = teacher_item_timer + dtime
-    if teacher_item_timer < 1 then return end
-    teacher_item_timer = 0
+    visitor_item_timer = visitor_item_timer + dtime
+    if visitor_item_timer < 1 then return end
+    visitor_item_timer = 0
 
-    for name in pairs(teacher_access) do
-        local player = minetest.get_player_by_name(name)
-        if player then
-            ensure_teacher_panel_item(player)
-        end
-    end
     for name in pairs(visitor_state) do
         local player = minetest.get_player_by_name(name)
         if player then
@@ -931,15 +885,6 @@ end)
 
 minetest.register_on_respawnplayer(function(player)
     apply_classroom_spawn_later(player:get_player_name(), 0.4)
-    if teacher_access[player:get_player_name()] then
-        minetest.after(0, function()
-            local current = minetest.get_player_by_name(player:get_player_name())
-            if current then
-                ensure_teacher_panel_item(current)
-                blockexchange_integration.ensure_item(current)
-            end
-        end)
-    end
     if visitor_state[player:get_player_name()] then
         minetest.after(0, function()
             local current = minetest.get_player_by_name(player:get_player_name())
@@ -962,6 +907,7 @@ minetest.register_on_leaveplayer(function(player)
     watching_players[name] = nil
     teacher_access[name] = nil
     blockexchange_integration.clear_player(name)
+    toolbar.clear_player(name)
     -- Keep frozen_players[name] so it re-applies if they reconnect to this server
 end)
 
