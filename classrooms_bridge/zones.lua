@@ -284,7 +284,7 @@ end
 
 -- ── Border glow and "Entered zone" notice ────────────────────────────────────
 
-local GLOW_RADIUS = 24
+local GLOW_RADIUS = 32
 local SURFACE_SCAN = 12      -- nodes above/below the player searched for the ground
 local SURFACE_TTL = 8        -- seconds a column's surface height is cached
 local current_zone = {} -- [name] = zone id
@@ -322,25 +322,43 @@ local function surface_y(x, z, ref_y)
     return found
 end
 
--- One light-curtain emitter over a run of border columns at the same height.
+-- Emitters over a run of border columns at the same height: light streaks
+-- rising from the block tops, and a line of glowing dots on the ground.
 local function curtain(name, color, minpos, maxpos, length)
     minetest.add_particlespawner({
-        amount = math.max(1, math.floor(length * 1.5)),
+        amount = math.max(2, math.floor(length * 3)),
         time = 1,
         minpos = minpos,
         maxpos = maxpos,
-        minvel = { x = 0, y = 0.5, z = 0 },
-        maxvel = { x = 0, y = 0.9, z = 0 },
-        minexptime = 1.2,
-        maxexptime = 2.0,
-        minsize = 2.5,
-        maxsize = 4,
+        minvel = { x = 0, y = 0.7, z = 0 },
+        maxvel = { x = 0, y = 1.3, z = 0 },
+        minexptime = 1.6,
+        maxexptime = 2.6,
+        minsize = 4,
+        maxsize = 6,
         vertical = true,
         glow = 14,
         texture = {
             name = "classrooms_bridge_zone_glow.png^[multiply:" .. color,
-            scale = { x = 0.25, y = 1.6 },
-            alpha_tween = { 0.85, 0 },
+            scale = { x = 0.35, y = 2.4 },
+            alpha_tween = { 1, 0 },
+            blend = "add",
+        },
+        playername = name,
+    })
+    minetest.add_particlespawner({
+        amount = math.max(2, math.floor(length * 2)),
+        time = 1,
+        minpos = { x = minpos.x, y = minpos.y + 0.08, z = minpos.z },
+        maxpos = { x = maxpos.x, y = minpos.y + 0.12, z = maxpos.z },
+        minexptime = 1.1,
+        maxexptime = 1.3,
+        minsize = 1.4,
+        maxsize = 1.8,
+        glow = 14,
+        texture = {
+            name = "[fill:2x2:" .. color,
+            alpha_tween = { 1, 0.4 },
             blend = "add",
         },
         playername = name,

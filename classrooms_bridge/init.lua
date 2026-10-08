@@ -152,6 +152,8 @@ local visitor_state = {}
 local function is_staff(name) return teacher_access[name] == true end
 zones.set_staff_check(is_staff)
 local missions = assert(loadfile(MODPATH .. "/missions.lua"))(zones, send_bridge_message, is_staff)
+local worldmap = assert(loadfile(MODPATH .. "/worldmap.lua"))(MODPATH, zones, toolbar, is_staff,
+    function(name) return frozen_players[name] == true end)
 
 local function request_teacher_panel(user)
     if not user or not user:is_player() then return end
@@ -280,6 +282,8 @@ local function set_teacher_access(player, enabled)
     local name = player:get_player_name()
     teacher_access[name] = enabled or nil
     toolbar.set_enabled(player, TEACHER_PANEL_TOOL, enabled)
+    -- Students carry the map item; staff open the map from World Tools.
+    worldmap.set_item(player, not enabled)
 end
 
 -- Teacher tools have dedicated slots (see toolbar.lua); visitors keep the
@@ -814,6 +818,13 @@ function handlers.show_zones(data)
     local player = data.player and minetest.get_player_by_name(data.player)
     if player then
         zones.show(player)
+    end
+end
+
+function handlers.open_map(data)
+    local player = data.player and minetest.get_player_by_name(data.player)
+    if player and teacher_access[data.player] then
+        worldmap.show(player)
     end
 end
 
