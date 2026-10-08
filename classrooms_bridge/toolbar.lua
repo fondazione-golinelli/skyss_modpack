@@ -39,7 +39,12 @@ function toolbar.register_tool(id, item, order)
     tool_by_item[item] = def
 end
 
+local suspended = {}    -- [name] = true while another mode owns the hotbar
+
 local function is_suspended(name)
+    if suspended[name] then
+        return true
+    end
     return minetest.global_exists("arena_lib")
         and ((arena_lib.is_player_in_edit_mode and arena_lib.is_player_in_edit_mode(name))
             or (arena_lib.is_player_in_arena and arena_lib.is_player_in_arena(name)))
@@ -219,6 +224,15 @@ function toolbar.set_enabled(player, id, enabled)
     end
 end
 
+-- Lets another mode (e.g. the zone editor) own the inventory and hotbar.
+function toolbar.set_suspended(name, value)
+    suspended[name] = value or nil
+end
+
+function toolbar.is_tool_item(item)
+    return tool_by_item[item] ~= nil
+end
+
 function toolbar.ensure(player)
     if player then sync(player) end
 end
@@ -308,6 +322,7 @@ end)
 
 minetest.register_on_leaveplayer(function(player)
     players[player:get_player_name()] = nil
+    suspended[player:get_player_name()] = nil
 end)
 
 local timer = 0

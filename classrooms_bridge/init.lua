@@ -14,6 +14,7 @@ local MOD_DATA_PATH = minetest.get_mod_data_path()
 local classrooms_http = minetest.request_http_api and minetest.request_http_api()
 local MODPATH = minetest.get_modpath("classrooms_bridge")
 local toolbar = dofile(MODPATH .. "/toolbar.lua")
+local zones = dofile(MODPATH .. "/zones.lua")
 local blockexchange_loader = assert(loadfile(MODPATH .. "/blockexchange.lua"))
 local blockexchange_integration = blockexchange_loader(classrooms_http, toolbar)
 
@@ -137,11 +138,18 @@ local function send_bridge_message(payload, context)
     return ok
 end
 
+local zone_edit = assert(loadfile(MODPATH .. "/zone_edit.lua"))(toolbar, zones, send_bridge_message)
+
 local TEACHER_PANEL_ITEM = "classrooms_bridge:teacher_panel"
 local TEACHER_PANEL_TOOL = "teacher_panel"
+local WORLD_TOOLS_ITEM = "classrooms_bridge:world_tools"
+local WORLD_TOOLS_TOOL = "world_tools"
 local VISITOR_RETURN_ITEM = "classrooms_bridge:return_hub"
 local teacher_access = {}
+local world_tools_access = {}
 local visitor_state = {}
+-- Class staff (teachers, Assistance, admins) may always build inside zones.
+zones.set_staff_check(function(name) return teacher_access[name] == true end)
 
 local function request_teacher_panel(user)
     if not user or not user:is_player() then return end
@@ -175,6 +183,41 @@ minetest.register_craftitem(TEACHER_PANEL_ITEM, {
     on_drop = toolbar.on_drop,
 })
 toolbar.register_tool(TEACHER_PANEL_TOOL, TEACHER_PANEL_ITEM, 1)
+
+-- Third classroom tool: zones (and later quests) of the current world.
+local function request_world_tools(user)
+    if not user or not user:is_player() then return end
+    local name = user:get_player_name()
+    if not world_tools_access[name] or zone_edit.is_editing(name) then return end
+    send_bridge_message({ action = "open_world_tools", player = name }, "open_world_tools")
+end
+
+minetest.register_craftitem(WORLD_TOOLS_ITEM, {
+    description = "World Tools\n" .. minetest.colorize("#aaaaaa", "Use to manage zones of this world"),
+    inventory_image = "classrooms_bridge_world_tools.png",
+    wield_image = "classrooms_bridge_world_tools.png",
+    stack_max = 1,
+    groups = { not_in_creative_inventory = 1 },
+    on_place = function(itemstack, placer)
+        request_world_tools(placer)
+        return itemstack
+    end,
+    on_use = function(itemstack, user)
+        request_world_tools(user)
+        return itemstack
+    end,
+    on_secondary_use = function(itemstack, user)
+        request_world_tools(user)
+        return itemstack
+    end,
+    on_drop = toolbar.on_drop,
+})
+toolbar.register_tool(WORLD_TOOLS_TOOL, WORLD_TOOLS_ITEM, 3)
+
+local function set_world_tools_access(player, enabled)
+    world_tools_access[player:get_player_name()] = enabled or nil
+    toolbar.set_enabled(player, WORLD_TOOLS_TOOL, enabled)
+end
 
 local function request_return_hub(user)
     if not user or not user:is_player() then return end
@@ -626,6 +669,7 @@ function handlers.set_teacher_defaults(data)
 
     set_teacher_access(player, true)
     blockexchange_integration.set_access(player, data.blockexchange_access ~= false)
+    set_world_tools_access(player, data.world_tools_access == true)
 
     local privs = minetest.get_player_privs(name)
     privs.fly = true
@@ -668,6 +712,7 @@ function handlers.set_teacher_access(data)
     local player = minetest.get_player_by_name(name)
     if player then
         set_teacher_access(player, true)
+        set_world_tools_access(player, data.world_tools_access == true)
     end
 end
 
@@ -680,6 +725,7 @@ function handlers.clear_teacher_defaults(data)
 
     set_teacher_access(player, true)
     blockexchange_integration.set_access(player, false)
+    set_world_tools_access(player, false)
 
     local privs = minetest.get_player_privs(name)
     privs.fly = nil
@@ -699,8 +745,10 @@ function handlers.clear_teacher_access(data)
     if player then
         set_teacher_access(player, false)
         blockexchange_integration.set_access(player, false)
+        set_world_tools_access(player, false)
     else
         teacher_access[name] = nil
+        world_tools_access[name] = nil
         blockexchange_integration.clear_player(name)
     end
 end
@@ -754,6 +802,50 @@ function handlers.set_settings(data)
         write_settings("runtime set_settings")
     end
     minetest.log("action", "[classrooms_bridge] Applied runtime settings after set_settings (" .. runtime_count .. " values)")
+end
+
+function handlers.set_zones(data)
+    zones.set(data.zones)
+end
+
+function handlers.show_zones(data)
+    local player = data.player and minetest.get_player_by_name(data.player)
+    if player then
+        zones.show(player)
+    end
+end
+
+function handlers.zone_edit_start(data)
+    local player = data.player and minetest.get_player_by_name(data.player)
+    if player and world_tools_access[data.player] then
+        zone_edit.start(player, data)
+    end
+end
+
+-- Teleports players to a point (zone teleport points), spread in a small
+-- circle when there are several.
+function handlers.tp_pos(data)
+    local pos = data.pos
+    if type(data.players) ~= "table" or type(pos) ~= "table"
+            or not tonumber(pos.x) or not tonumber(pos.y) or not tonumber(pos.z) then
+        return
+    end
+    local count = #data.players
+    for i, name in ipairs(data.players) do
+        local player = minetest.get_player_by_name(name)
+        if player then
+            local angle = (i - 1) * 2 * math.pi / math.max(count, 1)
+            local radius = count > 1 and 1.5 or 0
+            player:set_pos({
+                x = pos.x + math.cos(angle) * radius,
+                y = pos.y,
+                z = pos.z + math.sin(angle) * radius,
+            })
+            if tonumber(data.yaw) then
+                player:set_look_horizontal(tonumber(data.yaw))
+            end
+        end
+    end
 end
 
 function handlers.broadcast(data)
@@ -906,6 +998,7 @@ minetest.register_on_leaveplayer(function(player)
     end
     watching_players[name] = nil
     teacher_access[name] = nil
+    world_tools_access[name] = nil
     blockexchange_integration.clear_player(name)
     toolbar.clear_player(name)
     -- Keep frozen_players[name] so it re-applies if they reconnect to this server
