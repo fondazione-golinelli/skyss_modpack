@@ -263,11 +263,13 @@ minetest.register_craftitem(VISITOR_RETURN_ITEM, {
 })
 toolbar.register_tool(VISITOR_RETURN_TOOL, VISITOR_RETURN_ITEM, 0)
 
--- Students and other players (not staff): open the list of live class worlds
--- from anywhere, like stepping into the HUB portal.
+-- Students and other players (not staff) in the HUB: open the list of live
+-- class worlds from anywhere, like stepping into the portal. The proxy tells
+-- each player whether this server is the HUB ("set_hub").
 local WORLDS_ITEM = "classrooms_bridge:worlds"
 local WORLDS_TOOL = "worlds"
 local last_worlds_request = {}
+local hub_players = {}
 local function request_worlds(user)
     if not user or not user:is_player() then return end
     local name = user:get_player_name()
@@ -290,18 +292,9 @@ minetest.register_craftitem(WORLDS_ITEM, {
 })
 toolbar.register_tool(WORLDS_TOOL, WORLDS_ITEM, 5)
 
-minetest.register_on_joinplayer(function(player)
-    local name = player:get_player_name()
-    minetest.after(1, function()
-        local current = minetest.get_player_by_name(name)
-        if current and not teacher_access[name] then
-            toolbar.set_enabled(current, WORLDS_TOOL, true)
-        end
-    end)
-end)
-
 minetest.register_on_leaveplayer(function(player)
     last_worlds_request[player:get_player_name()] = nil
+    hub_players[player:get_player_name()] = nil
 end)
 
 local function set_teacher_access(player, enabled)
@@ -310,7 +303,7 @@ local function set_teacher_access(player, enabled)
     toolbar.set_enabled(player, TEACHER_PANEL_TOOL, enabled)
     -- Students carry the map and class worlds items; staff use World Tools.
     worldmap.set_item(player, not enabled)
-    toolbar.set_enabled(player, WORLDS_TOOL, not enabled)
+    toolbar.set_enabled(player, WORLDS_TOOL, not enabled and hub_players[name] == true)
 end
 
 local function set_visitor_defaults(player)
@@ -393,6 +386,55 @@ local function clear_visitor_defaults(player, is_leaving)
                 or mcl_gamemode.get_gamemode(player) ~= restored_gamemode then
             mcl_gamemode.set_gamemode(player, restored_gamemode)
         end
+    end
+end
+
+-- Student abilities chosen by the teacher in the world's Rules: flying and
+-- creative mode. Staff and spectators are left alone, and only what the
+-- bridge granted (marked in player meta) is taken back.
+local student_abilities = { fly = false, creative = false }
+local GRANTED_FLY, GRANTED_CREATIVE = "classrooms_granted_fly", "classrooms_granted_creative"
+
+local function forget_student_abilities(player)
+    local meta = player:get_meta()
+    meta:set_string(GRANTED_FLY, "")
+    meta:set_string(GRANTED_CREATIVE, "")
+end
+
+local function apply_student_abilities(player)
+    local name = player:get_player_name()
+    if teacher_access[name] or visitor_state[name] then return end
+    local meta = player:get_meta()
+    local notes = {}
+    local privs = minetest.get_player_privs(name)
+    if student_abilities.fly and not privs.fly then
+        privs.fly = true
+        minetest.set_player_privs(name, privs)
+        meta:set_string(GRANTED_FLY, "1")
+        table.insert(notes, "you can fly (press K)")
+    elseif not student_abilities.fly and meta:get_string(GRANTED_FLY) == "1" then
+        privs.fly = nil
+        minetest.set_player_privs(name, privs)
+        meta:set_string(GRANTED_FLY, "")
+        table.insert(notes, "flying is off")
+    end
+    if mcl_gamemode and mcl_gamemode.set_gamemode then
+        local mode = mcl_gamemode.get_gamemode and mcl_gamemode.get_gamemode(player) or "survival"
+        if student_abilities.creative and mode ~= "creative" then
+            mcl_gamemode.set_gamemode(player, "creative")
+            meta:set_string(GRANTED_CREATIVE, "1")
+            table.insert(notes, "creative mode is on")
+        elseif not student_abilities.creative and meta:get_string(GRANTED_CREATIVE) == "1" then
+            meta:set_string(GRANTED_CREATIVE, "")
+            if mode == "creative" then
+                mcl_gamemode.set_gamemode(player, "survival")
+                table.insert(notes, "back to survival mode")
+            end
+        end
+    end
+    if #notes > 0 then
+        minetest.chat_send_player(name, minetest.colorize("#00CC66",
+            "[Teacher] " .. table.concat(notes, ", ") .. "."))
     end
 end
 
@@ -683,6 +725,7 @@ function handlers.set_teacher_defaults(data)
     if not player then return end
 
     set_teacher_access(player, true)
+    forget_student_abilities(player)
     blockexchange_integration.set_access(player, data.blockexchange_access ~= false)
     set_world_tools_access(player, data.world_tools_access == true)
 
@@ -727,7 +770,33 @@ function handlers.set_teacher_access(data)
     local player = minetest.get_player_by_name(name)
     if player then
         set_teacher_access(player, true)
+        forget_student_abilities(player)
         set_world_tools_access(player, data.world_tools_access == true)
+    end
+end
+
+-- Whether this server is the HUB for the player: the class worlds item is
+-- only carried there.
+function handlers.set_hub(data)
+    local name = data.player
+    local player = name and minetest.get_player_by_name(name)
+    if not player then return end
+    hub_players[name] = data.hub == true or nil
+    toolbar.set_enabled(player, WORLDS_TOOL, data.hub == true and not teacher_access[name])
+end
+
+-- Flying and creative mode for students (world Rules). With "player" it is
+-- the state for someone who just joined, otherwise a change for everyone.
+function handlers.set_student_abilities(data)
+    student_abilities.fly = data.fly == true
+    student_abilities.creative = data.creative == true
+    if data.player then
+        local player = minetest.get_player_by_name(data.player)
+        if player then apply_student_abilities(player) end
+        return
+    end
+    for _, player in ipairs(minetest.get_connected_players()) do
+        apply_student_abilities(player)
     end
 end
 
@@ -821,6 +890,7 @@ end
 
 function handlers.set_zones(data)
     zones.set(data.zones)
+    missions.set_world(data.missions)
 end
 
 function handlers.show_zones(data)
@@ -856,7 +926,9 @@ end
 function handlers.give_delivery_chest(data)
     local player = data.player and minetest.get_player_by_name(data.player)
     if player and world_tools_access[data.player] then
-        missions.give_chest(player)
+        missions.give_chest(player, tonumber(data.mission), data.title, {
+            color = data.color, zone = data.zone, objectives = data.objectives, ref = data.ref,
+        })
     end
 end
 
