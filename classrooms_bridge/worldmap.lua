@@ -10,7 +10,9 @@
 -- teleport to teleport points only. Waypoints are shown in the world as HUD
 -- markers, light beams nearby, and a direction indicator to the nearest one.
 
-local modpath, zones, toolbar, is_staff, is_frozen = ...
+-- `hooks.spawn()` returns the world spawn (pos, yaw); `hooks.return_hub(player)`
+-- sends the player back to the HUB.
+local modpath, zones, toolbar, is_staff, is_frozen, hooks = ...
 
 local FORM = "classrooms_bridge:map"
 local ITEM = "classrooms_bridge:map"
@@ -198,11 +200,18 @@ show = function(player)
         "box[0,0;17.2,1.0;" .. C.header .. "]box[0,1.0;17.2,0.05;" .. C.accent .. "]",
         "label[0.35,0.35;" .. colored(C.light, "World map") .. "]",
         "label[0.35,0.72;" .. colored(C.muted, zoomed
-            and "Mouse wheel and scrollbars move the map · click to select a point"
+            and "Wheel and scrollbars move the map · click to select"
             or "Click the map to select a point") .. "]",
         "image_button_exit[16.35,0.17;0.66,0.66;clear.png;map_close;]",
+        ("style[map_spawn;bgcolor=%s]button[%g,0.2;3.75,0.6;map_spawn;Teleport to world spawn]"):format(
+            C.primary, staff and 12.45 or 9.7),
+        "tooltip[map_spawn;Go back to where players arrive in this world]",
         ("box[%g,%g;%g,%g;#1b2033]"):format(ox, oy, VIEW, VIEW),
     }
+    if not staff then
+        table.insert(fs, ("style[map_hub;bgcolor=%s]button_exit[13.55,0.2;2.65,0.6;map_hub;Return to HUB]"):format("#9b2c3c"))
+        table.insert(fs, "tooltip[map_hub;Leave this world and go back to the HUB]")
+    end
 
     if zoomed then
         local max_x = math.max(0, math.ceil((cw - VIEW) / SCROLL_FACTOR))
@@ -510,6 +519,22 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     end
 
+    if fields.map_hub and not staff then
+        if hooks and hooks.return_hub then hooks.return_hub(player) end
+        return true
+    end
+    if fields.map_spawn then
+        local spawn_pos, spawn_yaw
+        if hooks and hooks.spawn then spawn_pos, spawn_yaw = hooks.spawn(player) end
+        if not spawn_pos then
+            minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] This world has no spawn point."))
+        elseif may_teleport(name, staff) then
+            player:set_pos(spawn_pos)
+            if spawn_yaw then player:set_look_horizontal(spawn_yaw) end
+            minetest.close_formspec(name, FORM)
+        end
+        return true
+    end
     if fields.map_players and staff then
         v.show_players = v.show_players == false
         show(player)

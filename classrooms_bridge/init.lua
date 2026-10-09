@@ -152,8 +152,12 @@ local visitor_state = {}
 local function is_staff(name) return teacher_access[name] == true end
 zones.set_staff_check(is_staff)
 local missions = assert(loadfile(MODPATH .. "/missions.lua"))(zones, send_bridge_message, is_staff)
-local worldmap = assert(loadfile(MODPATH .. "/worldmap.lua"))(MODPATH, zones, toolbar, is_staff,
-    function(name) return frozen_players[name] == true end)
+-- On the map a spectator is never staff, even a teacher of another class.
+local function is_map_staff(name) return is_staff(name) and not visitor_state[name] end
+-- Filled below, once the spawn and channel helpers exist.
+local map_hooks = {}
+local worldmap = assert(loadfile(MODPATH .. "/worldmap.lua"))(MODPATH, zones, toolbar, is_map_staff,
+    function(name) return frozen_players[name] == true end, map_hooks)
 
 local function request_teacher_panel(user)
     if not user or not user:is_player() then return end
@@ -234,10 +238,12 @@ local function request_return_hub(user)
     }, "return_hub")
 end
 
+-- Spectators' exit: first dedicated toolbar slot, like the teacher tools.
+local VISITOR_RETURN_TOOL = "return_hub"
 minetest.register_craftitem(VISITOR_RETURN_ITEM, {
-    description = "Return to HUB",
-    inventory_image = "classrooms_bridge_teacher_panel.png",
-    wield_image = "classrooms_bridge_teacher_panel.png",
+    description = "Return to HUB\n" .. minetest.colorize("#aaaaaa", "Use to leave this world"),
+    inventory_image = "classrooms_bridge_return_hub.png",
+    wield_image = "classrooms_bridge_return_hub.png",
     range = 0,
     stack_max = 1,
     groups = { not_in_creative_inventory = 1 },
@@ -253,79 +259,64 @@ minetest.register_craftitem(VISITOR_RETURN_ITEM, {
         request_return_hub(user)
         return itemstack
     end,
-    on_drop = function(itemstack)
-        return itemstack
-    end,
+    on_drop = toolbar.on_drop,
 })
+toolbar.register_tool(VISITOR_RETURN_TOOL, VISITOR_RETURN_ITEM, 0)
 
-local function remove_managed_items(player, item_name)
-    local inv = player:get_inventory()
-    if not inv then return end
+-- Students and other players (not staff): open the list of live class worlds
+-- from anywhere, like stepping into the HUB portal.
+local WORLDS_ITEM = "classrooms_bridge:worlds"
+local WORLDS_TOOL = "worlds"
+local last_worlds_request = {}
+local function request_worlds(user)
+    if not user or not user:is_player() then return end
+    local name = user:get_player_name()
+    local now = minetest.get_us_time()
+    if last_worlds_request[name] and now - last_worlds_request[name] < 1000000 then return end
+    last_worlds_request[name] = now
+    send_bridge_message({ action = "open_portal_worlds", player = name }, "open_portal_worlds")
+end
+minetest.register_craftitem(WORLDS_ITEM, {
+    description = "Class worlds\n" .. minetest.colorize("#aaaaaa", "Use to see the open class worlds and enter one"),
+    inventory_image = "classrooms_bridge_worlds.png",
+    wield_image = "classrooms_bridge_worlds.png",
+    range = 0,
+    stack_max = 1,
+    groups = { not_in_creative_inventory = 1 },
+    on_place = function(itemstack, placer) request_worlds(placer) return itemstack end,
+    on_use = function(itemstack, user) request_worlds(user) return itemstack end,
+    on_secondary_use = function(itemstack, user) request_worlds(user) return itemstack end,
+    on_drop = toolbar.on_drop,
+})
+toolbar.register_tool(WORLDS_TOOL, WORLDS_ITEM, 5)
 
-    local size = inv:get_size("main")
-    for index = 1, size do
-        if inv:get_stack("main", index):get_name() == item_name then
-            inv:set_stack("main", index, "")
+minetest.register_on_joinplayer(function(player)
+    local name = player:get_player_name()
+    minetest.after(1, function()
+        local current = minetest.get_player_by_name(name)
+        if current and not teacher_access[name] then
+            toolbar.set_enabled(current, WORLDS_TOOL, true)
         end
-    end
-end
+    end)
+end)
 
-local function ensure_visitor_return_item(player)
-    local inv = player:get_inventory()
-    if not inv or inv:get_size("main") < 1 then return end
-
-    remove_managed_items(player, VISITOR_RETURN_ITEM)
-    inv:set_stack("main", 1, ItemStack(VISITOR_RETURN_ITEM))
-end
+minetest.register_on_leaveplayer(function(player)
+    last_worlds_request[player:get_player_name()] = nil
+end)
 
 local function set_teacher_access(player, enabled)
     local name = player:get_player_name()
     teacher_access[name] = enabled or nil
     toolbar.set_enabled(player, TEACHER_PANEL_TOOL, enabled)
-    -- Students carry the map item; staff open the map from World Tools.
+    -- Students carry the map and class worlds items; staff use World Tools.
     worldmap.set_item(player, not enabled)
+    toolbar.set_enabled(player, WORLDS_TOOL, not enabled)
 end
-
--- Teacher tools have dedicated slots (see toolbar.lua); visitors keep the
--- return item locked in slot 1.
-minetest.register_allow_player_inventory_action(function(player, action, _, info)
-    local name = player:get_player_name()
-    if not visitor_state[name] then return end
-
-    if action == "move" then
-        if (info.from_list == "main" and info.from_index == 1)
-                or (info.to_list == "main" and info.to_index == 1) then
-            return 0
-        end
-    elseif (action == "put" or action == "take")
-            and info.listname == "main" and info.index == 1 then
-        return 0
-    end
-end)
-
-local visitor_item_timer = 0
-minetest.register_globalstep(function(dtime)
-    visitor_item_timer = visitor_item_timer + dtime
-    if visitor_item_timer < 1 then return end
-    visitor_item_timer = 0
-
-    for name in pairs(visitor_state) do
-        local player = minetest.get_player_by_name(name)
-        if player then
-            ensure_visitor_return_item(player)
-        end
-    end
-end)
 
 local function set_visitor_defaults(player)
     local name = player:get_player_name()
     if not visitor_state[name] then
         local privs = minetest.get_player_privs(name)
-        local inv = player:get_inventory()
-        local slot_one = ""
-        if inv and inv:get_size("main") >= 1 then
-            slot_one = inv:get_stack("main", 1):to_string()
-        end
         visitor_state[name] = {
             gamemode = mcl_gamemode and mcl_gamemode.get_gamemode
                 and mcl_gamemode.get_gamemode(player) or "survival",
@@ -334,7 +325,6 @@ local function set_visitor_defaults(player)
             noclip = privs.noclip == true,
             interact = privs.interact == true,
             return_interact_enabled = false,
-            slot_one = slot_one,
         }
     end
 
@@ -348,9 +338,11 @@ local function set_visitor_defaults(player)
     if mcl_gamemode and mcl_gamemode.set_gamemode then
         mcl_gamemode.set_gamemode(player, "survival")
     end
-    ensure_visitor_return_item(player)
+    toolbar.set_enabled(player, VISITOR_RETURN_TOOL, true)
+    worldmap.set_item(player, true)
     minetest.chat_send_player(name, minetest.colorize("#00CCFF",
-        "[Classrooms] Spectator visit enabled. Fly, fast, and noclip are available; use the slot 1 item to return to the HUB."))
+        "[Classrooms] You are a spectator: fly (K) and pass through blocks (H). "
+        .. "Use the door in your hotbar to return to the HUB, the map to teleport."))
 end
 
 local function update_visitor_return_access(player)
@@ -358,7 +350,11 @@ local function update_visitor_return_access(player)
     local saved = visitor_state[name]
     if not saved then return end
 
-    local should_enable = player:get_wielded_item():get_name() == VISITOR_RETURN_ITEM
+    -- Luanti needs "interact" to use an item: grant it only while holding
+    -- the exit door or the map, so spectators can't build or dig.
+    local wielded = player:get_wielded_item():get_name()
+    local should_enable = wielded == VISITOR_RETURN_ITEM or wielded == "classrooms_bridge:map"
+        or wielded == WORLDS_ITEM
     if saved.return_interact_enabled == should_enable then return end
 
     local privs = minetest.get_player_privs(name)
@@ -370,17 +366,14 @@ end
 local function clear_visitor_defaults(player, is_leaving)
     local name = player:get_player_name()
     local saved = visitor_state[name]
-    remove_managed_items(player, VISITOR_RETURN_ITEM)
+    if not is_leaving then
+        toolbar.set_enabled(player, VISITOR_RETURN_TOOL, false)
+    end
     if not saved then return end
     -- Disable visitor callbacks before restoring anything. In particular,
     -- Mineclonia may already have removed its player/HUD state when our
     -- on_leaveplayer callback runs.
     visitor_state[name] = nil
-
-    local inv = player:get_inventory()
-    if inv and inv:get_size("main") >= 1 then
-        inv:set_stack("main", 1, ItemStack(saved.slot_one or ""))
-    end
 
     local privs = minetest.get_player_privs(name)
     privs.fly = saved.fly and true or nil
@@ -462,6 +455,22 @@ local function get_classroom_spawn()
         yaw = tonumber(minetest.settings:get("classrooms_spawn_yaw")),
         pitch = tonumber(minetest.settings:get("classrooms_spawn_pitch")),
     }
+end
+
+-- World spawn for the map: the teacher's arrival point, else the game's.
+map_hooks.spawn = function(player)
+    local spawn = get_classroom_spawn()
+    if spawn then
+        return spawn.pos, spawn.yaw
+    end
+    if mcl_spawn and mcl_spawn.get_world_spawn_pos then
+        return mcl_spawn.get_world_spawn_pos(player)
+    end
+    return minetest.settings:get_pos("static_spawnpoint")
+end
+
+map_hooks.return_hub = function(player)
+    send_bridge_message({ action = "return_hub", player = player:get_player_name() }, "return_hub")
 end
 
 local function apply_classroom_spawn(player)
@@ -835,6 +844,13 @@ function handlers.mission_catalog_request(data)
         player = data.player,
         catalog = missions.catalog_payload(),
     }, "mission_catalog")
+end
+
+-- The teacher asked to hand out the mission's support tools again.
+function handlers.mission_reset_tools(data)
+    if tonumber(data.mission) then
+        missions.reset_tools(tonumber(data.mission))
+    end
 end
 
 function handlers.give_delivery_chest(data)

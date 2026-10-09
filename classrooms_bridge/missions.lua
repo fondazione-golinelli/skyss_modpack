@@ -44,6 +44,10 @@ local CANDIDATES = {
         { "oak_log", "mcl_trees:tree_oak", "mcl_core:tree" },
         { "oak_planks", "mcl_trees:wood_oak", "mcl_core:wood" },
         { "cobblestone", "mcl_core:cobble" },
+        { "iron_ingot", "mcl_core:iron_ingot" },
+        { "gold_ingot", "mcl_core:gold_ingot" },
+        { "coal", "mcl_core:coal_lump", "mcl_core:charcoal_lump" },
+        { "stick", "mcl_core:stick" },
     },
     animals = {
         { "cow", "mobs_mc:cow" },
@@ -75,6 +79,8 @@ local CANDIDATES = {
         { "wool", "Wool", "group:wool" },
         { "leaves", "Leaves", "group:leaves" },
         { "torches", "Torches", "group:torch" },
+        { "crafting_table", "Crafting tables", "mcl_crafting_table:crafting_table" },
+        { "furnace", "Furnaces", "mcl_furnaces:furnace", "mcl_furnaces:furnace_active" },
     },
     tools = {
         { "water_bucket", "mcl_buckets:bucket_water" },
@@ -94,6 +100,11 @@ local CANDIDATES = {
         { "fence_gate", "mcl_fences:fence_gate" },
         { "torch", "mcl_torches:torch" },
         { "lead", "mcl_mobitems:lead" },
+        { "iron_ingot", "mcl_core:iron_ingot" },
+        { "coal", "mcl_core:coal_lump", "mcl_core:charcoal_lump" },
+        { "stick", "mcl_core:stick" },
+        { "crafting_table", "mcl_crafting_table:crafting_table" },
+        { "furnace", "mcl_furnaces:furnace" },
         { "cow_egg", "mobs_mc:cow" },
         { "sheep_egg", "mobs_mc:sheep" },
         { "pig_egg", "mobs_mc:pig" },
@@ -213,15 +224,120 @@ local function chest_key(zone_id)
     return "mission_chest_" .. tostring(zone_id)
 end
 
-local function chest_formspec(pos)
-    local spos = pos.x .. "," .. pos.y .. "," .. pos.z
-    return "formspec_version[6]size[11.75,10.4]"
-        .. "label[0.4,0.45;" .. minetest.formspec_escape("Delivery chest: put the requested items here") .. "]"
-        .. "list[nodemeta:" .. spos .. ";main;0.4,0.9;9,3;]"
-        .. "list[current_player;main;0.4,5.25;9,3;9]"
-        .. "list[current_player;main;0.4,9.05;9,1;]"
-        .. "listring[nodemeta:" .. spos .. ";main]listring[current_player;main]"
+local chest_viewers = {} -- [player] = pos string of the chest they look at
+
+local function chest_zone(pos)
+    local id = minetest.get_meta(pos):get_int("zone_id")
+    for _, zone in ipairs(zones.list()) do
+        if (id ~= 0 and zone.id == id) then return zone end
+    end
+    return zones.zone_at(pos)
 end
+
+-- Delivery goals of the chest's mission: { label, need, have, names = set, icon }.
+local function chest_requests(pos)
+    local zone = chest_zone(pos)
+    local mission = zone and zone.mission
+    local list = {}
+    if not mission then return list, zone, mission end
+    local inv = minetest.get_meta(pos):get_inventory()
+    for _, goal in ipairs(mission.objectives or {}) do
+        if goal.type == "deliver" then
+            local entry = resolve("deliver", goal.key)
+            if entry then
+                local names, have = {}, 0
+                for _, n in ipairs(entry.names) do names[n] = true end
+                for _, stack in ipairs(inv:get_list("main") or {}) do
+                    if names[stack:get_name()] then have = have + stack:get_count() end
+                end
+                table.insert(list, { label = goal.label or entry.label, need = tonumber(goal.count) or 1,
+                    have = have, names = names, icon = entry.icon })
+            end
+        end
+    end
+    return list, zone, mission
+end
+
+local function chest_formspec(pos, viewer)
+    local spos = pos.x .. "," .. pos.y .. "," .. pos.z
+    local requests, zone, mission = chest_requests(pos)
+    local esc = minetest.formspec_escape
+    local fs = {
+        "formspec_version[6]size[12,11.6]",
+        "bgcolor[#141a2a;true]box[0,0;12,11.6;#141a2a]",
+        "box[0,0;12,1.0;#0f3460]box[0,1.0;12,0.05;#e94560]",
+        "style_type[label;textcolor=#f0f0f0]",
+        "label[0.35,0.35;" .. esc("Delivery chest") .. "]",
+        "label[0.35,0.72;" .. esc(minetest.colorize("#aaaaaa",
+            (zone and ("Zone " .. zone.name) or "No zone") ..
+            (mission and ("  ·  " .. tostring(mission.title)) or ""))) .. "]",
+        "button_exit[11.1,0.17;0.72,0.66;chest_close;X]",
+        "box[0.3,1.3;11.4,2.6;#202a44]",
+        "label[0.55,1.6;" .. esc(minetest.colorize("#aaaaaa", "REQUESTED ITEMS")) .. "]",
+    }
+    if #requests == 0 then
+        table.insert(fs, "label[0.55,2.3;" .. esc(minetest.colorize("#aaaaaa",
+            mission and "This mission asks for no deliveries." or "This zone has no mission.")) .. "]")
+    end
+    for i, r in ipairs(requests) do
+        if i > 6 then break end
+        local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
+        local x, y = 0.5 + col * 5.65, 1.9 + row * 0.65
+        local done = r.have >= r.need
+        table.insert(fs, ("box[%g,%g;5.45,0.58;#28334f]"):format(x, y))
+        if r.icon then
+            table.insert(fs, ("item_image[%g,%g;0.5,0.5;%s]"):format(x + 0.05, y + 0.04, r.icon))
+        end
+        table.insert(fs, ("label[%g,%g;%s]"):format(x + 0.65, y + 0.29, esc(r.label)))
+        local w = 1.9
+        table.insert(fs, ("box[%g,%g;%g,0.2;#151b2e]"):format(x + 2.55, y + 0.19, w))
+        local ratio = math.min(1, r.have / math.max(r.need, 1))
+        if ratio > 0 then
+            table.insert(fs, ("box[%g,%g;%g,0.2;%s]"):format(x + 2.55, y + 0.19, w * ratio, done and "#3fb56b" or "#2a8c7f"))
+        end
+        table.insert(fs, ("label[%g,%g;%s]"):format(x + 4.55, y + 0.29,
+            esc(minetest.colorize(done and "#7fd18b" or "#f0f0f0", math.min(r.have, r.need) .. "/" .. r.need))))
+    end
+    table.insert(fs, "label[0.55,3.65;" .. esc(minetest.colorize("#aaaaaa",
+        "Only these items fit, up to the amount still missing.")) .. "]")
+
+    -- Inventories with visible slots, in the panel style.
+    table.insert(fs, "listcolors[#2a3450;#3a4a78;#0f1424;#202a44;#f0f0f0]")
+    table.insert(fs, "style_type[list;size=0.85,0.85;spacing=0.15,0.15]")
+    local lx = (12 - (9 * 0.85 + 8 * 0.15)) / 2
+    table.insert(fs, "label[" .. lx .. ",4.3;" .. esc(minetest.colorize("#aaaaaa", "CHEST")) .. "]")
+    table.insert(fs, ("list[nodemeta:%s;main;%g,4.5;9,3;]"):format(spos, lx))
+    table.insert(fs, "label[" .. lx .. ",7.65;" .. esc(minetest.colorize("#aaaaaa", "YOUR INVENTORY")) .. "]")
+    table.insert(fs, ("list[current_player;main;%g,7.85;9,3;9]"):format(lx))
+    table.insert(fs, ("list[current_player;main;%g,10.75;9,1;]"):format(lx))
+    table.insert(fs, ("listring[nodemeta:%s;main]listring[current_player;main]"):format(spos))
+    return table.concat(fs)
+end
+
+local function show_chest(player, pos)
+    local name = player:get_player_name()
+    chest_viewers[name] = minetest.pos_to_string(pos)
+    minetest.show_formspec(name, CHEST, chest_formspec(pos, player))
+end
+
+-- Redraw the chest for everyone looking at it (progress changed).
+local function refresh_chest(pos)
+    local key = minetest.pos_to_string(pos)
+    for name, viewed in pairs(chest_viewers) do
+        if viewed == key then
+            local player = minetest.get_player_by_name(name)
+            if player then show_chest(player, pos) else chest_viewers[name] = nil end
+        end
+    end
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+    if formname ~= CHEST then return false end
+    if fields.quit or fields.chest_close then
+        chest_viewers[player:get_player_name()] = nil
+    end
+    return true
+end)
 
 minetest.register_node(CHEST, {
     description = "Delivery Chest\n" .. minetest.colorize("#aaaaaa", "Place it inside a mission zone"),
@@ -249,7 +365,9 @@ minetest.register_node(CHEST, {
             return
         end
         storage:set_string(chest_key(zone.id), minetest.pos_to_string(pos))
-        minetest.get_meta(pos):set_string("infotext", "Delivery chest: " .. zone.name)
+        local meta = minetest.get_meta(pos)
+        meta:set_int("zone_id", zone.id)
+        meta:set_string("infotext", "Delivery chest: " .. zone.name)
         minetest.chat_send_player(name, minetest.colorize("#00CC66",
             "[Mission] Delivery chest set for zone " .. zone.name .. "."))
     end,
@@ -258,8 +376,23 @@ minetest.register_node(CHEST, {
     end,
     on_rightclick = function(pos, _, clicker)
         if clicker and clicker:is_player() then
-            minetest.show_formspec(clicker:get_player_name(), CHEST, chest_formspec(pos))
+            show_chest(clicker, pos)
         end
+    end,
+    -- Only requested items, up to the amount still missing.
+    allow_metadata_inventory_put = function(pos, _, _, stack, player)
+        local requests = chest_requests(pos)
+        for _, r in ipairs(requests) do
+            if r.names[stack:get_name()] then
+                return math.max(0, math.min(stack:get_count(), r.need - r.have))
+            end
+        end
+        local wanted = {}
+        for _, r in ipairs(requests) do table.insert(wanted, r.label) end
+        minetest.chat_send_player(player:get_player_name(), minetest.colorize("#FFB347",
+            #wanted > 0 and ("[Mission] This chest only takes: " .. table.concat(wanted, ", ") .. ".")
+            or "[Mission] This chest takes nothing right now."))
+        return 0
     end,
     -- Students deliver; only staff take items back out.
     allow_metadata_inventory_take = function(_, _, _, stack, player)
@@ -268,8 +401,19 @@ minetest.register_node(CHEST, {
     allow_metadata_inventory_move = function(_, _, _, _, _, count, player)
         return is_staff(player:get_player_name()) and count or 0
     end,
+    on_metadata_inventory_put = function(pos) refresh_chest(pos) end,
+    on_metadata_inventory_take = function(pos) refresh_chest(pos) end,
     on_blast = function() end,
 })
+
+minetest.register_on_leaveplayer(function(player)
+    chest_viewers[player:get_player_name()] = nil
+end)
+
+-- Students get the support tools again the next time they are in the zone.
+function missions.reset_tools(mission_id)
+    storage:set_string("mission_tools_" .. tostring(mission_id), "")
+end
 
 function missions.give_chest(player)
     local leftover = player:get_inventory():add_item("main", ItemStack(CHEST))
