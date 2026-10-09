@@ -496,6 +496,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     local name = player:get_player_name()
     local staff = is_staff(name)
     local v = view_of(player)
+    -- "Return to HUB" is an exit button: it arrives together with "quit".
+    if fields.map_hub and not staff then
+        if hooks and hooks.return_hub then hooks.return_hub(player) end
+        return true
+    end
     if fields.map_close or fields.quit then return true end
     if fields.map_name then v.name_text = fields.map_name end
 
@@ -519,10 +524,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     end
 
-    if fields.map_hub and not staff then
-        if hooks and hooks.return_hub then hooks.return_hub(player) end
-        return true
-    end
     if fields.map_spawn then
         local spawn_pos, spawn_yaw
         if hooks and hooks.spawn then spawn_pos, spawn_yaw = hooks.spawn(player) end

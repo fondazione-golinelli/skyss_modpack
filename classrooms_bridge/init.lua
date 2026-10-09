@@ -394,10 +394,12 @@ end
 -- bridge granted (marked in player meta) is taken back.
 local student_abilities = { fly = false, creative = false }
 local GRANTED_FLY, GRANTED_CREATIVE = "classrooms_granted_fly", "classrooms_granted_creative"
+local GRANTED_FAST = "classrooms_granted_fast"
 
 local function forget_student_abilities(player)
     local meta = player:get_meta()
     meta:set_string(GRANTED_FLY, "")
+    meta:set_string(GRANTED_FAST, "")
     meta:set_string(GRANTED_CREATIVE, "")
 end
 
@@ -407,15 +409,20 @@ local function apply_student_abilities(player)
     local meta = player:get_meta()
     local notes = {}
     local privs = minetest.get_player_privs(name)
-    if student_abilities.fly and not privs.fly then
-        privs.fly = true
+    -- Flying comes with fast movement (J), like for teachers.
+    if student_abilities.fly and (not privs.fly or not privs.fast) then
+        if not privs.fly then meta:set_string(GRANTED_FLY, "1") end
+        if not privs.fast then meta:set_string(GRANTED_FAST, "1") end
+        privs.fly, privs.fast = true, true
         minetest.set_player_privs(name, privs)
-        meta:set_string(GRANTED_FLY, "1")
-        table.insert(notes, "you can fly (press K)")
-    elseif not student_abilities.fly and meta:get_string(GRANTED_FLY) == "1" then
-        privs.fly = nil
+        table.insert(notes, "you can fly (K) and move fast (J)")
+    elseif not student_abilities.fly
+            and (meta:get_string(GRANTED_FLY) == "1" or meta:get_string(GRANTED_FAST) == "1") then
+        if meta:get_string(GRANTED_FLY) == "1" then privs.fly = nil end
+        if meta:get_string(GRANTED_FAST) == "1" then privs.fast = nil end
         minetest.set_player_privs(name, privs)
         meta:set_string(GRANTED_FLY, "")
+        meta:set_string(GRANTED_FAST, "")
         table.insert(notes, "flying is off")
     end
     if mcl_gamemode and mcl_gamemode.set_gamemode then
@@ -451,18 +458,245 @@ minetest.register_on_mods_loaded(function()
 end)
 
 -- Visitors cannot take damage or damage another connected player.
+-- ── World rules: hurt, PvP, hunger ───────────────────────────────────────
+-- Mineclonia builds the health/armor/hunger HUD bars and turns hunger on only
+-- when the server starts with damage and hunger enabled, and crashes if
+-- enable_damage changes while it runs. Class worlds therefore always start
+-- with damage, PvP and hunger on, and the teacher's rules are applied here,
+-- live. Until the proxy sends them (class worlds only) the engine settings
+-- rule, so the HUB and its minigames are untouched.
+local rules_storage = minetest.get_mod_storage()
+-- { damage, pvp, hunger } or nil; remembered so a restarted class world
+-- applies them before the proxy sends them again.
+local world_rules = minetest.parse_json(rules_storage:get_string("world_rules") ~= ""
+    and rules_storage:get_string("world_rules") or "null")
+if type(world_rules) ~= "table" then world_rules = nil end
+
+-- Teachers, players in creative mode and flying players never get hurt or
+-- hungry.
+local function rules_exempt(player)
+    local name = player:get_player_name()
+    if teacher_access[name] or visitor_state[name] then return true end
+    if minetest.check_player_privs(name, { fly = true }) then return true end
+    return mcl_gamemode and mcl_gamemode.get_gamemode
+        and mcl_gamemode.get_gamemode(player) == "creative" or false
+end
+
+local function can_get_hurt(player)
+    return not world_rules or (world_rules.damage and not rules_exempt(player))
+end
+
+local function gets_hungry(player)
+    return not world_rules or (world_rules.hunger and not rules_exempt(player))
+end
+
+-- Shows or hides a Mineclonia HUD bar, only if it exists for the player.
+local function show_hudbar(player, id, show)
+    if not hb or not hb.get_hudtable then return end
+    local name = player:get_player_name()
+    local t = hb.get_hudtable(id)
+    if not t or not t.hudstate or not t.hudstate[name] or not t.hudids or not t.hudids[name] then return end
+    if show and t.hudstate[name].hidden then
+        hb.unhide_hudbar(player, id)
+    elseif not show and not t.hudstate[name].hidden then
+        hb.hide_hudbar(player, id)
+    end
+end
+
+local function hunger_active()
+    return mcl_hunger and mcl_hunger.active == true and mcl_hunger.get_hunger and mcl_hunger.set_hunger
+end
+
+-- ── World lock: look, don't touch ──
+-- Students lose "interact" like spectators (no digging, placing, using
+-- blocks or hitting), except while holding the map so they can still use it.
+local LOCK_TOOK_INTERACT = "classrooms_lock_took_interact"
+local LOCK_ALLOWED_ITEMS = { ["classrooms_bridge:map"] = true }
+local locked_players = {} -- [name] = true while the lock applies to them
+
+local function lock_applies(player)
+    local name = player:get_player_name()
+    return world_rules and world_rules.locked and not teacher_access[name] and not visitor_state[name] or false
+end
+
+local function set_interact(name, value)
+    local privs = minetest.get_player_privs(name)
+    if (privs.interact == true) ~= value then
+        privs.interact = value or nil
+        minetest.set_player_privs(name, privs)
+    end
+end
+
+local function apply_lock(player)
+    local name = player:get_player_name()
+    local meta = player:get_meta()
+    if lock_applies(player) then
+        if not locked_players[name] then
+            locked_players[name] = true
+            if minetest.get_player_privs(name).interact then
+                meta:set_string(LOCK_TOOK_INTERACT, "1")
+            end
+            minetest.chat_send_player(name, minetest.colorize("#FFB347",
+                "[Teacher] The world is locked: you can look around but not build or use things."))
+        end
+        if meta:get_string(LOCK_TOOK_INTERACT) == "1" then
+            set_interact(name, LOCK_ALLOWED_ITEMS[player:get_wielded_item():get_name()] == true)
+        end
+    elseif locked_players[name] or meta:get_string(LOCK_TOOK_INTERACT) == "1" then
+        locked_players[name] = nil
+        if meta:get_string(LOCK_TOOK_INTERACT) == "1" then
+            meta:set_string(LOCK_TOOK_INTERACT, "")
+            set_interact(name, true)
+            minetest.chat_send_player(name, minetest.colorize("#00CC66",
+                "[Teacher] The world is unlocked: you can build again."))
+        end
+    end
+end
+
+local function apply_rules_to(player)
+    if not world_rules then return end
+    local hurt, hungry = can_get_hurt(player), gets_hungry(player)
+    show_hudbar(player, "health", hurt)
+    show_hudbar(player, "armor", hurt)
+    apply_lock(player)
+    if hunger_active() then
+        show_hudbar(player, "hunger", hungry)
+        if not hungry and mcl_hunger.get_hunger(player) < 20 then
+            mcl_hunger.set_hunger(player, 20)
+        end
+    end
+end
+
+-- Asks the proxy for a restart when a rule needs what the server did not
+-- start with (worlds created before rules were live).
+local restart_asked = {}
+local function check_engine_support()
+    if not world_rules then return end
+    local missing
+    if world_rules.damage and not minetest.settings:get_bool("enable_damage") then
+        missing = "damage"
+    elseif world_rules.hunger and not hunger_active() then
+        missing = "hunger"
+    end
+    if missing and not restart_asked[missing] then
+        restart_asked[missing] = true
+        send_bridge_message({ action = "restart_needed", reason = missing }, "restart_needed")
+    end
+end
+
+function handlers.set_world_rules(data)
+    world_rules = {
+        damage = data.damage == true,
+        pvp = data.pvp == true,
+        hunger = data.hunger == true,
+        locked = data.locked == true,
+    }
+    rules_storage:set_string("world_rules", minetest.write_json(world_rules))
+    -- Player hits are filtered below; the engine must not block them.
+    if world_rules.pvp then minetest.settings:set_bool("enable_pvp", true) end
+    check_engine_support()
+    for _, player in ipairs(minetest.get_connected_players()) do
+        apply_rules_to(player)
+    end
+end
+
 minetest.register_on_player_hpchange(function(player, hp_change)
-    if hp_change < 0 and visitor_state[player:get_player_name()] then
+    if hp_change < 0 and (visitor_state[player:get_player_name()] or not can_get_hurt(player)) then
         return 0
     end
     return hp_change
 end, true)
 
-minetest.register_on_punchplayer(function(player, hitter)
+-- A hit between players that must do nothing: no damage, no knockback.
+local function blocked_hit(player, hitter)
     local player_name = player and player:get_player_name() or ""
-    local hitter_name = hitter and hitter:is_player() and hitter:get_player_name() or ""
+    local hitter_name = hitter and hitter.is_player and hitter:is_player() and hitter:get_player_name() or ""
     if visitor_state[player_name] or visitor_state[hitter_name] then
         return true
+    end
+    return hitter_name ~= "" and world_rules ~= nil and (not world_rules.pvp or locked_players[hitter_name] == true)
+end
+
+minetest.register_on_punchplayer(function(player, hitter)
+    if blocked_hit(player, hitter) then return true end
+end)
+
+minetest.register_on_mods_loaded(function()
+    -- Every punch callback runs whatever the others return (damage,
+    -- knockback, Mineclonia's own health): skip them all for blocked hits.
+    for i, callback in ipairs(minetest.registered_on_punchplayers or {}) do
+        minetest.registered_on_punchplayers[i] = function(player, hitter, ...)
+            if blocked_hit(player, hitter) then return true end
+            return callback(player, hitter, ...)
+        end
+    end
+    -- Mineclonia keeps its own health (mcl_damage) and deducts it before the
+    -- engine HP: cancel damage first in its modifier chain, so no hurt
+    -- sound, flash or desync happens.
+    if mcl_damage and mcl_damage.modifiers then
+        table.insert(mcl_damage.modifiers, 1, { priority = -math.huge, func = function(obj, damage, reason)
+            if not obj or not obj.is_player or not obj:is_player() or damage <= 0 then return nil end
+            if visitor_state[obj:get_player_name()] or not can_get_hurt(obj) then return 0 end
+            local source = reason and (reason.source or reason.direct)
+            if source and blocked_hit(obj, source) then return 0 end
+            return nil
+        end })
+    end
+    -- Keep the health, armor and hunger bars hidden while they don't apply
+    -- (Mineclonia shows the health bar again on every update).
+    if hb and hb.unhide_hudbar then
+        local unhide = hb.unhide_hudbar
+        hb.unhide_hudbar = function(player, id)
+            if world_rules and player and player.is_player and player:is_player() then
+                if ((id == "health" or id == "armor") and not can_get_hurt(player))
+                        or (id == "hunger" and not gets_hungry(player)) then
+                    return hb.hide_hudbar(player, id)
+                end
+            end
+            return unhide(player, id)
+        end
+    end
+    -- Locked world: nothing can be built or dug by students.
+    local is_protected = minetest.is_protected
+    minetest.is_protected = function(pos, name)
+        if locked_players[name] then return true end
+        return is_protected(pos, name)
+    end
+end)
+
+minetest.register_on_leaveplayer(function(player)
+    locked_players[player:get_player_name()] = nil
+end)
+
+-- Hunger only drops through mcl_hunger.exhaust: skip it for those who must
+-- not get hungry.
+minetest.register_on_mods_loaded(function()
+    if not hunger_active() or not mcl_hunger.exhaust then return end
+    local exhaust = mcl_hunger.exhaust
+    mcl_hunger.exhaust = function(playername, increase)
+        local player = minetest.get_player_by_name(playername)
+        if player and not gets_hungry(player) then return false end
+        return exhaust(playername, increase)
+    end
+end)
+
+local rules_timer, lock_timer = 0, 0
+minetest.register_globalstep(function(dtime)
+    if not world_rules then return end
+    rules_timer = rules_timer + dtime
+    lock_timer = lock_timer + dtime
+    if rules_timer >= 2 then
+        rules_timer, lock_timer = 0, 0
+        for _, player in ipairs(minetest.get_connected_players()) do
+            apply_rules_to(player)
+        end
+    elseif lock_timer >= 0.1 and next(locked_players) then
+        -- Holding the map gives "interact" back for a moment.
+        lock_timer = 0
+        for name in pairs(locked_players) do
+            local player = minetest.get_player_by_name(name)
+            if player then apply_lock(player) end
+        end
     end
 end)
 
@@ -877,7 +1111,9 @@ function handlers.set_settings(data)
 
     local runtime_count = 0
     for key, value in pairs(runtime_settings) do
-        if type(key) == "string" then
+        -- Changing enable_damage while running crashes Mineclonia's HUD bars:
+        -- hurt is a live world rule instead (set_world_rules).
+        if type(key) == "string" and key ~= "enable_damage" then
             minetest.settings:set(key, tostring(value))
             runtime_count = runtime_count + 1
         end
