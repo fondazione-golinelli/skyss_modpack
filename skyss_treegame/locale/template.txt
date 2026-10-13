@@ -1,0 +1,13 @@
+# textdomain: skyss_treegame
+Plant trees on the marked spots and grow a forest together.=
+Plant trees on the marked spots! Goal: @1 trees. You have @2 seconds!=
+Time's up! The forest was not planted in time. @1/@2 trees grown.=
+2 minutes left! Trees: @1/@2=
+1 minute left! Trees: @1/@2=
+You died! Keep planting...=
+Plant only on the marked spots! (Sapling refunded)=
+Tree planted! Your contribution: @1  |  Team total: @2/@3=
+@1/@2 trees planted! Keep going!=
+All @1 trees planted! The forest is growing — explore for @2 seconds!=
+Exploration time is over. Thanks for planting!=
+30 seconds of exploration left!=

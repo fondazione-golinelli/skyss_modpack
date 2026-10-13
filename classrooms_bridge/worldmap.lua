@@ -14,6 +14,15 @@
 -- sends the player back to the HUB.
 local modpath, zones, toolbar, is_staff, is_frozen, hooks = ...
 
+local S = minetest.get_translator("classrooms_bridge")
+local TAG_MAP = S("[Map]") .. " "
+
+-- Translates on the server, for texts that are cut or stored here.
+local function translate_for(name, text)
+    local info = minetest.get_player_information(name)
+    return minetest.get_translated_string(info and info.lang_code or "", text)
+end
+
 local FORM = "classrooms_bridge:map"
 local ITEM = "classrooms_bridge:map"
 local TOOL = "map"
@@ -156,6 +165,8 @@ local C = { bg = "#141a2a", header = "#0f3460", accent = "#e94560", card = "#202
 
 local function esc(s) return minetest.formspec_escape(tostring(s)) end
 local function colored(color, text) return esc(minetest.colorize(color, text)) end
+-- Translated text for formspec elements.
+local function F(...) return esc(S(...)) end
 
 local function distance_to(player, x, z)
     local p = player:get_pos()
@@ -198,19 +209,19 @@ show = function(player)
         "style_type[button;bgcolor=" .. C.button .. ";border=false;textcolor=" .. C.light .. "]",
         "style_type[label;textcolor=" .. C.light .. "]",
         "box[0,0;17.2,1.0;" .. C.header .. "]box[0,1.0;17.2,0.05;" .. C.accent .. "]",
-        "label[0.35,0.35;" .. colored(C.light, "World map") .. "]",
+        "label[0.35,0.35;" .. colored(C.light, S("World map")) .. "]",
         "label[0.35,0.72;" .. colored(C.muted, zoomed
-            and "Wheel and scrollbars move the map · click to select"
-            or "Click the map to select a point") .. "]",
+            and S("Wheel and scrollbars move the map · click to select")
+            or S("Click the map to select a point")) .. "]",
         "image_button_exit[16.35,0.17;0.66,0.66;clear.png;map_close;]",
-        ("style[map_spawn;bgcolor=%s]button[%g,0.2;3.75,0.6;map_spawn;Teleport to world spawn]"):format(
-            C.primary, staff and 12.45 or 9.7),
-        "tooltip[map_spawn;Go back to where players arrive in this world]",
+        ("style[map_spawn;bgcolor=%s]button[%g,0.2;3.75,0.6;map_spawn;%s]"):format(
+            C.primary, staff and 12.45 or 9.7, F("Teleport to world spawn")),
+        "tooltip[map_spawn;" .. F("Go back to where players arrive in this world") .. "]",
         ("box[%g,%g;%g,%g;#1b2033]"):format(ox, oy, VIEW, VIEW),
     }
     if not staff then
-        table.insert(fs, ("style[map_hub;bgcolor=%s]button_exit[13.55,0.2;2.65,0.6;map_hub;Return to HUB]"):format("#9b2c3c"))
-        table.insert(fs, "tooltip[map_hub;Leave this world and go back to the HUB]")
+        table.insert(fs, ("style[map_hub;bgcolor=%s]button_exit[13.55,0.2;2.65,0.6;map_hub;%s]"):format("#9b2c3c", F("Return to HUB")))
+        table.insert(fs, "tooltip[map_hub;" .. F("Leave this world and go back to the HUB") .. "]")
     end
 
     if zoomed then
@@ -317,9 +328,9 @@ show = function(player)
                 local group = group_of[other_name]
                 local color, info = "#ffffff", other_name
                 if is_staff(other_name) then
-                    color, info = "#ffd43b", other_name .. " (teacher)"
+                    color, info = "#ffd43b", S("@1 (teacher)", other_name)
                 elseif group then
-                    color, info = group.color, other_name .. " · group " .. group.name
+                    color, info = group.color, S("@1 · group @2", other_name, group.name)
                 end
                 table.insert(v.players, { name = other_name, x = math.floor(p.x + 0.5), z = math.floor(p.z + 0.5) })
                 local field = "map_pl_" .. #v.players
@@ -334,51 +345,51 @@ show = function(player)
     -- Side panel.
     local px0 = 10.5
     table.insert(fs, ("box[%g,1.25;6.4,2.35;%s]"):format(px0, C.card))
-    table.insert(fs, ("label[%g,1.55;%s]"):format(px0 + 0.2, colored(C.muted, "ZOOM ×" .. zoom)))
+    table.insert(fs, ("label[%g,1.55;%s]"):format(px0 + 0.2, colored(C.muted, S("ZOOM ×@1", zoom))))
     table.insert(fs, ("button[%g,1.3;0.8,0.55;map_zoom_out;-]button[%g,1.3;0.8,0.55;map_zoom_in;+]"):format(px0 + 2.2, px0 + 3.05))
-    table.insert(fs, ("button[%g,1.3;1.6,0.55;map_me;Me]"):format(px0 + 4.6))
-    table.insert(fs, "tooltip[map_me;Center the map on your position]")
+    table.insert(fs, ("button[%g,1.3;1.6,0.55;map_me;%s]"):format(px0 + 4.6, F("Me")))
+    table.insert(fs, "tooltip[map_me;" .. F("Center the map on your position") .. "]")
     table.insert(fs, ("button[%g,2.0;0.9,0.5;map_n;N]"):format(px0 + 1.4))
     table.insert(fs, ("button[%g,2.55;0.9,0.5;map_w;W]button[%g,2.55;0.9,0.5;map_e;E]"):format(px0 + 0.45, px0 + 2.35))
     table.insert(fs, ("button[%g,3.1;0.9,0.5;map_s;S]"):format(px0 + 1.4))
     if staff then
         local shown = v.show_players ~= false
         table.insert(fs, ("style[map_players;bgcolor=%s]button[%g,2.0;2.6,0.5;map_players;%s]"):format(
-            shown and C.primary or C.button, px0 + 3.6, shown and "Students: shown" or "Students: hidden"))
-        table.insert(fs, "tooltip[map_players;Show or hide the other players on the map]")
+            shown and C.primary or C.button, px0 + 3.6, shown and F("Students: shown") or F("Students: hidden")))
+        table.insert(fs, "tooltip[map_players;" .. F("Show or hide the other players on the map") .. "]")
     end
     table.insert(fs, ("label[%g,2.8;%s]"):format(px0 + 3.6, colored(C.muted,
-        ("You: %d, %d"):format(math.floor(me.x + 0.5), math.floor(me.z + 0.5)))))
+        S("You: @1, @2", math.floor(me.x + 0.5), math.floor(me.z + 0.5)))))
 
     table.insert(fs, ("box[%g,3.75;6.4,%g;%s]"):format(px0, staff and 2.35 or 1.25, C.card))
     if v.sel then
         table.insert(fs, ("label[%g,4.05;%s]"):format(px0 + 0.2, colored(C.light,
-            ("Selected point: %d, %d"):format(v.sel.x, v.sel.z))))
-        table.insert(fs, ("button[%g,4.35;1.9,0.5;map_center;Center]"):format(px0 + 0.2))
+            S("Selected point: @1, @2", v.sel.x, v.sel.z))))
+        table.insert(fs, ("button[%g,4.35;1.9,0.5;map_center;%s]"):format(px0 + 0.2, F("Center")))
         if staff then
-            table.insert(fs, ("button[%g,4.35;2.0,0.5;map_go_sel;Go there]"):format(px0 + 2.2))
+            table.insert(fs, ("button[%g,4.35;2.0,0.5;map_go_sel;%s]"):format(px0 + 2.2, F("Go there")))
             table.insert(fs, ("field[%g,5.0;2.3,0.5;map_name;;%s]"):format(px0 + 0.2, esc(v.name_text)))
-            table.insert(fs, "field_close_on_enter[map_name;false]tooltip[map_name;Name of the new point]")
-            table.insert(fs, ("style[map_add_wp;bgcolor=%s]button[%g,5.0;1.95,0.5;map_add_wp;+ Waypoint]"):format(C.primary, px0 + 2.6))
-            table.insert(fs, ("style[map_add_tp;bgcolor=%s]button[%g,5.0;1.75,0.5;map_add_tp;+ Teleport]"):format(C.primary, px0 + 4.6))
-            table.insert(fs, "tooltip[map_add_wp;Students see it as a marker with distance and direction]")
-            table.insert(fs, "tooltip[map_add_tp;Students can teleport here from their map]")
+            table.insert(fs, "field_close_on_enter[map_name;false]tooltip[map_name;" .. F("Name of the new point") .. "]")
+            table.insert(fs, ("style[map_add_wp;bgcolor=%s]button[%g,5.0;1.95,0.5;map_add_wp;%s]"):format(C.primary, px0 + 2.6, F("+ Waypoint")))
+            table.insert(fs, ("style[map_add_tp;bgcolor=%s]button[%g,5.0;1.75,0.5;map_add_tp;%s]"):format(C.primary, px0 + 4.6, F("+ Teleport")))
+            table.insert(fs, "tooltip[map_add_wp;" .. F("Students see it as a marker with distance and direction") .. "]")
+            table.insert(fs, "tooltip[map_add_tp;" .. F("Students can teleport here from their map") .. "]")
         end
     else
-        table.insert(fs, ("label[%g,4.25;%s]"):format(px0 + 0.2, colored(C.muted, "Click the map to select a point.")))
+        table.insert(fs, ("label[%g,4.25;%s]"):format(px0 + 0.2, colored(C.muted, S("Click the map to select a point."))))
     end
 
     -- Places list: markers, then zones the player can teleport to.
     local list_y = staff and 6.25 or 5.15
     local list_h = 10.95 - list_y
     table.insert(fs, ("box[%g,%g;6.4,%g;%s]"):format(px0, list_y, list_h, C.card))
-    table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.28, colored(C.muted, "PLACES")))
+    table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.28, colored(C.muted, S("PLACES"))))
     local rows = {}
     for _, m in ipairs(markers) do table.insert(rows, { marker = m }) end
     for _, zone in ipairs(teleport_zones(name, staff)) do table.insert(rows, { zone = zone }) end
     if #rows == 0 then
         table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.75, colored(C.muted,
-            staff and "None yet: select a point on the map." or "Your teacher has not placed any yet.")))
+            staff and S("None yet: select a point on the map.") or S("Your teacher has not placed any yet."))))
     end
     local area_y, area_h = list_y + 0.5, list_h - 0.6
     local content_h = #rows * 0.55
@@ -404,19 +415,19 @@ show = function(player)
             local zone = row.zone
             local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
             table.insert(fs, ("box[0.15,%g;0.3,0.3;%s]"):format(ly + 0.1, color))
-            label, dist = "Zone: " .. zone.name, distance_to(player, zone.tp.x, zone.tp.z)
+            label, dist = translate_for(name, S("Zone: @1", zone.name)), distance_to(player, zone.tp.x, zone.tp.z)
             go, show_key = "map_ztp_" .. zone.id, "map_zshow_" .. zone.id
         end
         if #label > 13 then label = label:sub(1, 12) .. "…" end
         table.insert(fs, ("label[0.6,%g;%s]"):format(ly + 0.25, colored(C.light, label)))
         table.insert(fs, ("label[2.75,%g;%s]"):format(ly + 0.25, colored(C.muted, dist)))
-        table.insert(fs, ("button[3.75,%g;0.95,0.42;%s;Show]"):format(ly + 0.04, show_key))
+        table.insert(fs, ("button[3.75,%g;0.95,0.42;%s;%s]"):format(ly + 0.04, show_key, F("Show")))
         if go then
-            table.insert(fs, ("style[%s;bgcolor=%s]button[4.75,%g;0.75,0.42;%s;Go]tooltip[%s;Teleport there]"):format(
-                go, C.primary, ly + 0.04, go, go))
+            table.insert(fs, ("style[%s;bgcolor=%s]button[4.75,%g;0.75,0.42;%s;%s]tooltip[%s;%s]"):format(
+                go, C.primary, ly + 0.04, go, F("Go"), go, F("Teleport there")))
         end
         if del then
-            table.insert(fs, ("image_button[5.55,%g;0.42,0.42;clear.png;%s;]tooltip[%s;Remove]"):format(ly + 0.04, del, del))
+            table.insert(fs, ("image_button[5.55,%g;0.42,0.42;clear.png;%s;]tooltip[%s;%s]"):format(ly + 0.04, del, del, F("Remove")))
         end
     end
     table.insert(fs, "scroll_container_end[]")
@@ -427,7 +438,7 @@ end
 function worldmap.show(player)
     if not MAP then
         minetest.chat_send_player(player:get_player_name(), minetest.colorize("#FFB347",
-            "[Map] This world has no map."))
+            TAG_MAP .. S("This world has no map.")))
         return
     end
     show(player)
@@ -446,12 +457,12 @@ end
 local function may_teleport(name, staff)
     if staff then return true end
     if is_frozen(name) then
-        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] You are frozen by the teacher."))
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_MAP .. S("You are frozen by the teacher.")))
         return false
     end
     local now = minetest.get_us_time() / 1e6
     if last_tp[name] and now - last_tp[name] < TP_COOLDOWN then
-        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] Wait a moment before teleporting again."))
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_MAP .. S("Wait a moment before teleporting again.")))
         return false
     end
     last_tp[name] = now
@@ -528,7 +539,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         local spawn_pos, spawn_yaw
         if hooks and hooks.spawn then spawn_pos, spawn_yaw = hooks.spawn(player) end
         if not spawn_pos then
-            minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] This world has no spawn point."))
+            minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_MAP .. S("This world has no spawn point.")))
         elseif may_teleport(name, staff) then
             player:set_pos(spawn_pos)
             if spawn_yaw then player:set_look_horizontal(spawn_yaw) end
@@ -562,12 +573,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         local kind = fields.map_add_wp and "waypoint" or "teleport"
         local label = (v.name_text or ""):gsub("[%c]", ""):sub(1, 30)
         if label == "" then
-            label = (kind == "waypoint" and "Waypoint " or "Teleport ") .. tostring(next_id)
+            -- Stored with the marker, so named in the teacher's language.
+            label = translate_for(name, kind == "waypoint" and S("Waypoint @1", next_id)
+                or S("Teleport @1", next_id))
         end
         local sel = v.sel
         find_ground(sel.x, sel.z, function(y)
             if not add_marker(kind, label, sel.x, y, sel.z) then
-                minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Map] Too many points: remove some first."))
+                minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_MAP .. S("Too many points: remove some first.")))
             end
             local current = minetest.get_player_by_name(name)
             if current then show(current) end
@@ -765,7 +778,7 @@ end
 -- ── Map item and lifecycle ───────────────────────────────────────────────────
 
 minetest.register_craftitem(ITEM, {
-    description = "World Map\n" .. minetest.colorize("#aaaaaa", "Use to see zones, waypoints and teleport points"),
+    description = S("World Map") .. "\n" .. minetest.colorize("#aaaaaa", S("Use to see zones, waypoints and teleport points")),
     inventory_image = "classrooms_bridge_map.png",
     wield_image = "classrooms_bridge_map.png",
     stack_max = 1,

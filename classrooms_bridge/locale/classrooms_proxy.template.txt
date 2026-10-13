@@ -1,0 +1,81 @@
+# textdomain: classrooms_proxy
+# Text of the classrooms proxy plugin (mt-multiserver-proxy-classrooms).
+
+# forms_groups_zones.go
+Group: @1=
+All students=
+Without group=
+Online now=
+
+# formspec.go
+Error loading classes: @1=
+Assistance dashboard=
+Teacher dashboard=
+Admin panel: all worlds, classes and teachers=
+New class=
+Type a name for the new class, e.g. 3B Science=
+Create class=
+YOUR CLASSES=
+No classes are assigned to you yet.=
+No classes yet: type a name above and press Create class.=
+@1/@2 students online   ·   @3 worlds running=
+Open=
+Delete?=
+Click again to delete this class permanently=
+Delete class=
+@1/@2 students online=
+Owner: @1=
+LIVE CONTROLS (ONLINE STUDENTS)=
+Freeze=
+Unfreeze=
+Look at me=
+Stop looking=
+Stops every online student from moving. Click again to release them.=
+Bring here=
+Teleports every online student around you.=
+Turns every online student's camera towards you.=
+STUDENTS=
+Manage people=
+Add or remove students, create student accounts, and manage groups, assistance and teachers=
+Show only some students=
+No students yet: use Manage people to add them.=
+No students match this filter.=
+Teleport to @1=
+Make @1 look at you=
+offline=
+CLASS WORLDS=
++ New class world=
+Create a new world from a map template for this class=
+No class worlds are running right now.=
+No worlds yet: press + New class world.=
+Join=
+Go to this world=
+You are here=
+Bring class=
+Move you and every online student of this class into this world=
+Manage: start/stop, rules, time & weather=
+Return to HUB=
+on=
+off=
+YOU ARE IN THIS WORLD=
+restart needed=
+Hurt: @1  ·  PvP: @2  ·  Hunger: @3=
+no mobs=
+peaceful mobs=
+all mobs=
+time flowing=
+time paused=
+world locked=
+Mobs: @1=
+Rules=
+Damage, PvP, hunger, mobs and arrival point of this world=
+Time & weather=
+Manage this world=
+online=
+
+# ui.go
+Back=
+Close=
+Online=
+Creating…=
+Stopped=

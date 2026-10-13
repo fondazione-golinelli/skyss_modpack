@@ -15,6 +15,16 @@
 
 local zones, send, is_staff = ...
 
+local S = minetest.get_translator("classrooms_bridge")
+local TAG_MISSION = S("[Mission]") .. " "
+local WHOLE_WORLD = S("Whole world")
+
+-- Translates on the server, for texts whose length is measured here.
+local function translate_for(name, text)
+    local info = minetest.get_player_information(name)
+    return minetest.get_translated_string(info and info.lang_code or "", text)
+end
+
 local storage = minetest.get_mod_storage()
 local TICK = 3
 local REPORT_EVERY = 30
@@ -315,7 +325,7 @@ local function chest_mission(pos)
     local mission_id = meta:get_int("mission_id")
     if mission_id ~= 0 then
         local mission = world_mission(mission_id)
-        return mission, "Whole world", mission and mission.color or DEFAULT_COLOR
+        return mission, WHOLE_WORLD, mission and mission.color or DEFAULT_COLOR
     end
     local id = meta:get_int("zone_id")
     local zone
@@ -323,7 +333,7 @@ local function chest_mission(pos)
         if id ~= 0 and z.id == id then zone = z end
     end
     zone = zone or zones.zone_at(pos)
-    return zone and zone.mission, zone and ("Zone " .. zone.name), zone and zone.color or PALETTE[1]
+    return zone and zone.mission, zone and S("Zone @1", zone.name), zone and zone.color or PALETTE[1]
 end
 
 -- Delivery goals of the chest's mission: { label, need, have, names = set, icon }.
@@ -355,11 +365,18 @@ end
 
 -- ── Chest window ─────────────────────────────────────────────────────────────
 
-local OTHER_GOAL_TEXT = {
-    collect = "Gather %d %s",
-    animals = "%d %s %s",
-    blocks = "%d %s blocks %s",
-}
+local function other_goal_text(goal, whole_world)
+    local count, label = tonumber(goal.count) or 1, tostring(goal.label or goal.key)
+    if goal.type == "collect" then
+        return S("Gather @1 @2", count, label)
+    elseif goal.type == "animals" then
+        return whole_world and S("@1 @2 near the chest", count, label) or S("@1 @2 in the zone", count, label)
+    elseif goal.type == "blocks" then
+        return whole_world and S("@1 @2 blocks near the chest", count, label)
+            or S("@1 @2 blocks in the zone", count, label)
+    end
+    return count .. " " .. label
+end
 
 local function chest_formspec(pos, viewer)
     local spos = pos.x .. "," .. pos.y .. "," .. pos.z
@@ -391,23 +408,23 @@ local function chest_formspec(pos, viewer)
     add("item_image[0.4,0.25;0.95,0.95;%s]", CHEST)
     add("style_type[label;textcolor=#f0f0f0]")
     add("style_type[label;font_size=*1.35]")
-    add("label[1.6,0.48;%s]", esc(mission and tostring(mission.title) or "Delivery chest"))
+    add("label[1.6,0.48;%s]", esc(mission and tostring(mission.title) or S("Delivery chest")))
     add("style_type[label;font_size=*1]")
-    local sub = mission and ("Delivery chest  ·  " .. (place or "")) or "Delivery chest  ·  no mission uses it"
-    if done then sub = sub .. "  ·  completed" end
+    local sub = S("Delivery chest") .. "  ·  " .. (mission and (place or "") or S("no mission uses it"))
+    if done then sub = sub .. "  ·  " .. S("completed") end
     add("label[1.6,1.0;%s]", grey(sub))
     add("button_exit[%g,0.37;0.72,0.72;chest_close;X]", W - 0.95)
 
     add("box[0.3,1.7;%g,%g;#202a44]", W - 0.6, inv_top - 1.95)
-    local heading = done and "MISSION COMPLETE: THANK YOU!" or "BRING THESE ITEMS"
+    local heading = done and S("MISSION COMPLETE: THANK YOU!") or S("BRING THESE ITEMS")
     add("label[0.55,1.98;%s]", esc(minetest.colorize(done and "#7fd18b" or "#aaaaaa", heading)))
     if description then
         if #description > 80 then description = description:sub(1, 78) .. "..." end
         add("label[0.55,2.4;%s]", grey(description))
     end
     if #requests == 0 then
-        add("label[0.55,%g;%s]", cards_top + 0.8, grey(mission and "This mission asks for no deliveries."
-            or "No mission uses this chest."))
+        add("label[0.55,%g;%s]", cards_top + 0.8, grey(mission and S("This mission asks for no deliveries.")
+            or S("No mission uses this chest.")))
     end
     local card_w = (W - 0.6 - 0.6) / 2
     for i, r in ipairs(requests) do
@@ -430,21 +447,20 @@ local function chest_formspec(pos, viewer)
             add("box[%g,%g;%g,0.2;%s]", bar_x, y + 0.5, bar_w * ratio, met and "#3fb56b" or "#2a8c7f")
         end
         add("label[%g,%g;%s]", x + 1.2, y + 0.89, met
-            and esc(minetest.colorize("#7fd18b", "Done!"))
-            or grey((r.need - r.have) .. " more needed"))
+            and esc(minetest.colorize("#7fd18b", S("Done!")))
+            or grey(S("@1 more needed", r.need - r.have)))
     end
 
     -- The mission's other goals, for context.
     if #others > 0 then
         local y = cards_top + 0.45 + rows * 1.2 + 0.1
-        add("label[0.55,%g;%s]", y + 0.3, grey("ALSO:"))
+        add("label[0.55,%g;%s]", y + 0.3, grey(S("ALSO:")))
         local x = 1.45
         for i, goal in ipairs(others) do
             if i > 3 then break end
             local icon = goal_icon(goal)
             if icon then add("item_image[%g,%g;0.55,0.55;%s]", x, y + 0.03, icon) end
-            local text = (OTHER_GOAL_TEXT[goal.type] or "%d %s"):format(tonumber(goal.count) or 1,
-                tostring(goal.label or goal.key), place == "Whole world" and "near the chest" or "in the zone")
+            local text = translate_for(viewer:get_player_name(), other_goal_text(goal, place == WHOLE_WORLD))
             add("label[%g,%g;%s]", x + 0.65, y + 0.3, esc(text))
             x = x + 0.75 + #text * 0.17 + 0.35
         end
@@ -454,9 +470,9 @@ local function chest_formspec(pos, viewer)
     add("listcolors[#2a3450;#3a4a78;#0f1424;#202a44;#f0f0f0]")
     add("style_type[list;size=0.85,0.85;spacing=0.15,0.15]")
     local lx = (W - (9 * 0.85 + 8 * 0.15)) / 2
-    add("label[%g,%g;%s]", lx, inv_top + 0.2, grey(done and "CHEST" or "CHEST  (only the items above fit)"))
+    add("label[%g,%g;%s]", lx, inv_top + 0.2, grey(done and S("CHEST") or S("CHEST  (only the items above fit)")))
     add("list[nodemeta:%s;main;%g,%g;9,3;]", spos, lx, inv_top + 0.4)
-    add("label[%g,%g;%s]", lx, inv_top + 3.55, grey("YOUR INVENTORY"))
+    add("label[%g,%g;%s]", lx, inv_top + 3.55, grey(S("YOUR INVENTORY")))
     add("list[current_player;main;%g,%g;9,3;9]", lx, inv_top + 3.75)
     add("list[current_player;main;%g,%g;9,1;]", lx, inv_top + 6.8)
     add("listring[nodemeta:%s;main]listring[current_player;main]", spos)
@@ -504,17 +520,18 @@ end
 
 -- Text shown above the chest and as its infotext.
 local function chest_sign(requests, mission, done)
-    if not mission then return "Delivery chest\n(no mission)" end
-    local lines = { (done and "MISSION COMPLETE: " or "MISSION: ") .. tostring(mission.title) }
+    if not mission then return S("Delivery chest") .. "\n" .. S("(no mission)") end
+    local title = tostring(mission.title)
+    local lines = { done and S("MISSION COMPLETE: @1", title) or S("MISSION: @1", title) }
     if #requests == 0 then
-        table.insert(lines, "Animals and blocks count around this chest")
+        table.insert(lines, S("Animals and blocks count around this chest"))
     elseif not done then
-        table.insert(lines, "Bring here:")
+        table.insert(lines, S("Bring here:"))
     end
     for i, r in ipairs(requests) do
         if i > 6 then break end
         local met = done or r.have >= r.need
-        table.insert(lines, ("%s  %d/%d%s"):format(r.label, math.min(r.have, r.need), r.need, met and "  - done" or ""))
+        table.insert(lines, ("%s  %d/%d%s"):format(r.label, math.min(r.have, r.need), r.need, met and ("  - " .. S("done")) or ""))
     end
     return table.concat(lines, "\n")
 end
@@ -657,7 +674,7 @@ local tile_side, trim_side = trimmed("classrooms_bridge_chest_side.png", "classr
 local tile_front, trim_front = trimmed("classrooms_bridge_chest_front.png", "classrooms_bridge_chest_trim_front.png")
 
 minetest.register_node(CHEST, {
-    description = "Delivery Chest\n" .. minetest.colorize("#aaaaaa", "Place it inside a mission zone"),
+    description = S("Delivery Chest") .. "\n" .. minetest.colorize("#aaaaaa", S("Place it inside a mission zone")),
     -- Wood stays white-tinted; the trim overlay takes the palette color.
     tiles = { tile_top[1], tile_top[1], tile_side[1], tile_side[1], tile_side[1], tile_front[1] },
     overlay_tiles = { trim_top, trim_top, trim_side, trim_side, trim_side, trim_front },
@@ -671,7 +688,7 @@ minetest.register_node(CHEST, {
     on_construct = function(pos)
         local meta = minetest.get_meta(pos)
         meta:get_inventory():set_size("main", 27)
-        meta:set_string("infotext", "Delivery chest")
+        meta:set_string("infotext", S("Delivery chest"))
     end,
     after_place_node = function(pos, placer, itemstack)
         local name = placer and placer:get_player_name() or ""
@@ -683,7 +700,7 @@ minetest.register_node(CHEST, {
             if not here or here.name ~= wanted_zone then
                 minetest.remove_node(pos)
                 minetest.chat_send_player(name, minetest.colorize("#FFB347",
-                    "[Mission] This delivery chest belongs inside zone " .. wanted_zone .. "."))
+                    TAG_MISSION .. S("This delivery chest belongs inside zone @1.", wanted_zone)))
                 return true -- keep the item
             end
         end
@@ -700,30 +717,30 @@ minetest.register_node(CHEST, {
         local mission_id = item_meta and item_meta:get_int("mission_id") or 0
         if mission_id ~= 0 then
             local mission = world_mission(mission_id)
-            local title = mission and tostring(mission.title) or "mission"
+            local title = mission and tostring(mission.title) or S("mission")
             storage:set_string(chest_key("g" .. mission_id), minetest.pos_to_string(pos))
             local meta = minetest.get_meta(pos)
             meta:set_int("mission_id", mission_id)
-            meta:set_string("infotext", "Delivery chest: " .. title)
+            meta:set_string("infotext", S("Delivery chest: @1", title))
             set_chest_color(pos, mission and mission.color or DEFAULT_COLOR)
             minetest.chat_send_player(name, minetest.colorize("#00CC66",
-                "[Mission] Delivery chest set for mission " .. title .. "."))
+                TAG_MISSION .. S("Delivery chest set for mission @1.", title)))
             return
         end
         local zone = zones.zone_at(pos)
         if not zone then
             set_chest_color(pos, PALETTE[1])
             minetest.chat_send_player(name, minetest.colorize("#FFB347",
-                "[Mission] Place the delivery chest inside a zone."))
+                TAG_MISSION .. S("Place the delivery chest inside a zone.")))
             return
         end
         storage:set_string(chest_key(zone.id), minetest.pos_to_string(pos))
         local meta = minetest.get_meta(pos)
         meta:set_int("zone_id", zone.id)
-        meta:set_string("infotext", "Delivery chest: " .. zone.name)
+        meta:set_string("infotext", S("Delivery chest: @1", zone.name))
         set_chest_color(pos, zone.color)
         minetest.chat_send_player(name, minetest.colorize("#00CC66",
-            "[Mission] Delivery chest set for zone " .. zone.name .. "."))
+            TAG_MISSION .. S("Delivery chest set for zone @1.", zone.name)))
     end,
     can_dig = function(pos, player)
         return player and is_staff(player:get_player_name())
@@ -757,8 +774,8 @@ minetest.register_node(CHEST, {
         local wanted = {}
         for _, r in ipairs(requests) do table.insert(wanted, r.label) end
         minetest.chat_send_player(player:get_player_name(), minetest.colorize("#FFB347",
-            #wanted > 0 and ("[Mission] This chest only takes: " .. table.concat(wanted, ", ") .. ".")
-            or "[Mission] This chest takes nothing right now."))
+            TAG_MISSION .. (#wanted > 0 and S("This chest only takes: @1.", table.concat(wanted, ", "))
+            or S("This chest takes nothing right now."))))
         return 0
     end,
     -- Students deliver; only staff take items back out.
@@ -810,7 +827,7 @@ function missions.give_chest(player, mission_id, title, info)
         for _, held in ipairs(inv:get_list("main") or {}) do
             if held:get_name() == CHEST and held:get_meta():get_int("mission_ref") == ref then
                 minetest.chat_send_player(name, minetest.colorize("#FFB347",
-                    "[Mission] You already have the delivery chest of " .. tostring(title or "this mission") .. "."))
+                    TAG_MISSION .. S("You already have the delivery chest of @1.", tostring(title or S("this mission")))))
                 return
             end
         end
@@ -832,14 +849,15 @@ function missions.give_chest(player, mission_id, title, info)
             if goal.type == "deliver" then table.insert(wanted, tostring(goal.label or goal.key)) end
         end
         local tag = mission_tag(title)
-        local lines = { "Delivery Chest: " .. tostring(title) }
-        table.insert(lines, minetest.colorize("#aaaaaa", mission_id and "Whole world: place it anywhere"
-            or ("Place it inside zone " .. tostring(info.zone or "of the mission"))))
+        local lines = { S("Delivery Chest: @1", tostring(title)) }
+        table.insert(lines, minetest.colorize("#aaaaaa", mission_id and S("Whole world: place it anywhere")
+            or info.zone and S("Place it inside zone @1", tostring(info.zone))
+            or S("Place it inside the mission's zone")))
         if #wanted > 0 then
-            table.insert(lines, minetest.colorize("#ffe066", "Collects: " .. table.concat(wanted, ", ")))
+            table.insert(lines, minetest.colorize("#ffe066", S("Collects: @1", table.concat(wanted, ", "))))
         end
         if tag ~= "" then
-            table.insert(lines, minetest.colorize("#aaaaaa", "Marked \"" .. tag .. "\" on the icon"))
+            table.insert(lines, minetest.colorize("#aaaaaa", S("Marked \"@1\" on the icon", tag)))
         end
         meta:set_string("description", table.concat(lines, "\n"))
         meta:set_string("count_meta", tag)
@@ -849,12 +867,12 @@ function missions.give_chest(player, mission_id, title, info)
     local leftover = inv:add_item("main", stack)
     if not leftover:is_empty() then
         minetest.chat_send_player(name, minetest.colorize("#FFB347",
-            "[Mission] Your inventory is full."))
+            TAG_MISSION .. S("Your inventory is full.")))
         return
     end
     minetest.chat_send_player(name, minetest.colorize("#00CC66",
-        mission_id and "[Mission] Place the delivery chest where students should bring things."
-        or "[Mission] Place the delivery chest inside the zone."))
+        TAG_MISSION .. (mission_id and S("Place the delivery chest where students should bring things.")
+        or S("Place the delivery chest inside the zone."))))
 end
 
 local function chest_inventory(zone_id)
@@ -964,7 +982,7 @@ local function count_goal(zone, goal, previous, mission)
     return 0
 end
 
-local GOAL_VERBS = { deliver = "Deliver", collect = "Gather", animals = "Animals:", blocks = "Blocks:" }
+local GOAL_VERBS = { deliver = S("Deliver"), collect = S("Gather"), animals = S("Animals:"), blocks = S("Blocks:") }
 
 local function goal_label(goal)
     return (GOAL_VERBS[goal.type] or "") .. " " .. tostring(goal.label or goal.key)
@@ -1001,9 +1019,12 @@ local function draw_hud(player, list)
     local ids = {}
     local y = 0
     local lines = {}
+    -- Translated here, not by the client: the lines are wrapped and measured.
+    local function T(text) return translate_for(player:get_player_name(), text) end
     for _, item in ipairs(list) do
         local mission, state = item.mission, item.state
-        local heading = (state.complete and "MISSION COMPLETE: " or "MISSION: ") .. tostring(mission.title)
+        local title = tostring(mission.title)
+        local heading = T(state.complete and S("MISSION COMPLETE: @1", title) or S("MISSION: @1", title))
         for _, text in ipairs(wrap(heading, HUD_WRAP)) do
             table.insert(lines, { text = text, color = state.complete and 0x7FD18B or 0xFFE066, size = 1 })
         end
@@ -1016,7 +1037,7 @@ local function draw_hud(player, list)
             local have = state.counts[i] or 0
             local need = tonumber(goal.count) or 1
             local ok = state.complete or have >= need
-            local goal_lines = wrap((ok and "[x] " or "[ ] ") .. goal_label(goal) .. "  "
+            local goal_lines = wrap((ok and "[x] " or "[ ] ") .. T(goal_label(goal)) .. "  "
                 .. math.min(have, need) .. "/" .. need, HUD_WRAP)
             local icon = item_texture(goal_icon(goal))
             for j, text in ipairs(goal_lines) do
@@ -1025,7 +1046,7 @@ local function draw_hud(player, list)
             end
         end
         if state.needs_chest then
-            table.insert(lines, { text = "Waiting for the teacher's delivery chest", color = 0xFFB347 })
+            table.insert(lines, { text = T(S("Waiting for the teacher's delivery chest")), color = 0xFFB347 })
         end
         table.insert(lines, { text = "", color = 0xFFFFFF })
     end
@@ -1151,15 +1172,15 @@ local function announce_complete(zone, mission)
         if participant or is_staff(name) then
             -- World missions: the title and fireworks are for everyone playing.
             if zone.global or zones.zone_at(player:get_pos()) == zone then
-                show_title(player, "Mission complete!", tostring(mission.title))
+                show_title(player, S("Mission complete!"), tostring(mission.title))
             end
             if zone.global and not zone.min_x and participant then
                 local p = vector.round(player:get_pos())
                 fireworks({ min_x = p.x - 2, max_x = p.x + 2, min_z = p.z - 2, max_z = p.z + 2, ref_y = p.y })
             end
             minetest.chat_send_player(name, minetest.colorize("#7FD18B",
-                "[Mission] \"" .. tostring(mission.title) .. "\" completed"
-                .. (zone.global and "" or (" in zone " .. zone.name)) .. "!"))
+                TAG_MISSION .. (zone.global and S("\"@1\" completed!", tostring(mission.title))
+                or S("\"@1\" completed in zone @2!", tostring(mission.title), zone.name))))
         end
     end
 end
@@ -1187,7 +1208,7 @@ local function give_tools(player, mission)
     storage:set_string(key, minetest.write_json(given))
     if #got > 0 then
         minetest.chat_send_player(name, minetest.colorize("#00CCFF",
-            "[Mission] Tools for this mission: " .. table.concat(got, ", ")))
+            TAG_MISSION .. S("Tools for this mission: @1", table.concat(got, ", "))))
     end
 end
 

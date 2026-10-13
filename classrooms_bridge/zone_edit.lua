@@ -12,6 +12,9 @@
 
 local toolbar, zones, send = ...
 
+local S = minetest.get_translator("classrooms_bridge")
+local TAG_ZONE = S("[Zone]") .. " "
+
 local META_KEY = "classrooms_zone_edit"
 local MODE_HOTBAR = "[combine:102x22"
     .. ":0,0=classrooms_bridge_hotbar_slot_mcl.png:20,0=classrooms_bridge_hotbar_slot_mcl.png"
@@ -31,13 +34,13 @@ local function update_hud(player)
     local state = editing[name]
     if not state then return end
     local lines = {
-        "ZONE EDITOR: " .. state.name .. "  (" .. state.who .. ")",
-        "Point 1: " .. fmt_pos(state.p1) .. "    Point 2: " .. fmt_pos(state.p2)
-            .. "    Teleport: " .. (state.tp and fmt_pos(state.tp) or "point 1"),
-        "Fly to the corners and use the tools below. Confirm when done.",
+        S("ZONE EDITOR: @1  (@2)", state.name, state.who),
+        S("Point 1: @1    Point 2: @2    Teleport: @3", fmt_pos(state.p1), fmt_pos(state.p2),
+            state.tp and fmt_pos(state.tp) or S("point 1")),
+        S("Fly to the corners and use the tools below. Confirm when done."),
     }
     if state.p1 and state.p2 then
-        lines[3] = ("Area %d × %d blocks, full height. Press Confirm to save."):format(
+        lines[3] = S("Area @1 × @2 blocks, full height. Press Confirm to save.",
             math.abs(state.p1.x - state.p2.x) + 1, math.abs(state.p1.z - state.p2.z) + 1)
     end
     if not state.huds then
@@ -154,11 +157,11 @@ end
 -- ── Mode tools ───────────────────────────────────────────────────────────────
 
 local TOOLS = {
-    { id = "point1", desc = "Set point 1", tip = "Marks the first corner where you are" },
-    { id = "point2", desc = "Set point 2", tip = "Marks the opposite corner where you are" },
-    { id = "teleport", desc = "Set teleport point", tip = "Where players arrive when teleported to this zone" },
-    { id = "cancel", desc = "Cancel", tip = "Leave the editor without saving" },
-    { id = "confirm", desc = "Confirm", tip = "Save the zone" },
+    { id = "point1", desc = S("Set point 1"), tip = S("Marks the first corner where you are") },
+    { id = "point2", desc = S("Set point 2"), tip = S("Marks the opposite corner where you are") },
+    { id = "teleport", desc = S("Set teleport point"), tip = S("Where players arrive when teleported to this zone") },
+    { id = "cancel", desc = S("Cancel"), tip = S("Leave the editor without saving") },
+    { id = "confirm", desc = S("Confirm"), tip = S("Save the zone") },
 }
 
 local function use_tool(id, user)
@@ -186,7 +189,7 @@ local function use_tool(id, user)
     elseif id == "confirm" then
         if not (state.p1 and state.p2) then
             minetest.chat_send_player(name, minetest.colorize("#FFB347",
-                "[Zone] Set point 1 and point 2 first."))
+                TAG_ZONE .. S("Set point 1 and point 2 first.")))
             return
         end
         local message = {
@@ -266,15 +269,15 @@ function zone_edit.start(player, data)
     minetest.set_player_privs(name, privs)
 
     editing[name] = {
-        name = tostring(data.name or "New zone"),
-        who = tostring(data.who or "Teachers only"),
+        name = tostring(data.name or S("New zone")),
+        who = tostring(data.who or S("Teachers only")),
     }
     fill_tools(player)
     player:hud_set_hotbar_itemcount(#TOOLS)
     player:hud_set_hotbar_image(MODE_HOTBAR)
     update_hud(player)
     minetest.chat_send_player(name, minetest.colorize("#FFE066",
-        "[Zone] Editor on: you can fly through blocks (toggle fly/noclip with K/H)."))
+        TAG_ZONE .. S("Editor on: you can fly through blocks (toggle fly/noclip with K/H).")))
 end
 
 minetest.register_allow_player_inventory_action(function(player, action)

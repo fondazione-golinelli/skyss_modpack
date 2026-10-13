@@ -9,6 +9,15 @@
 -- only staff may build ("teachers only"); with `allowed` the listed group
 -- members may build too; `open` zones protect nothing (meeting points).
 
+local S = minetest.get_translator("classrooms_bridge")
+local TAG_ZONE = S("[Zone]") .. " "
+
+-- Translates on the server, for texts the client does not translate itself.
+local function translate_for(name, text)
+    local info = minetest.get_player_information(name)
+    return minetest.get_translated_string(info and info.lang_code or "", text)
+end
+
 local storage = minetest.get_mod_storage()
 local STORAGE_KEY = "classrooms_zones"
 local SHOW_SECONDS = 15
@@ -122,9 +131,9 @@ minetest.register_on_protection_violation(function(pos, name)
     if last_message[name] and now - last_message[name] < MESSAGE_COOLDOWN then return end
     last_message[name] = now
     local text = zone.group
-        and ("Only group " .. zone.group .. " can build in \"" .. zone.name .. "\".")
-        or ("\"" .. zone.name .. "\" is protected by your teacher.")
-    minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Zone] " .. text))
+        and S("Only group @1 can build in \"@2\".", zone.group, zone.name)
+        or S("\"@1\" is protected by your teacher.", zone.name)
+    minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_ZONE .. text))
 end)
 
 minetest.register_on_leaveplayer(function(player)
@@ -136,7 +145,7 @@ end)
 function zones_api.show(player)
     local name = player:get_player_name()
     if #zones == 0 then
-        minetest.chat_send_player(name, minetest.colorize("#FFB347", "[Zone] This world has no zones."))
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_ZONE .. S("This world has no zones.")))
         return
     end
     local pos = player:get_pos()
@@ -167,8 +176,8 @@ function zones_api.show(player)
             mark(zone.min_x - 0.5, z)
             mark(zone.max_x + 0.5, z)
         end
-        local label = zone.name .. (zone.open and " (everyone)"
-            or zone.group and (" (" .. zone.group .. ")") or " (teachers only)")
+        local label = zone.name .. " (" .. (zone.open and translate_for(name, S("everyone"))
+            or zone.group or translate_for(name, S("teachers only"))) .. ")"
         table.insert(huds, player:hud_add({
             type = "waypoint",
             name = label,
@@ -190,7 +199,7 @@ function zones_api.show(player)
         end
     end)
     minetest.chat_send_player(name, minetest.colorize("#00CCFF",
-        "[Zone] Showing " .. #zones .. " zone(s) for " .. SHOW_SECONDS .. " seconds."))
+        TAG_ZONE .. S("Showing @1 zone(s) for @2 seconds.", #zones, SHOW_SECONDS)))
 end
 
 -- ── Corner markers while a teacher draws a new zone ──────────────────────────
@@ -462,16 +471,16 @@ local function update_presence(player, pos)
     if current_zone[name] == id then return end
     current_zone[name] = id
     if zone then
-        local who = zone.group and ("Only group " .. zone.group .. " can build here")
-            or "Only teachers can build here"
+        local who = zone.group and S("Only group @1 can build here", zone.group)
+            or S("Only teachers can build here")
         if zone.open then
-            who = "Everyone can build here"
+            who = S("Everyone can build here")
         elseif zone.allowed and zone.allowed[name] then
-            who = "Your group can build here"
+            who = S("Your group can build here")
         elseif is_staff(name) then
-            who = zone.group and ("Reserved for group " .. zone.group) or "Teachers only"
+            who = zone.group and S("Reserved for group @1", zone.group) or S("Teachers only")
         end
-        show_notice(player, "Entered zone " .. zone.name, who, zone.color)
+        show_notice(player, S("Entered zone @1", zone.name), who, zone.color)
     end
 end
 

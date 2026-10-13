@@ -1,0 +1,13 @@
+# textdomain: skyss_treegame
+Plant trees on the marked spots and grow a forest together.=Plantez des arbres aux endroits marqués et faites pousser une forêt ensemble.
+Plant trees on the marked spots! Goal: @1 trees. You have @2 seconds!=Plante des arbres aux endroits marqués ! Objectif : @1 arbres. Tu as @2 secondes !
+Time's up! The forest was not planted in time. @1/@2 trees grown.=Temps écoulé ! La forêt n'a pas été plantée à temps. @1/@2 arbres ont poussé.
+2 minutes left! Trees: @1/@2=Plus que 2 minutes ! Arbres : @1/@2
+1 minute left! Trees: @1/@2=Plus qu'1 minute ! Arbres : @1/@2
+You died! Keep planting...=Tu es mort ! Continue à planter...
+Plant only on the marked spots! (Sapling refunded)=Plante uniquement aux endroits marqués ! (Pousse rendue)
+Tree planted! Your contribution: @1  |  Team total: @2/@3=Arbre planté ! Ta contribution : @1  |  Total de l'équipe : @2/@3
+@1/@2 trees planted! Keep going!=@1/@2 arbres plantés ! Continuez !
+All @1 trees planted! The forest is growing — explore for @2 seconds!=Les @1 arbres sont plantés ! La forêt grandit : explorez-la pendant @2 secondes !
+Exploration time is over. Thanks for planting!=Le temps d'exploration est terminé. Merci d'avoir planté !
+30 seconds of exploration left!=Plus que 30 secondes d'exploration !

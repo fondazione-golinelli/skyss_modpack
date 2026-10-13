@@ -1,0 +1,81 @@
+# textdomain: classrooms_proxy
+# Text of the classrooms proxy plugin (mt-multiserver-proxy-classrooms).
+
+# forms_groups_zones.go
+Group: @1=Grupa: @1
+All students=Wszyscy uczniowie
+Without group=Bez grupy
+Online now=Teraz online
+
+# formspec.go
+Error loading classes: @1=Błąd wczytywania klas: @1
+Assistance dashboard=Panel asysty
+Teacher dashboard=Panel nauczyciela
+Admin panel: all worlds, classes and teachers=Panel administratora: wszystkie światy, klasy i nauczyciele
+New class=Nowa klasa
+Type a name for the new class, e.g. 3B Science=Wpisz nazwę nowej klasy, np. 3B Przyroda
+Create class=Utwórz klasę
+YOUR CLASSES=TWOJE KLASY
+No classes are assigned to you yet.=Nie przypisano ci jeszcze żadnej klasy.
+No classes yet: type a name above and press Create class.=Nie ma jeszcze klas: wpisz nazwę powyżej i naciśnij Utwórz klasę.
+@1/@2 students online   ·   @3 worlds running=Uczniowie online: @1/@2   ·   Działające światy: @3
+Open=Otwórz
+Delete?=Usunąć?
+Click again to delete this class permanently=Kliknij ponownie, aby trwale usunąć tę klasę
+Delete class=Usuń klasę
+@1/@2 students online=Uczniowie online: @1/@2
+Owner: @1=Właściciel: @1
+LIVE CONTROLS (ONLINE STUDENTS)=STEROWANIE NA ŻYWO (UCZNIOWIE ONLINE)
+Freeze=Unieruchom
+Unfreeze=Uwolnij
+Look at me=Patrzcie na mnie
+Stop looking=Przestań patrzeć
+Stops every online student from moving. Click again to release them.=Uniemożliwia ruch wszystkim uczniom online. Kliknij ponownie, aby ich uwolnić.
+Bring here=Sprowadź tutaj
+Teleports every online student around you.=Teleportuje wszystkich uczniów online wokół ciebie.
+Turns every online student's camera towards you.=Kieruje kamerę wszystkich uczniów online na ciebie.
+STUDENTS=UCZNIOWIE
+Manage people=Zarządzaj osobami
+Add or remove students, create student accounts, and manage groups, assistance and teachers=Dodawaj lub usuwaj uczniów, twórz konta uczniów oraz zarządzaj grupami, asystą i nauczycielami
+Show only some students=Pokaż tylko niektórych uczniów
+No students yet: use Manage people to add them.=Nie ma jeszcze uczniów: dodaj ich przez Zarządzaj osobami.
+No students match this filter.=Żaden uczeń nie pasuje do tego filtra.
+Teleport to @1=Teleportuj się do: @1
+Make @1 look at you=Spraw, aby @1 patrzył(a) na ciebie
+offline=offline
+CLASS WORLDS=ŚWIATY KLASY
++ New class world=+ Nowy świat klasy
+Create a new world from a map template for this class=Tworzy dla tej klasy nowy świat z szablonu mapy
+No class worlds are running right now.=Żaden świat klasy teraz nie działa.
+No worlds yet: press + New class world.=Nie ma jeszcze światów: naciśnij + Nowy świat klasy.
+Join=Dołącz
+Go to this world=Przejdź do tego świata
+You are here=Jesteś tutaj
+Bring class=Sprowadź klasę
+Move you and every online student of this class into this world=Przenosi ciebie i wszystkich uczniów online z tej klasy do tego świata
+Manage: start/stop, rules, time & weather=Zarządzaj: start/stop, zasady, czas i pogoda
+Return to HUB=Wróć do HUB-u
+on=wł.
+off=wył.
+YOU ARE IN THIS WORLD=JESTEŚ W TYM ŚWIECIE
+restart needed=wymagany restart
+Hurt: @1  ·  PvP: @2  ·  Hunger: @3=Obrażenia: @1  ·  PvP: @2  ·  Głód: @3
+no mobs=bez mobów
+peaceful mobs=pokojowe moby
+all mobs=wszystkie moby
+time flowing=czas płynie
+time paused=czas zatrzymany
+world locked=świat zablokowany
+Mobs: @1=Moby: @1
+Rules=Zasady
+Damage, PvP, hunger, mobs and arrival point of this world=Obrażenia, PvP, głód, moby i punkt przybycia w tym świecie
+Time & weather=Czas i pogoda
+Manage this world=Zarządzaj tym światem
+online=online
+
+# ui.go
+Back=Wstecz
+Close=Zamknij
+Online=Online
+Creating…=Tworzenie…
+Stopped=Zatrzymany

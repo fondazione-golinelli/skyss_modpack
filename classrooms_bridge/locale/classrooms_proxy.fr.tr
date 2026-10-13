@@ -1,0 +1,81 @@
+# textdomain: classrooms_proxy
+# Text of the classrooms proxy plugin (mt-multiserver-proxy-classrooms).
+
+# forms_groups_zones.go
+Group: @1=Groupe : @1
+All students=Tous les élèves
+Without group=Sans groupe
+Online now=En ligne maintenant
+
+# formspec.go
+Error loading classes: @1=Erreur lors du chargement des classes : @1
+Assistance dashboard=Tableau de bord d'assistance
+Teacher dashboard=Tableau de bord de l'enseignant
+Admin panel: all worlds, classes and teachers=Panneau d'administration : tous les mondes, classes et enseignants
+New class=Nouvelle classe
+Type a name for the new class, e.g. 3B Science=Saisis un nom pour la nouvelle classe, p. ex. 3B Sciences
+Create class=Créer la classe
+YOUR CLASSES=TES CLASSES
+No classes are assigned to you yet.=Aucune classe ne t'a encore été attribuée.
+No classes yet: type a name above and press Create class.=Pas encore de classe : saisis un nom ci-dessus et appuie sur Créer la classe.
+@1/@2 students online   ·   @3 worlds running=@1/@2 élèves en ligne   ·   @3 mondes actifs
+Open=Ouvrir
+Delete?=Supprimer ?
+Click again to delete this class permanently=Clique à nouveau pour supprimer définitivement cette classe
+Delete class=Supprimer la classe
+@1/@2 students online=@1/@2 élèves en ligne
+Owner: @1=Propriétaire : @1
+LIVE CONTROLS (ONLINE STUDENTS)=CONTRÔLES EN DIRECT (ÉLÈVES EN LIGNE)
+Freeze=Immobiliser
+Unfreeze=Libérer
+Look at me=Regardez-moi
+Stop looking=Arrêter de regarder
+Stops every online student from moving. Click again to release them.=Empêche tous les élèves en ligne de bouger. Clique à nouveau pour les libérer.
+Bring here=Amener ici
+Teleports every online student around you.=Téléporte tous les élèves en ligne autour de toi.
+Turns every online student's camera towards you.=Tourne vers toi la caméra de tous les élèves en ligne.
+STUDENTS=ÉLÈVES
+Manage people=Gérer les personnes
+Add or remove students, create student accounts, and manage groups, assistance and teachers=Ajoute ou retire des élèves, crée des comptes élèves et gère les groupes, l'assistance et les enseignants
+Show only some students=Afficher seulement certains élèves
+No students yet: use Manage people to add them.=Pas encore d'élèves : utilise Gérer les personnes pour en ajouter.
+No students match this filter.=Aucun élève ne correspond à ce filtre.
+Teleport to @1=Se téléporter vers @1
+Make @1 look at you=Faire en sorte que @1 te regarde
+offline=hors ligne
+CLASS WORLDS=MONDES DE LA CLASSE
++ New class world=+ Nouveau monde de classe
+Create a new world from a map template for this class=Crée un nouveau monde pour cette classe à partir d'un modèle de carte
+No class worlds are running right now.=Aucun monde de la classe n'est actif pour le moment.
+No worlds yet: press + New class world.=Pas encore de monde : appuie sur + Nouveau monde de classe.
+Join=Rejoindre
+Go to this world=Aller dans ce monde
+You are here=Tu es ici
+Bring class=Amener la classe
+Move you and every online student of this class into this world=Te déplace, avec tous les élèves en ligne de cette classe, dans ce monde
+Manage: start/stop, rules, time & weather=Gérer : démarrage/arrêt, règles, heure et météo
+Return to HUB=Retour au HUB
+on=oui
+off=non
+YOU ARE IN THIS WORLD=TU ES DANS CE MONDE
+restart needed=redémarrage nécessaire
+Hurt: @1  ·  PvP: @2  ·  Hunger: @3=Dégâts : @1  ·  PvP : @2  ·  Faim : @3
+no mobs=aucun mob
+peaceful mobs=mobs pacifiques
+all mobs=tous les mobs
+time flowing=le temps s'écoule
+time paused=temps en pause
+world locked=monde verrouillé
+Mobs: @1=Mobs : @1
+Rules=Règles
+Damage, PvP, hunger, mobs and arrival point of this world=Dégâts, PvP, faim, mobs et point d'arrivée de ce monde
+Time & weather=Heure et météo
+Manage this world=Gérer ce monde
+online=en ligne
+
+# ui.go
+Back=Retour
+Close=Fermer
+Online=En ligne
+Creating…=Création…
+Stopped=Arrêté

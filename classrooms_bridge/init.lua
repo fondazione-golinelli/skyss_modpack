@@ -2,6 +2,10 @@
 -- Lightweight bridge mod: receives commands from the proxy plugin via mod channel
 -- and executes server-local actions (freeze, teleport, watch, broadcast).
 
+local S = minetest.get_translator("classrooms_bridge")
+-- Chat prefix of messages sent on the teacher's behalf.
+local TAG_TEACHER = S("[Teacher]") .. " "
+
 local CHANNEL_NAME = "classrooms:cmd"
 local channel = nil
 -- This API is only valid while the mod is loading. Cache the path so later
@@ -171,7 +175,7 @@ local function request_teacher_panel(user)
 end
 
 minetest.register_craftitem(TEACHER_PANEL_ITEM, {
-    description = "Class Panel\n" .. minetest.colorize("#aaaaaa", "Use to open your class: students, worlds and rules"),
+    description = S("Class Panel") .. "\n" .. minetest.colorize("#aaaaaa", S("Use to open your class: students, worlds and rules")),
     inventory_image = "classrooms_bridge_class_panel.png",
     wield_image = "classrooms_bridge_class_panel.png",
     stack_max = 1,
@@ -201,7 +205,7 @@ local function request_world_tools(user)
 end
 
 minetest.register_craftitem(WORLD_TOOLS_ITEM, {
-    description = "World Tools\n" .. minetest.colorize("#aaaaaa", "Use to manage zones of this world"),
+    description = S("World Tools") .. "\n" .. minetest.colorize("#aaaaaa", S("Use to manage zones of this world")),
     inventory_image = "classrooms_bridge_world_tools.png",
     wield_image = "classrooms_bridge_world_tools.png",
     stack_max = 1,
@@ -241,7 +245,7 @@ end
 -- Spectators' exit: first dedicated toolbar slot, like the teacher tools.
 local VISITOR_RETURN_TOOL = "return_hub"
 minetest.register_craftitem(VISITOR_RETURN_ITEM, {
-    description = "Return to HUB\n" .. minetest.colorize("#aaaaaa", "Use to leave this world"),
+    description = S("Return to HUB") .. "\n" .. minetest.colorize("#aaaaaa", S("Use to leave this world")),
     inventory_image = "classrooms_bridge_return_hub.png",
     wield_image = "classrooms_bridge_return_hub.png",
     range = 0,
@@ -279,7 +283,7 @@ local function request_worlds(user)
     send_bridge_message({ action = "open_portal_worlds", player = name }, "open_portal_worlds")
 end
 minetest.register_craftitem(WORLDS_ITEM, {
-    description = "Class worlds\n" .. minetest.colorize("#aaaaaa", "Use to see the open class worlds and enter one"),
+    description = S("Class worlds") .. "\n" .. minetest.colorize("#aaaaaa", S("Use to see the open class worlds and enter one")),
     inventory_image = "classrooms_bridge_worlds.png",
     wield_image = "classrooms_bridge_worlds.png",
     range = 0,
@@ -334,8 +338,8 @@ local function set_visitor_defaults(player)
     toolbar.set_enabled(player, VISITOR_RETURN_TOOL, true)
     worldmap.set_item(player, true)
     minetest.chat_send_player(name, minetest.colorize("#00CCFF",
-        "[Classrooms] You are a spectator: fly (K) and pass through blocks (H). "
-        .. "Use the door in your hotbar to return to the HUB, the map to teleport."))
+        "[Classrooms] " .. S("You are a spectator: fly (K) and pass through blocks (H). "
+        .. "Use the door in your hotbar to return to the HUB, the map to teleport.")))
 end
 
 local function update_visitor_return_access(player)
@@ -415,7 +419,7 @@ local function apply_student_abilities(player)
         if not privs.fast then meta:set_string(GRANTED_FAST, "1") end
         privs.fly, privs.fast = true, true
         minetest.set_player_privs(name, privs)
-        table.insert(notes, "you can fly (K) and move fast (J)")
+        table.insert(notes, S("you can fly (K) and move fast (J)"))
     elseif not student_abilities.fly
             and (meta:get_string(GRANTED_FLY) == "1" or meta:get_string(GRANTED_FAST) == "1") then
         if meta:get_string(GRANTED_FLY) == "1" then privs.fly = nil end
@@ -423,25 +427,25 @@ local function apply_student_abilities(player)
         minetest.set_player_privs(name, privs)
         meta:set_string(GRANTED_FLY, "")
         meta:set_string(GRANTED_FAST, "")
-        table.insert(notes, "flying is off")
+        table.insert(notes, S("flying is off"))
     end
     if mcl_gamemode and mcl_gamemode.set_gamemode then
         local mode = mcl_gamemode.get_gamemode and mcl_gamemode.get_gamemode(player) or "survival"
         if student_abilities.creative and mode ~= "creative" then
             mcl_gamemode.set_gamemode(player, "creative")
             meta:set_string(GRANTED_CREATIVE, "1")
-            table.insert(notes, "creative mode is on")
+            table.insert(notes, S("creative mode is on"))
         elseif not student_abilities.creative and meta:get_string(GRANTED_CREATIVE) == "1" then
             meta:set_string(GRANTED_CREATIVE, "")
             if mode == "creative" then
                 mcl_gamemode.set_gamemode(player, "survival")
-                table.insert(notes, "back to survival mode")
+                table.insert(notes, S("back to survival mode"))
             end
         end
     end
     if #notes > 0 then
         minetest.chat_send_player(name, minetest.colorize("#00CC66",
-            "[Teacher] " .. table.concat(notes, ", ") .. "."))
+            TAG_TEACHER .. table.concat(notes, ", ") .. "."))
     end
 end
 
@@ -537,7 +541,7 @@ local function apply_lock(player)
                 meta:set_string(LOCK_TOOK_INTERACT, "1")
             end
             minetest.chat_send_player(name, minetest.colorize("#FFB347",
-                "[Teacher] The world is locked: you can look around but not build or use things."))
+                TAG_TEACHER .. S("The world is locked: you can look around but not build or use things.")))
         end
         if meta:get_string(LOCK_TOOK_INTERACT) == "1" then
             set_interact(name, LOCK_ALLOWED_ITEMS[player:get_wielded_item():get_name()] == true)
@@ -548,7 +552,7 @@ local function apply_lock(player)
             meta:set_string(LOCK_TOOK_INTERACT, "")
             set_interact(name, true)
             minetest.chat_send_player(name, minetest.colorize("#00CC66",
-                "[Teacher] The world is unlocked: you can build again."))
+                TAG_TEACHER .. S("The world is unlocked: you can build again.")))
         end
     end
 end
@@ -788,7 +792,7 @@ function handlers.freeze(data)
         player:set_physics_override({ speed = 0, jump = 0 })
     end
     minetest.chat_send_player(name, minetest.colorize("#FF9900",
-        "[Teacher] You have been frozen by the teacher."))
+        TAG_TEACHER .. S("You have been frozen by the teacher.")))
 end
 
 function handlers.unfreeze(data)
@@ -807,7 +811,7 @@ function handlers.unfreeze(data)
             player:set_physics_override({ speed = 1, jump = 1 })
         end
         minetest.chat_send_player(name, minetest.colorize("#00CC66",
-            "[Teacher] You are free to move again."))
+            TAG_TEACHER .. S("You are free to move again.")))
     end
 end
 
@@ -821,7 +825,7 @@ function handlers.watch(data)
 
     watching_players[name] = teacher
     minetest.chat_send_player(name, minetest.colorize("#FF9900",
-        "[Teacher] Pay attention! Look at the teacher."))
+        TAG_TEACHER .. S("Pay attention! Look at the teacher.")))
 end
 
 function handlers.unwatch(data)
@@ -830,7 +834,7 @@ function handlers.unwatch(data)
 
     watching_players[name] = nil
     minetest.chat_send_player(name, minetest.colorize("#00CC66",
-        "[Teacher] You can look around freely again."))
+        TAG_TEACHER .. S("You can look around freely again.")))
 end
 
 function handlers.set_world_time(data)
@@ -852,7 +856,7 @@ function handlers.set_world_time(data)
     if data.stop_time then
         minetest.settings:set("time_speed", "0")
         minetest.chat_send_player(name, minetest.colorize("#FFD700",
-            "[Teacher] Time is now frozen at the current setting."))
+            TAG_TEACHER .. S("Time is now frozen at the current setting.")))
     else
         if type(time_value) == "number" and time_value >= 0 and time_value <= 1 then
             minetest.set_timeofday(time_value)
@@ -861,7 +865,7 @@ function handlers.set_world_time(data)
         end
         minetest.settings:set("time_speed", "1")
         minetest.chat_send_player(name, minetest.colorize("#FFD700",
-            "[Teacher] Time has been updated to the selected preset."))
+            TAG_TEACHER .. S("Time has been updated to the selected preset.")))
     end
 
     write_settings("set_world_time")
@@ -890,7 +894,7 @@ function handlers.set_world_weather(data)
     end
 
     minetest.chat_send_player(name, minetest.colorize("#FFD700",
-        "[Teacher] Weather has been updated to the selected preset."))
+        TAG_TEACHER .. S("Weather has been updated to the selected preset.")))
 end
 
 function handlers.gather(data)
@@ -916,7 +920,7 @@ function handlers.gather(data)
             player:set_pos(tp_pos)
             offset = offset + (2 * math.pi / count)
             minetest.chat_send_player(name, minetest.colorize("#FF9900",
-                "[Teacher] You have been teleported to the teacher."))
+                TAG_TEACHER .. S("You have been teleported to the teacher.")))
         end
     end
 end
@@ -945,7 +949,8 @@ function handlers.set_gamemode(data)
     if mcl_gamemode and mcl_gamemode.set_gamemode then
         mcl_gamemode.set_gamemode(player, gamemode)
         minetest.chat_send_player(name, minetest.colorize("#00CC66",
-            "[Teacher] Your game mode is now " .. gamemode .. "."))
+            TAG_TEACHER .. S("Your game mode is now @1.",
+                gamemode == "creative" and S("creative") or S("survival"))))
     else
         minetest.log("warning", "[classrooms_bridge] mcl_gamemode API is not available")
     end
@@ -1204,7 +1209,7 @@ end
 function handlers.broadcast(data)
     local players = data.players
     local message = data.message
-    local sender = data.sender or "Teacher"
+    local sender = data.sender or S("Teacher")
     local class_name = data.class or ""
     if not players or not message then return end
 
@@ -1363,50 +1368,50 @@ end)
 
 local function proxy_only(name)
     minetest.chat_send_player(name, minetest.colorize("#FF6600",
-        "[Classrooms] Connect via the proxy to use this command."))
+        "[Classrooms] " .. S("Connect via the proxy to use this command.")))
 end
 
 minetest.register_chatcommand("classes", {
-    description = "Open teacher dashboard",
+    description = S("Open teacher dashboard"),
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("admin", {
-    description = "Open admin dashboard",
+    description = S("Open admin dashboard"),
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("lobby", {
-    description = "Go back to the lobby",
+    description = S("Go back to the lobby"),
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("freeze", {
-    description = "Freeze a student or class",
+    description = S("Freeze a student or class"),
     params = "<student_name|class_name>",
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("unfreeze", {
-    description = "Unfreeze a student or class",
+    description = S("Unfreeze a student or class"),
     params = "<student_name|class_name>",
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("teacher_add", {
-    description = "Register a new teacher",
+    description = S("Register a new teacher"),
     params = "<username>",
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("teacher_remove", {
-    description = "Unregister a teacher",
+    description = S("Unregister a teacher"),
     params = "<username>",
     func = function(name) proxy_only(name) end,
 })
 
 minetest.register_chatcommand("teacher_list", {
-    description = "List all registered teachers",
+    description = S("List all registered teachers"),
     func = function(name) proxy_only(name) end,
 })
 

@@ -1,3 +1,6 @@
+local S = core.get_translator("skyss_treegame")
+local TAG = "[TreeGame] "
+
 local SAPLING = "mcl_trees:sapling_oak"
 local TREE    = "mcl_trees:tree_oak"
 local LEAVES  = "mcl_trees:leaves_oak"
@@ -103,6 +106,7 @@ end
 
 arena_lib.register_minigame("skyss_treegame", {
     name          = "Plant the Forest!",
+    description   = S("Plant trees on the marked spots and grow a forest together."),
     min_players   = 1,
     max_players   = 25,
     keep_inventory = false,
@@ -138,8 +142,8 @@ arena_lib.on_start("skyss_treegame", function(arena)
             arena.players[p_name].trees_grown = 0
         end
         core.chat_send_player(p_name,
-            "[TreeGame] Plant trees on the marked spots! Goal: " ..
-            TREES_REQUIRED .. " trees. You have " .. MATCH_TIMEOUT .. "s!")
+            TAG .. S("Plant trees on the marked spots! Goal: @1 trees. You have @2 seconds!",
+                TREES_REQUIRED, MATCH_TIMEOUT))
     end
 
     -- ---- 5-minute timeout ----
@@ -152,8 +156,8 @@ arena_lib.on_start("skyss_treegame", function(arena)
 
         -- Time's up — failure
         core.chat_send_all(
-            "[TreeGame] Time's up! The forest was not planted in time. " ..
-            arena.total_trees_grown .. "/" .. TREES_REQUIRED .. " trees grown.")
+            TAG .. S("Time's up! The forest was not planted in time. @1/@2 trees grown.",
+                arena.total_trees_grown, TREES_REQUIRED))
         cancel_timer(arena)
         arena_lib.load_celebration("skyss_treegame", arena, nil)   -- nil = no winner
     end)
@@ -165,14 +169,14 @@ arena_lib.on_start("skyss_treegame", function(arena)
     core.after(MATCH_TIMEOUT - 120, function()
         if remind_handle_2.cancelled then return end
         if arena.celebration_active then return end
-        core.chat_send_all("[TreeGame] \xE2\x8F\xB1 2 minutes left! Trees: " ..
-            arena.total_trees_grown .. "/" .. TREES_REQUIRED)
+        core.chat_send_all(TAG .. "\xE2\x8F\xB1 " .. S("2 minutes left! Trees: @1/@2",
+            arena.total_trees_grown, TREES_REQUIRED))
     end)
     core.after(MATCH_TIMEOUT - 60, function()
         if remind_handle_1.cancelled then return end
         if arena.celebration_active then return end
-        core.chat_send_all("[TreeGame] \xE2\x8F\xB1 1 minute left! Trees: " ..
-            arena.total_trees_grown .. "/" .. TREES_REQUIRED)
+        core.chat_send_all(TAG .. "\xE2\x8F\xB1 " .. S("1 minute left! Trees: @1/@2",
+            arena.total_trees_grown, TREES_REQUIRED))
     end)
 end)
 
@@ -187,7 +191,7 @@ arena_lib.on_respawn("skyss_treegame", function(arena, p_name)
         if arena.spawners and #arena.spawners > 0 then
             player:set_pos(arena.spawners[1])
         end
-        core.chat_send_player(p_name, "[TreeGame] You died! Keep planting...")
+        core.chat_send_player(p_name, TAG .. S("You died! Keep planting..."))
     end)
 end)
 
@@ -222,7 +226,7 @@ core.register_on_placenode(function(pos, newnode, placer)
             inv:add_item("main", ItemStack(SAPLING .. " 1"))
         end
         core.chat_send_player(p_name,
-            "[TreeGame] Plant only on the marked spots! (Sapling refunded)")
+            TAG .. S("Plant only on the marked spots! (Sapling refunded)"))
         return
     end
 
@@ -241,13 +245,13 @@ core.register_on_placenode(function(pos, newnode, placer)
     local total    = arena.total_trees_grown
 
     core.chat_send_player(p_name,
-        "[TreeGame] Tree planted! Your contribution: " .. personal ..
-        "  |  Team total: " .. total .. "/" .. TREES_REQUIRED)
+        TAG .. S("Tree planted! Your contribution: @1  |  Team total: @2/@3",
+            personal, total, TREES_REQUIRED))
 
     -- Broadcast milestones every 5 trees
     if total % 5 == 0 then
-        core.chat_send_all("[TreeGame] \xF0\x9F\x8C\xB3 " .. total .. "/" ..
-            TREES_REQUIRED .. " trees planted! Keep going!")
+        core.chat_send_all(TAG .. "\xF0\x9F\x8C\xB3 " ..
+            S("@1/@2 trees planted! Keep going!", total, TREES_REQUIRED))
     end
 
     -- ---- Victory check ----
@@ -256,9 +260,9 @@ core.register_on_placenode(function(pos, newnode, placer)
         cancel_timer(arena)
 
         core.chat_send_all(
-            "[TreeGame] \xF0\x9F\x8E\x89 All " .. TREES_REQUIRED ..
-            " trees planted! The forest is growing — explore for " ..
-            CELEBRATION_DURATION .. " seconds!")
+            TAG .. "\xF0\x9F\x8E\x89 " ..
+            S("All @1 trees planted! The forest is growing — explore for @2 seconds!",
+                TREES_REQUIRED, CELEBRATION_DURATION))
 
         -- Grow all trees into their bigger form
         grow_all_trees(arena)
@@ -269,7 +273,7 @@ core.register_on_placenode(function(pos, newnode, placer)
 
         core.after(CELEBRATION_DURATION, function()
             if cel_handle.cancelled then return end
-            core.chat_send_all("[TreeGame] Exploration time is over. Thanks for planting!")
+            core.chat_send_all(TAG .. S("Exploration time is over. Thanks for planting!"))
             cancel_timer(arena)
             arena_lib.load_celebration("skyss_treegame", arena, p_name)
         end)
@@ -277,7 +281,7 @@ core.register_on_placenode(function(pos, newnode, placer)
         -- Countdown reminders during celebration
         core.after(CELEBRATION_DURATION - 30, function()
             if cel_handle.cancelled then return end
-            core.chat_send_all("[TreeGame] \xE2\x8F\xB1 30 seconds of exploration left!")
+            core.chat_send_all(TAG .. "\xE2\x8F\xB1 " .. S("30 seconds of exploration left!"))
         end)
     end
 end)

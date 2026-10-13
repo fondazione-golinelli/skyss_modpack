@@ -1,0 +1,13 @@
+# textdomain: skyss_treegame
+Plant trees on the marked spots and grow a forest together.=Ültessetek fákat a megjelölt helyekre, és neveljetek együtt erdőt.
+Plant trees on the marked spots! Goal: @1 trees. You have @2 seconds!=Ültess fákat a megjelölt helyekre! Cél: @1 fa. @2 másodperced van!
+Time's up! The forest was not planted in time. @1/@2 trees grown.=Lejárt az idő! Az erdőt nem sikerült időben elültetni. @1/@2 fa nőtt ki.
+2 minutes left! Trees: @1/@2=Még 2 perc! Fák: @1/@2
+1 minute left! Trees: @1/@2=Még 1 perc! Fák: @1/@2
+You died! Keep planting...=Meghaltál! Ültess tovább...
+Plant only on the marked spots! (Sapling refunded)=Csak a megjelölt helyekre ültess! (A csemetét visszakaptad)
+Tree planted! Your contribution: @1  |  Team total: @2/@3=Fa elültetve! A te részed: @1  |  A csapat összesen: @2/@3
+@1/@2 trees planted! Keep going!=@1/@2 fa elültetve! Csak így tovább!
+All @1 trees planted! The forest is growing — explore for @2 seconds!=Mind a(z) @1 fa el van ültetve! Az erdő növekszik – fedezzétek fel @2 másodpercig!
+Exploration time is over. Thanks for planting!=A felfedezés ideje lejárt. Köszönjük az ültetést!
+30 seconds of exploration left!=Még 30 másodperc a felfedezésre!

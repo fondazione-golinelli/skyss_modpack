@@ -1,0 +1,81 @@
+# textdomain: classrooms_proxy
+# Text of the classrooms proxy plugin (mt-multiserver-proxy-classrooms).
+
+# forms_groups_zones.go
+Group: @1=Csoport: @1
+All students=Minden tanuló
+Without group=Csoport nélkül
+Online now=Most online
+
+# formspec.go
+Error loading classes: @1=Hiba az osztályok betöltésekor: @1
+Assistance dashboard=Asszisztensi irányítópult
+Teacher dashboard=Tanári irányítópult
+Admin panel: all worlds, classes and teachers=Adminisztrátori panel: minden világ, osztály és tanár
+New class=Új osztály
+Type a name for the new class, e.g. 3B Science=Írd be az új osztály nevét, pl. 3B Természetismeret
+Create class=Osztály létrehozása
+YOUR CLASSES=OSZTÁLYAID
+No classes are assigned to you yet.=Még nincs hozzád rendelt osztály.
+No classes yet: type a name above and press Create class.=Még nincs osztály: írj be fent egy nevet, és nyomd meg az Osztály létrehozása gombot.
+@1/@2 students online   ·   @3 worlds running=@1/@2 tanuló online   ·   @3 világ fut
+Open=Megnyitás
+Delete?=Törlöd?
+Click again to delete this class permanently=Kattints újra az osztály végleges törléséhez
+Delete class=Osztály törlése
+@1/@2 students online=@1/@2 tanuló online
+Owner: @1=Tulajdonos: @1
+LIVE CONTROLS (ONLINE STUDENTS)=ÉLŐ VEZÉRLÉS (ONLINE TANULÓK)
+Freeze=Megállítás
+Unfreeze=Feloldás
+Look at me=Rám nézzetek
+Stop looking=Nézés leállítása
+Stops every online student from moving. Click again to release them.=Megakadályozza, hogy az online tanulók mozogjanak. Kattints újra a feloldásukhoz.
+Bring here=Ide hívás
+Teleports every online student around you.=Minden online tanulót köréd teleportál.
+Turns every online student's camera towards you.=Minden online tanuló kameráját feléd fordítja.
+STUDENTS=TANULÓK
+Manage people=Személyek kezelése
+Add or remove students, create student accounts, and manage groups, assistance and teachers=Tanulók hozzáadása vagy eltávolítása, tanulói fiókok létrehozása, valamint csoportok, asszisztensek és tanárok kezelése
+Show only some students=Csak bizonyos tanulók megjelenítése
+No students yet: use Manage people to add them.=Még nincsenek tanulók: a Személyek kezelése gombbal adhatod hozzá őket.
+No students match this filter.=Egy tanuló sem felel meg ennek a szűrőnek.
+Teleport to @1=Teleportálás hozzá: @1
+Make @1 look at you=@1 nézzen rád
+offline=offline
+CLASS WORLDS=AZ OSZTÁLY VILÁGAI
++ New class world=+ Új osztályvilág
+Create a new world from a map template for this class=Új világot hoz létre ennek az osztálynak egy térképsablonból
+No class worlds are running right now.=Jelenleg egy osztályvilág sem fut.
+No worlds yet: press + New class world.=Még nincs világ: nyomd meg az + Új osztályvilág gombot.
+Join=Belépés
+Go to this world=Ugrás ebbe a világba
+You are here=Itt vagy
+Bring class=Osztály idehozása
+Move you and every online student of this class into this world=Téged és az osztály minden online tanulóját ebbe a világba viszi
+Manage: start/stop, rules, time & weather=Kezelés: indítás/leállítás, szabályok, idő és időjárás
+Return to HUB=Vissza a HUB-ba
+on=be
+off=ki
+YOU ARE IN THIS WORLD=EBBEN A VILÁGBAN VAGY
+restart needed=újraindítás szükséges
+Hurt: @1  ·  PvP: @2  ·  Hunger: @3=Sebzés: @1  ·  PvP: @2  ·  Éhség: @3
+no mobs=nincsenek mobok
+peaceful mobs=békés mobok
+all mobs=minden mob
+time flowing=az idő telik
+time paused=az idő áll
+world locked=a világ zárolva
+Mobs: @1=Mobok: @1
+Rules=Szabályok
+Damage, PvP, hunger, mobs and arrival point of this world=A világ sebzés-, PvP-, éhség- és mobbeállításai, valamint érkezési pontja
+Time & weather=Idő és időjárás
+Manage this world=A világ kezelése
+online=online
+
+# ui.go
+Back=Vissza
+Close=Bezárás
+Online=Online
+Creating…=Létrehozás…
+Stopped=Leállítva
