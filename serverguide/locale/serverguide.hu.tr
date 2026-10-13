@@ -1,0 +1,36 @@
+# textdomain: serverguide
+
+# commands.lua
+Show an introduction to the server=A szerver bemutatójának megjelenítése
+Show the rules of the server=A szerver szabályainak megjelenítése
+
+# first_steps.lua
+FIRST STEPS=ELSŐ LÉPÉSEK
+Use your free hand to hit an arena sign and enter a minigame (/quit to leave)=Üss rá szabad kézzel egy arénatáblára, hogy belépj egy minijátékba (kilépés: /quit)
+Use the compass to teleport and reach places more quickly=Használd az iránytűt a teleportáláshoz, hogy gyorsabban eljuss a helyekre
+Complete many challenges and unlock content to make your adventure more magical!=Teljesíts sok kihívást és oldj fel tartalmakat, hogy a kalandod még varázslatosabb legyen!
+LET'S GO!=GYERÜNK!
+
+# nodes.lua
+Rules=Szabályok
+Biophilia values=A biofília értékei
+
+# rules.lua
+SERVER RULES=SZERVERSZABÁLYOK
+Be respectful to other players and staff.=Légy tisztelettudó a többi játékossal és a csapattal.
+Keep chat friendly and appropriate.=A csevegés maradjon barátságos és illendő.
+Do not grief, cheat, exploit bugs, or disrupt other players.=Ne rombold mások építményeit, ne csalj, ne használj ki hibákat, és ne zavard a többi játékost.
+Follow teacher and admin instructions.=Kövesd a tanárok és az adminok utasításait.
+Protect your account and do not share personal information.=Védd a fiókodat, és ne ossz meg személyes adatokat.
+Close=Bezárás
+
+# values.lua
+BIOPHILIA VALUES=A BIOFÍLIA ÉRTÉKEI
+CONNECTION=KAPCSOLÓDÁS
+Biophilia reminds us that people feel better when they notice plants, animals, weather, water, soil, and living systems around them.=A biofília arra emlékeztet, hogy az emberek jobban érzik magukat, ha észreveszik maguk körül a növényeket, az állatokat, az időjárást, a vizet, a talajt és az élő rendszereket.
+CURIOSITY=KÍVÁNCSISÁG
+Explore slowly, ask questions, and observe details. Every landscape can teach something about how life adapts and cooperates.=Fedezz fel nyugodtan, tegyél fel kérdéseket, és figyeld meg a részleteket. Minden táj taníthat valamit arról, hogyan alkalmazkodik és működik együtt az élet.
+CARE=GONDOSKODÁS
+Respect shared spaces and the living world. Build, play, and learn in ways that protect habitats and help others enjoy them.=Tiszteld a közös tereket és az élővilágot. Építs, játssz és tanulj úgy, hogy megóvd az élőhelyeket, és mások is örömüket leljék bennük.
+BALANCE=EGYENSÚLY
+Human creativity and nature can grow together. Good choices leave room for beauty, biodiversity, and future players.=Az emberi kreativitás és a természet együtt fejlődhet. A jó döntések helyet hagynak a szépségnek, a biológiai sokféleségnek és a jövő játékosainak.

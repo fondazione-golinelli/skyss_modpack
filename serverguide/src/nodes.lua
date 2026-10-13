@@ -63,12 +63,11 @@ end)
 -- nodi
 core.register_node("serverguide:pedestal_rules", {
 	drawtype = "mesh",
-	mesh = "fbrawl_book_pedestal.obj",
-	tiles = {"aesguide_pedestal.png"},
-	visual_scale = 1.4,
+	mesh = "serverguide_pedestal.obj",
+	tiles = {"serverguide_pedestal_rules.png"},
 	selection_box = {
 		type = "fixed",
-		fixed  = {-0.3, -0.5, -0.3, 0.3, 0.12, 0.3}
+		fixed  = {-0.34, -0.5, -0.34, 0.34, 0.4, 0.34}
 	},
 	use_texture_alpha = "clip",
 	groups = {oddly_breakable_by_hand=1},
@@ -99,12 +98,11 @@ core.register_node("serverguide:pedestal_rules", {
 
 core.register_node("serverguide:pedestal_values", {
 	drawtype = "mesh",
-	mesh = "fbrawl_book_pedestal.obj",
-	tiles = {"aesguide_pedestal.png"},
-	visual_scale = 1.4,
+	mesh = "serverguide_pedestal.obj",
+	tiles = {"serverguide_pedestal_values.png"},
 	selection_box = {
 		type = "fixed",
-		fixed  = {-0.3, -0.5, -0.3, 0.3, 0.12, 0.3}
+		fixed  = {-0.34, -0.5, -0.34, 0.34, 0.4, 0.34}
 	},
 	use_texture_alpha = "clip",
 	groups = {oddly_breakable_by_hand=1},

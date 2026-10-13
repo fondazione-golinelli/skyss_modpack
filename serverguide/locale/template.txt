@@ -1,0 +1,36 @@
+# textdomain: serverguide
+
+# commands.lua
+Show an introduction to the server=
+Show the rules of the server=
+
+# first_steps.lua
+FIRST STEPS=
+Use your free hand to hit an arena sign and enter a minigame (/quit to leave)=
+Use the compass to teleport and reach places more quickly=
+Complete many challenges and unlock content to make your adventure more magical!=
+LET'S GO!=
+
+# nodes.lua
+Rules=
+Biophilia values=
+
+# rules.lua
+SERVER RULES=
+Be respectful to other players and staff.=
+Keep chat friendly and appropriate.=
+Do not grief, cheat, exploit bugs, or disrupt other players.=
+Follow teacher and admin instructions.=
+Protect your account and do not share personal information.=
+Close=
+
+# values.lua
+BIOPHILIA VALUES=
+CONNECTION=
+Biophilia reminds us that people feel better when they notice plants, animals, weather, water, soil, and living systems around them.=
+CURIOSITY=
+Explore slowly, ask questions, and observe details. Every landscape can teach something about how life adapts and cooperates.=
+CARE=
+Respect shared spaces and the living world. Build, play, and learn in ways that protect habitats and help others enjoy them.=
+BALANCE=
+Human creativity and nature can grow together. Good choices leave room for beauty, biodiversity, and future players.=

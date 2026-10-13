@@ -1,0 +1,36 @@
+# textdomain: serverguide
+
+# commands.lua
+Show an introduction to the server=Muestra una introducción al servidor
+Show the rules of the server=Muestra las reglas del servidor
+
+# first_steps.lua
+FIRST STEPS=PRIMEROS PASOS
+Use your free hand to hit an arena sign and enter a minigame (/quit to leave)=Usa tu mano libre para golpear un cartel de arena y entrar en un minijuego (/quit para salir)
+Use the compass to teleport and reach places more quickly=Usa la brújula para teletransportarte y llegar más rápido a los lugares
+Complete many challenges and unlock content to make your adventure more magical!=¡Completa muchos desafíos y desbloquea contenido para hacer tu aventura más mágica!
+LET'S GO!=¡VAMOS!
+
+# nodes.lua
+Rules=Reglas
+Biophilia values=Valores de la biofilia
+
+# rules.lua
+SERVER RULES=REGLAS DEL SERVIDOR
+Be respectful to other players and staff.=Respeta a los demás jugadores y al equipo.
+Keep chat friendly and appropriate.=Mantén el chat amable y apropiado.
+Do not grief, cheat, exploit bugs, or disrupt other players.=No destruyas las construcciones de otros, no hagas trampas, no aproveches errores y no molestes a los demás jugadores.
+Follow teacher and admin instructions.=Sigue las indicaciones de docentes y administradores.
+Protect your account and do not share personal information.=Protege tu cuenta y no compartas información personal.
+Close=Cerrar
+
+# values.lua
+BIOPHILIA VALUES=VALORES DE LA BIOFILIA
+CONNECTION=CONEXIÓN
+Biophilia reminds us that people feel better when they notice plants, animals, weather, water, soil, and living systems around them.=La biofilia nos recuerda que las personas se sienten mejor cuando se fijan en las plantas, los animales, el tiempo, el agua, el suelo y los sistemas vivos que las rodean.
+CURIOSITY=CURIOSIDAD
+Explore slowly, ask questions, and observe details. Every landscape can teach something about how life adapts and cooperates.=Explora con calma, haz preguntas y observa los detalles. Cada paisaje puede enseñar algo sobre cómo la vida se adapta y coopera.
+CARE=CUIDADO
+Respect shared spaces and the living world. Build, play, and learn in ways that protect habitats and help others enjoy them.=Respeta los espacios compartidos y el mundo vivo. Construye, juega y aprende de formas que protejan los hábitats y ayuden a los demás a disfrutarlos.
+BALANCE=EQUILIBRIO
+Human creativity and nature can grow together. Good choices leave room for beauty, biodiversity, and future players.=La creatividad humana y la naturaleza pueden crecer juntas. Las buenas decisiones dejan espacio para la belleza, la biodiversidad y los jugadores del futuro.
