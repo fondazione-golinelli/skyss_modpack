@@ -7,7 +7,11 @@
 --
 -- Everyone sees the map with zones, waypoints, teleport points and their own
 -- position. Staff can add/remove waypoints and teleport points; students can
--- teleport to teleport points only. Waypoints are shown in the world as HUD
+-- teleport to teleport points only.
+--
+-- On the "hub" map (the HUB lobby) every player carries the map, staff are the
+-- hub admins (server or hub_admin privilege) and they can also move the spawn
+-- point of the hub mod; there is no "Return to HUB" button. Waypoints are shown in the world as HUD
 -- markers, light beams nearby, and a direction indicator to the nearest one.
 
 -- `hooks.spawn()` returns the world spawn (pos, yaw); `hooks.return_hub(player)`
@@ -47,6 +51,55 @@ if MAP then
     minetest.log("action", "[classrooms_bridge] World map: " .. template)
 end
 
+local HUB_MODE = MAP ~= nil and template == "hub"
+if HUB_MODE then
+    is_staff = function(name)
+        return minetest.check_player_privs(name, { server = true })
+            or minetest.check_player_privs(name, { hub_admin = true })
+    end
+end
+
+-- ── HUB spawn ────────────────────────────────────────────────────────────────
+
+local HUB_SPAWN_KEY = "hub_spawn"
+
+local function hub_spawn_point()
+    local hub_mod = rawget(_G, "hub")
+    return hub_mod and hub_mod.get_hub_spawn_point and hub_mod.get_hub_spawn_point()
+end
+
+-- The hub mod keeps references to its spawn vector, so it is changed in place.
+local function apply_hub_spawn(pos)
+    local spawn = hub_spawn_point()
+    if spawn then
+        spawn.x, spawn.y, spawn.z = pos.x, pos.y, pos.z
+    end
+    return spawn ~= nil
+end
+
+-- Spawn from the world's hub/SETTINGS.lua, before any change made on the map.
+local original_spawn
+
+-- Facing set by the hub mod on join (degrees in its settings).
+local function hub_spawn_look()
+    local hub_mod = rawget(_G, "hub")
+    local settings = hub_mod and hub_mod.settings or {}
+    return tonumber(settings.join_rotation_x) and math.rad(settings.join_rotation_x),
+        tonumber(settings.join_rotation_y) and math.rad(settings.join_rotation_y)
+end
+
+if HUB_MODE then
+    minetest.register_on_mods_loaded(function()
+        local spawn = hub_spawn_point()
+        original_spawn = spawn and vector.copy(spawn)
+        local saved = storage:get_string(HUB_SPAWN_KEY)
+        saved = saved ~= "" and minetest.parse_json(saved)
+        if saved and apply_hub_spawn(saved) then
+            minetest.log("action", ("[classrooms_bridge] HUB spawn: %d, %d, %d"):format(saved.x, saved.y, saved.z))
+        end
+    end)
+end
+
 -- ── Markers ──────────────────────────────────────────────────────────────────
 
 local markers = minetest.parse_json(storage:get_string("map_markers") ~= "" and storage:get_string("map_markers") or "[]") or {}
@@ -65,11 +118,27 @@ end
 
 local refresh_huds -- forward
 
--- Highest walkable or liquid node of a column, after generating it.
+local function solid_or_liquid(pos)
+    local def = minetest.registered_nodes[minetest.get_node(pos).name]
+    return def and (def.walkable or def.liquidtype == "source")
+end
+
+-- Highest walkable or liquid node of a column, after generating it. In the HUB
+-- the lowest spot with headroom instead, so tree crowns and the floating logo
+-- are not taken for the ground.
 local function find_ground(x, z, callback)
     local p1, p2 = { x = x, y = -64, z = z }, { x = x, y = 255, z = z }
     minetest.emerge_area(p1, p2, function(_, _, remaining)
         if remaining > 0 then return end
+        if HUB_MODE then
+            for y = -64, 253 do
+                if solid_or_liquid({ x = x, y = y, z = z }) and not solid_or_liquid({ x = x, y = y + 1, z = z })
+                        and not solid_or_liquid({ x = x, y = y + 2, z = z }) then
+                    callback(y + 1)
+                    return
+                end
+            end
+        end
         for y = 255, -64, -1 do
             local node = minetest.get_node({ x = x, y = y, z = z })
             local def = minetest.registered_nodes[node.name]
@@ -219,7 +288,7 @@ show = function(player)
         "tooltip[map_spawn;" .. F("Go back to where players arrive in this world") .. "]",
         ("box[%g,%g;%g,%g;#1b2033]"):format(ox, oy, VIEW, VIEW),
     }
-    if not staff then
+    if not staff and not HUB_MODE then
         table.insert(fs, ("style[map_hub;bgcolor=%s]button_exit[13.55,0.2;2.65,0.6;map_hub;%s]"):format("#9b2c3c", F("Return to HUB")))
         table.insert(fs, "tooltip[map_hub;" .. F("Leave this world and go back to the HUB") .. "]")
     end
@@ -368,6 +437,11 @@ show = function(player)
         table.insert(fs, ("button[%g,4.35;1.9,0.5;map_center;%s]"):format(px0 + 0.2, F("Center")))
         if staff then
             table.insert(fs, ("button[%g,4.35;2.0,0.5;map_go_sel;%s]"):format(px0 + 2.2, F("Go there")))
+            if HUB_MODE then
+                table.insert(fs, ("style[map_set_spawn;bgcolor=%s]button[%g,4.35;1.95,0.5;map_set_spawn;%s]"):format(
+                    C.accent, px0 + 4.3, F("Set spawn")))
+                table.insert(fs, "tooltip[map_set_spawn;" .. F("Players arrive here when they join the HUB") .. "]")
+            end
             table.insert(fs, ("field[%g,5.0;2.3,0.5;map_name;;%s]"):format(px0 + 0.2, esc(v.name_text)))
             table.insert(fs, "field_close_on_enter[map_name;false]tooltip[map_name;" .. F("Name of the new point") .. "]")
             table.insert(fs, ("style[map_add_wp;bgcolor=%s]button[%g,5.0;1.95,0.5;map_add_wp;%s]"):format(C.primary, px0 + 2.6, F("+ Waypoint")))
@@ -377,6 +451,18 @@ show = function(player)
         end
     else
         table.insert(fs, ("label[%g,4.25;%s]"):format(px0 + 0.2, colored(C.muted, S("Click the map to select a point."))))
+    end
+
+    if staff and HUB_MODE then
+        local spawn = hub_spawn_point()
+        if spawn then
+            table.insert(fs, ("label[%g,5.78;%s]"):format(px0 + 3.35, colored(C.muted,
+                S("Spawn: @1, @2, @3", math.floor(spawn.x), math.floor(spawn.y), math.floor(spawn.z)))))
+        end
+        if storage:get_string(HUB_SPAWN_KEY) ~= "" then
+            table.insert(fs, ("button[%g,5.55;3.0,0.45;map_reset_spawn;%s]"):format(px0 + 0.2, F("Reset spawn")))
+            table.insert(fs, "tooltip[map_reset_spawn;" .. F("Back to the spawn point of the hub settings") .. "]")
+        end
     end
 
     -- Places list: markers, then zones the player can teleport to.
@@ -389,7 +475,8 @@ show = function(player)
     for _, zone in ipairs(teleport_zones(name, staff)) do table.insert(rows, { zone = zone }) end
     if #rows == 0 then
         table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.75, colored(C.muted,
-            staff and S("None yet: select a point on the map.") or S("Your teacher has not placed any yet."))))
+            staff and S("None yet: select a point on the map.")
+                or (HUB_MODE and S("No places yet.") or S("Your teacher has not placed any yet.")))))
     end
     local area_y, area_h = list_y + 0.5, list_h - 0.6
     local content_h = #rows * 0.55
@@ -508,7 +595,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     local staff = is_staff(name)
     local v = view_of(player)
     -- "Return to HUB" is an exit button: it arrives together with "quit".
-    if fields.map_hub and not staff then
+    if fields.map_hub and not staff and not HUB_MODE then
         if hooks and hooks.return_hub then hooks.return_hub(player) end
         return true
     end
@@ -537,12 +624,20 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
     if fields.map_spawn then
         local spawn_pos, spawn_yaw
-        if hooks and hooks.spawn then spawn_pos, spawn_yaw = hooks.spawn(player) end
+        local spawn_pitch
+        if HUB_MODE then
+            local spawn = hub_spawn_point()
+            spawn_pos = spawn and vector.copy(spawn)
+            spawn_yaw, spawn_pitch = hub_spawn_look()
+        elseif hooks and hooks.spawn then
+            spawn_pos, spawn_yaw = hooks.spawn(player)
+        end
         if not spawn_pos then
             minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_MAP .. S("This world has no spawn point.")))
         elseif may_teleport(name, staff) then
             player:set_pos(spawn_pos)
             if spawn_yaw then player:set_look_horizontal(spawn_yaw) end
+            if spawn_pitch then player:set_look_vertical(spawn_pitch) end
             minetest.close_formspec(name, FORM)
         end
         return true
@@ -586,6 +681,30 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             if current then show(current) end
         end)
         v.name_text = ""
+        return true
+    elseif fields.map_set_spawn and staff and HUB_MODE and v.sel then
+        local sel = v.sel
+        find_ground(sel.x, sel.z, function(y)
+            local pos = { x = sel.x, y = y, z = sel.z }
+            if apply_hub_spawn(pos) then
+                storage:set_string(HUB_SPAWN_KEY, minetest.write_json(pos))
+                minetest.log("action", ("[classrooms_bridge] %s moved the HUB spawn to %d, %d, %d"):format(name, pos.x, pos.y, pos.z))
+                minetest.chat_send_player(name, minetest.colorize("#7CFC00",
+                    TAG_MAP .. S("Spawn point moved to @1, @2, @3.", pos.x, pos.y, pos.z)))
+            end
+            local current = minetest.get_player_by_name(name)
+            if current then show(current) end
+        end)
+        return true
+    elseif fields.map_reset_spawn and staff and HUB_MODE then
+        if original_spawn and apply_hub_spawn(original_spawn) then
+            storage:set_string(HUB_SPAWN_KEY, "")
+            local o = original_spawn
+            minetest.log("action", ("[classrooms_bridge] %s reset the HUB spawn to %d, %d, %d"):format(name, o.x, o.y, o.z))
+            minetest.chat_send_player(name, minetest.colorize("#7CFC00",
+                TAG_MAP .. S("Spawn point reset to @1, @2, @3.", o.x, o.y, o.z)))
+        end
+        show(player)
         return true
     elseif fields.map_go_sel and staff and v.sel then
         local sel = v.sel
@@ -790,10 +909,10 @@ minetest.register_craftitem(ITEM, {
 })
 toolbar.register_tool(TOOL, ITEM, 4)
 
--- Students carry the map; staff open it from World Tools.
+-- Students carry the map; staff open it from World Tools. In the HUB everyone carries it.
 function worldmap.set_item(player, enabled)
     if MAP then
-        toolbar.set_enabled(player, TOOL, enabled)
+        toolbar.set_enabled(player, TOOL, enabled or HUB_MODE)
     end
 end
 
@@ -804,7 +923,7 @@ minetest.register_on_joinplayer(function(player)
         local current = minetest.get_player_by_name(name)
         if not current then return end
         add_waypoint_huds(current)
-        if not is_staff(name) then
+        if HUB_MODE or not is_staff(name) then
             worldmap.set_item(current, true)
         end
     end)
