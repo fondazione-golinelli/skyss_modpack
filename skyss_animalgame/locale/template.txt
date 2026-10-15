@@ -53,3 +53,4 @@ The arena has no spawn point: tell your teacher.=
 Listen to the animal and click the right one. Ring the bell to hear it again. You have @1 lives!=
 Well done, @1!=
 Game over=
+Animal Sounds=

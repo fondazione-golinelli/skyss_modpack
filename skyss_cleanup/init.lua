@@ -60,8 +60,8 @@ local WATER_SOURCES = {"mcl_core:water_source", "default:water_source"}
 -- STATE
 -- ============================================================
 
--- Runtime match state, keyed by arena name: arena_lib hands on_end a copy of
--- the arena table, and entities must not be stored in persisted arena fields.
+-- Runtime match state, keyed by arena name. In this file `arena` is the
+-- skyss_minigames match (players, name, pos1/pos2, params, state).
 local matches = {}
 local huds = {}
 local serial = 0
@@ -73,10 +73,10 @@ end
 local function match_of_player(player)
 	if not player or not player:is_player() then return end
 	local p_name = player:get_player_name()
-	if arena_lib.get_mod_by_player(p_name) ~= MOD then return end
-	local arena = arena_lib.get_arena_by_player(p_name)
+	local arena = skyss_minigames.get_match_by_player(p_name)
+	if not arena or arena.game.name ~= MOD then return end
 	local match = get_match(arena)
-	if match and arena.in_game and arena.players[p_name] then
+	if match and arena.state == "running" and arena.players[p_name] then
 		return match, arena
 	end
 end
@@ -302,7 +302,7 @@ local function hud_update_all(arena, match)
 end
 
 local function hotbar_msg(p_name, text, color, duration)
-	arena_lib.HUD_send_msg("hotbar", p_name, text, duration or 3, nil, color or 0xffffff)
+	skyss_minigames.hint_player(p_name, text, duration or 3, color or 0xffffff)
 end
 
 -- ============================================================
@@ -657,7 +657,7 @@ local function bin_rightclick(bin_id)
 			match.errors = match.errors + 1
 			match.penalty = match.penalty + WRONG_BIN_PENALTY
 			local right = BINS[def.bin]
-			arena_lib.HUD_send_msg("title", p_name, S("Wrong bin!  +@1s", WRONG_BIN_PENALTY), 2, nil, 0xff6b5a)
+			skyss_minigames.title_player(p_name, S("Wrong bin!  +@1s", WRONG_BIN_PENALTY), 2, 0xff6b5a)
 			core.chat_send_player(p_name, core.colorize("#ff8a7a", TAG) .. S("@1 goes in the @2 bin (@3), not in @4.",
 				def.label, core.colorize(right.color, right.label), right.colour_name, bin.label))
 			sound("default_place_node_hard", {pos = top, pitch = 0.6, max_hear_distance = 16})
@@ -747,8 +747,8 @@ local function sorted_region(arena)
 	return vector.sort(arena.pos1, arena.pos2)
 end
 
--- Collects the editor-placed markers and hides them for the match. arena_lib
--- tracks the set_node calls and restores the markers when the map resets.
+-- Collects the markers placed in the arena and hides them for the match;
+-- skyss_minigames puts them back when it restores the area.
 local function take_markers(arena)
 	local p1, p2 = sorted_region(arena)
 	local spots = {}
@@ -816,41 +816,30 @@ end
 -- MINIGAME
 -- ============================================================
 
-arena_lib.register_minigame(MOD, {
-	name = "Eco-CleanUp",
+-- Arena params: waste_amount (0 or missing = automatic, scales with the
+-- number of players).
+local game_def = {
+	title = S("Eco-CleanUp"),
 	description = S("Collect all the waste, on land and underwater, and sort it into the right bins."),
 	icon = MOD .. "_bottle.png",
+	color = "#2f7fbf",
+	mode = "coop",
+	ranking = "time",
 	min_players = 1,
 	max_players = 16,
-	join_while_in_progress = true,
-	keep_inventory = false,
-	can_build = false,
-	can_drop = false,
-	regenerate_map = true,
-	eliminate_on_death = false,
-	end_when_too_few = false,
-	disabled_damage_types = {"drown", "fall"},
+	join_in_progress = true,
+	exclusive = false,
 	celebration_time = CELEBRATION_TIME,
-	properties = {
-		waste_amount = 0, -- 0 = automatic (scales with the number of players)
-	},
-	custom_messages = {
-		-- arena_lib translates these with this mod's textdomain.
-		celebration_one_player = "Area cleaned up by @1!",
-		celebration_more_players = "Area cleaned up by @1!",
-		celebration_nobody = "Match over",
-	},
 	hud_flags = {
 		minimap = false,
 	},
-})
+}
 
 local function finish(arena, match, success, reason)
 	if match.finished then return end
 	match.finished = true
 	match.stopped_us = core.get_us_time()
 
-	local winners = {}
 	if success then
 		local time = elapsed(match)
 		local key = record_key(arena)
@@ -859,7 +848,6 @@ local function finish(arena, match, success, reason)
 		if is_record then storage:set_float(key, time) end
 
 		for p_name in pairs(arena.players) do
-			winners[#winners + 1] = p_name
 			local player = core.get_player_by_name(p_name)
 			if player then fireworks(player:get_pos()) end
 		end
@@ -872,8 +860,8 @@ local function finish(arena, match, success, reason)
 		end
 		chat(arena, msg .. "  " .. (is_record and core.colorize("#ffd43b", S("NEW RECORD!")) or
 			S("Record: @1", format_time(old))))
-		arena_lib.HUD_send_msg_all("broadcast", arena, is_record and S("New arena record!") or msg,
-			CELEBRATION_TIME, nil, is_record and 0xffd43b or 0x8fe388)
+		skyss_minigames.title(arena, is_record and S("New arena record!") or msg,
+			CELEBRATION_TIME, is_record and 0xffd43b or 0x8fe388)
 	elseif reason then
 		chat(arena, core.colorize("#ff8a7a", reason))
 	end
@@ -882,10 +870,10 @@ local function finish(arena, match, success, reason)
 		hud_update_player(arena, match, p_name)
 		hud_clear_waypoints(p_name)
 	end
-	arena_lib.load_celebration(MOD, arena, winners)
+	skyss_minigames.finish(arena, {success = success, time = elapsed(match)})
 end
 
-arena_lib.on_start(MOD, function(arena)
+function game_def.on_start(arena)
 	serial = serial + 1
 	local match = {
 		token = tostring(core.get_us_time()) .. ":" .. serial,
@@ -938,7 +926,8 @@ arena_lib.on_start(MOD, function(arena)
 
 	local players = 0
 	for _ in pairs(arena.players) do players = players + 1 end
-	local wanted = arena.waste_amount and arena.waste_amount > 0 and arena.waste_amount
+	local waste_amount = tonumber(arena.params.waste_amount)
+	local wanted = waste_amount and waste_amount > 0 and waste_amount
 		or math.min(WASTE_MAX, WASTE_BASE + WASTE_PER_PLAYER * players)
 
 	match.spots = take_markers(arena)
@@ -966,7 +955,7 @@ arena_lib.on_start(MOD, function(arena)
 	end
 	hud_update_all(arena, match)
 
-	arena_lib.HUD_send_msg_all("title", arena, S("Clean up the area!"), 3, nil, 0x8fe388)
+	skyss_minigames.title(arena, S("Clean up the area!"), 3, 0x8fe388)
 	local bin_names = {}
 	for _, bin_id in ipairs(BIN_ORDER) do
 		local bin = BINS[bin_id]
@@ -974,11 +963,18 @@ arena_lib.on_start(MOD, function(arena)
 	end
 	chat(arena, S("There are @1 pieces of waste around. Hit them with the pitchfork, then hold them and right-click the right bin: @2. Every mistake costs +@3 seconds!",
 		match.total, table.concat(bin_names, ", "), WRONG_BIN_PENALTY))
-end)
+end
 
-arena_lib.on_join(MOD, function(p_name, arena, as_spectator)
+function game_def.on_timeout(arena)
 	local match = get_match(arena)
-	if as_spectator or not playing(match) then return end
+	if match and not match.finished then
+		finish(arena, match, false, S("Time is up! @1 of @2 pieces of waste were sorted.", match.deposited, match.total))
+	end
+end
+
+function game_def.on_join(arena, p_name)
+	local match = get_match(arena)
+	if not playing(match) then return end
 	match.carried[p_name] = match.carried[p_name] or {}
 	local player = core.get_player_by_name(p_name)
 	if player then
@@ -987,9 +983,9 @@ arena_lib.on_join(MOD, function(p_name, arena, as_spectator)
 	end
 	hud_update_all(arena, match)
 	chat(arena, S("@1 joins the clean-up crew!", p_name))
-end)
+end
 
-arena_lib.on_respawn(MOD, function(arena, p_name)
+function game_def.on_respawn(arena, p_name)
 	local match = get_match(arena)
 	local player = core.get_player_by_name(p_name)
 	if not playing(match) or not player then return end
@@ -999,16 +995,16 @@ arena_lib.on_respawn(MOD, function(arena, p_name)
 		inv:add_item("main", stack)
 	end
 	match.death_items[p_name] = nil
-end)
+end
 
-arena_lib.on_quit(MOD, function(arena, p_name, is_spectator)
+function game_def.on_leave(arena, p_name)
 	local match = get_match(arena)
 	local player = core.get_player_by_name(p_name)
 	if player then
 		hud_remove(player)
 		if match then remove_round_items(player, match.token) end
 	end
-	if is_spectator or not playing(match) then return end
+	if not playing(match) then return end
 
 	-- Whatever the player carried goes back into the world.
 	local respawned = 0
@@ -1025,9 +1021,9 @@ arena_lib.on_quit(MOD, function(arena, p_name, is_spectator)
 		chat(arena, S("@1 left the match: @2 pieces of waste are back on the ground.", p_name, respawned))
 	end
 	hud_update_all(arena, match)
-end)
+end
 
-arena_lib.on_celebration(MOD, function(arena)
+function game_def.on_finish(arena)
 	local match = get_match(arena)
 	if not match then return end
 	if not match.finished then
@@ -1042,9 +1038,9 @@ arena_lib.on_celebration(MOD, function(arena)
 		local player = core.get_player_by_name(p_name)
 		if player then remove_round_items(player, match.token) end
 	end
-end)
+end
 
-arena_lib.on_end(MOD, function(arena, winners, is_forced)
+function game_def.on_end(arena)
 	local match = matches[arena.name]
 	if not match then return end
 	for _, rec in pairs(match.waste) do
@@ -1061,7 +1057,9 @@ arena_lib.on_end(MOD, function(arena, winners, is_forced)
 		end
 	end
 	matches[arena.name] = nil
-end)
+end
+
+skyss_minigames.register_game(MOD, game_def)
 
 -- Once per second: timer, waypoints and full breath for underwater arenas.
 local tick = 0
@@ -1070,8 +1068,8 @@ core.register_globalstep(function(dtime)
 	if tick < 1 then return end
 	tick = 0
 	for name, match in pairs(matches) do
-		local _, arena = arena_lib.get_arena_by_name(MOD, name)
-		if arena and arena.in_game and playing(match) then
+		local arena = skyss_minigames.get_match(name)
+		if arena and arena.state == "running" and playing(match) then
 			for p_name in pairs(arena.players) do
 				local player = core.get_player_by_name(p_name)
 				if player then

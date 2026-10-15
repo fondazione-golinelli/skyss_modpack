@@ -73,7 +73,7 @@ core.register_on_player_hpchange(function(player, hp_change, reason)
   reason = reason.type
 
   -- se non è in arena, disabilito danno da caduta, da affogamento e PvP
-  if not arena_lib.is_player_in_arena(player:get_player_name()) and (reason == "fall" or reason == "punch" or reason == "drown") then
+  if not hub.is_in_game(player:get_player_name()) and (reason == "fall" or reason == "punch" or reason == "drown") then
     return 0
   end
 
@@ -83,7 +83,7 @@ end, true)
 
 
 core.register_on_respawnplayer(function(player)
-  if arena_lib.is_player_in_arena(player:get_player_name()) then return end
+  if hub.is_in_game(player:get_player_name()) then return end
 
   player:set_pos(hub.get_hub_spawn_point())
   return true

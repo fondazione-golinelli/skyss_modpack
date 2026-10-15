@@ -155,6 +155,9 @@ local visitor_state = {}
 -- Class staff (teachers, Assistance, admins) may always build inside zones.
 local function is_staff(name) return teacher_access[name] == true end
 zones.set_staff_check(is_staff)
+if minetest.global_exists("skyss_minigames") then
+    skyss_minigames.set_staff_check(is_staff)
+end
 local missions = assert(loadfile(MODPATH .. "/missions.lua"))(zones, send_bridge_message, is_staff)
 -- On the map a spectator is never staff, even a teacher of another class.
 local function is_map_staff(name) return is_staff(name) and not visitor_state[name] end
@@ -1223,6 +1226,70 @@ function handlers.broadcast(data)
             minetest.chat_send_player(name, formatted)
         end
     end
+end
+
+-- ── Minigames (skyss_minigames, HUB only) ───────────────────────────────────
+
+local function minigames_reply(request, data, ok, err, counts)
+    counts = counts or {}
+    send_bridge_message({
+        action = "minigame_result",
+        request = request,
+        request_id = data.request_id,
+        arena = data.arena,
+        game = data.game,
+        started = counts.started,
+        waiting = counts.waiting,
+        left_out = counts.left_out,
+        teacher = data.teacher,
+        ok = ok == true,
+        error = err and minetest.get_translated_string("en", err) or nil,
+    }, "minigame_result")
+end
+
+-- { arena | game, players = {names}, time_limit = seconds (optional, 0 = none), teacher, request_id }
+-- With game, the players are spread over its free arenas (solo games) or put
+-- in the first free one (cooperative games).
+-- request_id is echoed back: the reply reaches the proxy once per player.
+function handlers.minigame_start(data)
+    if not minetest.global_exists("skyss_minigames") then
+        return minigames_reply("start", data, false, "Minigames are not available on this server")
+    end
+    local names = type(data.players) == "table" and data.players or {}
+    local opts = { time_limit = tonumber(data.time_limit), by = data.teacher }
+    local ok, err, counts
+    if data.game then
+        local message, started, waiting, left_out
+        ok, message, started, waiting, left_out = skyss_minigames.start_game(tostring(data.game), names, opts)
+        counts = { started = started, waiting = waiting, left_out = left_out }
+        err = not ok and message or nil
+        if data.teacher and minetest.get_player_by_name(data.teacher) then
+            minetest.chat_send_player(data.teacher, TAG_TEACHER .. (ok and message or minetest.colorize("#ff8a7a", message)))
+        end
+    else
+        ok, err = skyss_minigames.start(tostring(data.arena or ""), names, opts)
+        if data.teacher and minetest.get_player_by_name(data.teacher) then
+            minetest.chat_send_player(data.teacher, TAG_TEACHER .. (ok
+                and S("Minigame started for @1 student(s).", #names)
+                or minetest.colorize("#ff8a7a", err)))
+        end
+    end
+    minigames_reply("start", data, ok, err, counts)
+end
+
+-- { arena, teacher }
+function handlers.minigame_stop(data)
+    local ok = minetest.global_exists("skyss_minigames") and skyss_minigames.stop(tostring(data.arena or ""))
+    minigames_reply("stop", data, ok, not ok and "No match is being played there" or nil)
+end
+
+function handlers.minigame_list(data)
+    send_bridge_message({
+        action = "minigame_list",
+        request_id = data.request_id,
+        teacher = data.teacher,
+        arenas = minetest.global_exists("skyss_minigames") and skyss_minigames.list_arenas() or {},
+    }, "minigame_list")
 end
 
 function handlers.ping(data)

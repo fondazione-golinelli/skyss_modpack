@@ -6,8 +6,9 @@
 -- hub lobby: its item count) and the tools occupy the extra slots. Slots
 -- 1..N stay free for game items and arena_lib tools.
 --
--- While arena_lib owns the player's inventory (editor or match) the toolbar is
--- suspended; arena_lib restores the extended hotbar when it hands it back.
+-- While arena_lib or skyss_minigames owns the player's inventory (editor,
+-- edit mode or match) the toolbar is suspended; they restore the extended hotbar when they
+-- hand it back.
 
 local SLOT_TEXTURES = {
     mcl = {
@@ -43,6 +44,10 @@ local suspended = {}    -- [name] = true while another mode owns the hotbar
 
 local function is_suspended(name)
     if suspended[name] then
+        return true
+    end
+    if minetest.global_exists("skyss_minigames") and (skyss_minigames.is_playing(name)
+            or (skyss_minigames.is_editing and skyss_minigames.is_editing(name))) then
         return true
     end
     return minetest.global_exists("arena_lib")

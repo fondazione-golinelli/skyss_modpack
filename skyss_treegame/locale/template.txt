@@ -11,3 +11,4 @@ Tree planted! Your contribution: @1  |  Team total: @2/@3=
 All @1 trees planted! The forest is growing — explore for @2 seconds!=
 Exploration time is over. Thanks for planting!=
 30 seconds of exploration left!=
+Plant the Forest!=

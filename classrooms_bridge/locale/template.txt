@@ -296,3 +296,4 @@ Reset spawn=
 Back to the spawn point of the hub settings=
 Spawn point reset to @1, @2, @3.=
 Spawn: @1, @2, @3=
+Minigame started for @1 student(s).=

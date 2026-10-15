@@ -25,12 +25,20 @@ end
 
 
 
+-- In a match of arena_lib or of skyss_minigames (the Skyss minigame manager).
+function hub.is_in_game(pl_name)
+  return arena_lib.is_player_in_arena(pl_name)
+    or (core.global_exists("skyss_minigames") and skyss_minigames.is_playing(pl_name))
+end
+
+
+
 function hub.get_players_in_hub(to_player)
   local in_hub = {}
 
   for _, pl in pairs(core.get_connected_players()) do
     local pl_name = pl:get_player_name()
-    if not arena_lib.is_player_in_arena(pl_name) then
+    if not hub.is_in_game(pl_name) then
       if to_player then
         table.insert(in_hub, pl)
       else

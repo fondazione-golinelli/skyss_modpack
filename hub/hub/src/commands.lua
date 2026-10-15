@@ -19,7 +19,7 @@ core.register_on_chatcommand(function(name, command, params)
       return true
     end
 
-    if blocked_cmds[command] and not arena_lib.is_player_in_arena(name) then
+    if blocked_cmds[command] and not hub.is_in_game(name) then
       hub.print_error(name, S("Admins have blocked this command whilst in the lobby"))
       return true
     end

@@ -84,8 +84,8 @@ end
 -- STATE
 -- ============================================================
 
--- Runtime match state, keyed by arena name: entities and callbacks must not
--- end up in the persisted arena table.
+-- Runtime quiz state, keyed by arena name. In this file `arena` is the
+-- skyss_minigames match (players, name, spawns, state).
 local matches = {}
 local huds = {}
 
@@ -96,10 +96,10 @@ end
 local function match_of_player(player)
 	if not player or not player:is_player() then return end
 	local p_name = player:get_player_name()
-	if arena_lib.get_mod_by_player(p_name) ~= MOD then return end
-	local arena = arena_lib.get_arena_by_player(p_name)
+	local arena = skyss_minigames.get_match_by_player(p_name)
+	if not arena or arena.game.name ~= MOD then return end
 	local match = get_match(arena)
-	if match and arena.in_game and arena.players[p_name] then
+	if match and arena.state == "running" and arena.players[p_name] then
 		return match, arena
 	end
 end
@@ -125,8 +125,9 @@ local function time_left(match)
 	return math.max(0, (match.deadline_us - core.get_us_time()) / 1000000)
 end
 
-local function record_key(arena)
-	return "record:" .. arena.name
+-- One record for all the farm pens, like the leaderboard.
+local function record_key()
+	return "record"
 end
 
 local function chat(arena, message)
@@ -146,7 +147,7 @@ end
 
 local function title_all(arena, text, duration, color)
 	for p_name in pairs(arena.players) do
-		arena_lib.HUD_send_msg("title", p_name, text, duration, nil, color or 0xffffff)
+		skyss_minigames.title_player(p_name, text, duration, color or 0xffffff)
 	end
 end
 
@@ -310,7 +311,7 @@ local function hud_update_player(arena, match, p_name)
 	end
 	player:hud_change(h.streak, "text", match.streak >= 2 and S("Streak x@1", match.streak) or "")
 
-	local record = storage:get_int(record_key(arena))
+	local record = storage:get_int(record_key())
 	player:hud_change(h.footer, "text", S("Record: @1", record > 0 and record or "-")
 		.. "     " .. S("Best streak: @1", match.best_streak))
 	hud_update_timer(match, player, h)
@@ -583,11 +584,11 @@ end
 -- The stage is built in front of the first spawn point, facing it, and
 -- stays for the whole match: only the animals change between questions.
 local function stage_anchor(arena)
-	local spawn = arena.spawn_points and arena.spawn_points[1]
+	local spawn = arena.spawns and arena.spawns[1]
 	local pos, yaw
 	if spawn and spawn.pos then
 		pos = spawn.pos
-		yaw = math.rad(spawn.rot and spawn.rot.x or 0)
+		yaw = spawn.yaw or 0
 	else
 		local p_name = next(arena.players)
 		local player = p_name and core.get_player_by_name(p_name)
@@ -703,32 +704,20 @@ end
 -- GAME FLOW
 -- ============================================================
 
-arena_lib.register_minigame(MOD, {
-	name = "Animal Sounds",
+local game_def = {
+	title = S("Animal Sounds"),
 	description = S("Listen to the sound and pick the right animal."),
 	icon = MOD .. "_icon.png",
-	min_players = 1,
-	max_players = 1,
-	keep_inventory = false,
-	can_build = false,
-	can_drop = false,
-	disable_inventory = true,
-	regenerate_map = true,
-	eliminate_on_death = false,
-	end_when_too_few = false,
+	color = "#b8483f",
+	mode = "solo",
+	ranking = "score",
 	celebration_time = CELEBRATION_TIME,
-	custom_messages = {
-		-- arena_lib translates these with this mod's textdomain.
-		celebration_one_player = "Well done, @1!",
-		celebration_nobody = "Game over",
-	},
 	hud_flags = {
-		hotbar = false,
 		healthbar = false,
 		breathbar = false,
 		minimap = false,
 	},
-})
+}
 
 local begin_question
 
@@ -769,14 +758,12 @@ end
 local function game_over(arena, match)
 	match.state = "over"
 	match.token = match.token .. "!"
-	local key = record_key(arena)
+	local key = record_key()
 	local old = storage:get_int(key)
 	local is_record = match.score > old
 	if is_record then storage:set_int(key, match.score) end
 
-	local winners = {}
 	for p_name in pairs(arena.players) do
-		winners[#winners + 1] = p_name
 		if is_record and match.score > 0 then
 			local player = core.get_player_by_name(p_name)
 			if player then fireworks(player:get_pos()) end
@@ -794,12 +781,12 @@ local function game_over(arena, match)
 		chat(arena, msg .. "  " .. S("Record: @1", old))
 		sound_all(arena, "mcl_experience", {gain = 0.5, pitch = 0.7})
 	end
-	arena_lib.HUD_send_msg_all("broadcast", arena,
+	skyss_minigames.title(arena,
 		(is_record and match.score > 0) and S("New record: @1!", match.score) or S("Final score: @1", match.score),
-		CELEBRATION_TIME, nil, (is_record and match.score > 0) and 0xffd43b or 0xffc978)
+		CELEBRATION_TIME, (is_record and match.score > 0) and 0xffd43b or 0xffc978)
 
 	hud_update_all(arena, match)
-	arena_lib.load_celebration(MOD, arena, winners)
+	skyss_minigames.finish(arena, {success = true, score = match.score})
 end
 
 -- After a correct answer, a wrong one or a timeout.
@@ -852,7 +839,7 @@ local function resolve(arena, match, picked_slot)
 
 	hud_update_all(arena, match)
 	core.after(picked_slot == correct_slot and NEXT_DELAY or REVEAL_TIME, function()
-		if match.token ~= token or not arena.in_game then return end
+		if match.token ~= token or arena.state ~= "running" then return end
 		if match.lives <= 0 then
 			game_over(arena, match)
 		else
@@ -907,7 +894,7 @@ on_replay = function(player, ent)
 	play_animal(arena, match)
 end
 
-arena_lib.on_start(MOD, function(arena)
+function game_def.on_start(arena)
 	local match = {
 		base_token = tostring(core.get_us_time()),
 		state = "setup",
@@ -944,21 +931,27 @@ arena_lib.on_start(MOD, function(arena)
 
 	chat(arena, S("Listen to the animal and click the right one. Ring the bell to hear it again. You have @1 lives!", LIVES))
 	begin_question(arena, match)
-end)
+end
 
-arena_lib.on_celebration(MOD, function(arena)
+-- Time is up: the score so far counts.
+function game_def.on_timeout(arena)
+	local match = get_match(arena)
+	if match and match.state ~= "over" then game_over(arena, match) end
+end
+
+function game_def.on_finish(arena)
 	local match = get_match(arena)
 	if not match then return end
 	match.state = "over"
 	hud_update_all(arena, match)
-end)
+end
 
-arena_lib.on_quit(MOD, function(arena, p_name)
+function game_def.on_leave(arena, p_name)
 	local player = core.get_player_by_name(p_name)
 	if player then hud_remove(player) end
-end)
+end
 
-arena_lib.on_end(MOD, function(arena)
+function game_def.on_end(arena)
 	local match = matches[arena.name]
 	if not match then return end
 	match.token = match.token .. "!"
@@ -968,7 +961,9 @@ arena_lib.on_end(MOD, function(arena)
 		if player then hud_remove(player) end
 	end
 	matches[arena.name] = nil
-end)
+end
+
+skyss_minigames.register_game(MOD, game_def)
 
 -- Smooth countdown bar, last-seconds ticking and timeouts.
 local tick = 0
@@ -978,8 +973,8 @@ core.register_globalstep(function(dtime)
 	tick = 0
 	for name, match in pairs(matches) do
 		if match.state == "answer" then
-			local _, arena = arena_lib.get_arena_by_name(MOD, name)
-			if arena and arena.in_game then
+			local arena = skyss_minigames.get_match(name)
+			if arena and arena.state == "running" then
 				local left = time_left(match)
 				for p_name in pairs(arena.players) do
 					local player = core.get_player_by_name(p_name)
