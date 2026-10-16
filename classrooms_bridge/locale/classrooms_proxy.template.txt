@@ -716,3 +716,20 @@ Real terrain of Germany from geographic data=
 Real terrain of Poland from geographic data=
 Copy of the HUB world=
 World for development tests=
+
+# Class panel and World Tools menu
+Settings=
+The world is off: start it from the Settings tab.=
+Hurt: @1=
+PvP: @1=
+Hunger: @1=
+Tools=
+Zones, missions, map and the other tools of this world=
+Settings: start/stop, guests, delete=
+Zones & missions=
+Tools of the world you are in=
+Protect areas and set goals=
+Waypoints and teleport points=
+Day, night and rain=
+Damage, PvP, hunger, mobs=
+Start/stop, guests, delete=

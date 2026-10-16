@@ -716,3 +716,20 @@ Real terrain of Germany from geographic data=Terreno real de Alemania
 Real terrain of Poland from geographic data=Terreno real de Polonia
 Copy of the HUB world=Copia del mundo HUB
 World for development tests=Mundo para pruebas de desarrollo
+
+# Class panel and World Tools menu
+Settings=Ajustes
+The world is off: start it from the Settings tab.=El mundo está apagado: inícialo desde la pestaña Ajustes.
+Hurt: @1=Daño: @1
+PvP: @1=PvP: @1
+Hunger: @1=Hambre: @1
+Tools=Herramientas
+Zones, missions, map and the other tools of this world=Zonas, misiones, mapa y las demás herramientas de este mundo
+Settings: start/stop, guests, delete=Ajustes: iniciar/detener, invitados, eliminar
+Zones & missions=Zonas y misiones
+Tools of the world you are in=Herramientas del mundo en el que estás
+Protect areas and set goals=Protege áreas y fija objetivos
+Waypoints and teleport points=Marcadores y puntos de teletransporte
+Day, night and rain=Día, noche y lluvia
+Damage, PvP, hunger, mobs=Daño, PvP, hambre, criaturas
+Start/stop, guests, delete=Iniciar/detener, invitados, eliminar

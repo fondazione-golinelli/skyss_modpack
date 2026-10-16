@@ -716,3 +716,20 @@ Real terrain of Germany from geographic data=Németország valós domborzata
 Real terrain of Poland from geographic data=Lengyelország valós domborzata
 Copy of the HUB world=A HUB világ másolata
 World for development tests=Világ fejlesztési tesztekhez
+
+# Class panel and World Tools menu
+Settings=Beállítások
+The world is off: start it from the Settings tab.=A világ ki van kapcsolva: indítsd el a Beállítások fülön.
+Hurt: @1=Sebzés: @1
+PvP: @1=PvP: @1
+Hunger: @1=Éhség: @1
+Tools=Eszközök
+Zones, missions, map and the other tools of this world=Zónák, küldetések, térkép és a világ többi eszköze
+Settings: start/stop, guests, delete=Beállítások: indítás/leállítás, vendégek, törlés
+Zones & missions=Zónák és küldetések
+Tools of the world you are in=Annak a világnak az eszközei, ahol vagy
+Protect areas and set goals=Területek védelme és célok kitűzése
+Waypoints and teleport points=Útpontok és teleportpontok
+Day, night and rain=Nappal, éjszaka és eső
+Damage, PvP, hunger, mobs=Sebzés, PvP, éhség, mobok
+Start/stop, guests, delete=Indítás/leállítás, vendégek, törlés
