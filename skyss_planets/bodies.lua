@@ -1,8 +1,9 @@
 -- Celestial bodies. Gravity is a factor of Earth's (9.81 m/s²); sky values
--- go to player:set_sky/set_sun/set_moon/set_stars/set_clouds. Only built-in
--- client textures and Mineclonia nodes are used: these worlds share the
--- instance media pool, so the mod must not add media or definitions.
+-- go to player:set_sky/set_sun/set_moon/set_stars/set_clouds. These worlds
+-- share the instance media pool, so the mod adds no media or definitions:
+-- the Earth, Phobos and the Martian sunset are inline PNGs (textures.lua).
 
+local textures = dofile(core.get_modpath(core.get_current_modname()) .. "/textures.lua")
 local bodies = {}
 
 -- The Moon: 1.62 m/s², no air, so a black sky with stars by day too, a sun
@@ -24,7 +25,7 @@ bodies.moon = {
         fog = { fog_start = 0.9 },
     },
     sun = { visible = true, sunrise_visible = false, scale = 1 },
-    moon = { visible = true, texture = "moon.png^[colorize:#2f6fd8:170", scale = 3.7 },
+    moon = { visible = true, texture = textures.earth, tonemap = "", scale = 3.7 },
     stars = { visible = true, day_opacity = 1, count = 2500, star_color = "#ffffffdd", scale = 1 },
     clouds = { density = 0 },
 }
@@ -48,8 +49,8 @@ bodies.mars = {
         fog = { fog_start = 0.2 },
     },
     sun = { visible = true, sunrise_visible = true, scale = 0.66,
-        sunrise = "sunrisebg.png^[colorize:#5b8bd6:200" },
-    moon = { visible = true, texture = "moon.png^[colorize:#6b5a4a:160", scale = 0.35 },
+        sunrise = textures.mars_sunrise },
+    moon = { visible = true, texture = textures.phobos, tonemap = "", scale = 0.5 },
     stars = { visible = true, day_opacity = 0, count = 1200, star_color = "#ffffffaa", scale = 1 },
     clouds = { density = 0.12, color = "#f0dcc8a0", height = 180, thickness = 4,
         speed = { x = 1.5, z = -0.5 } },

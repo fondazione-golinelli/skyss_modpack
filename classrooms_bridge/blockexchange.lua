@@ -22,8 +22,16 @@ local TAG_LABELS = {}
 for _, tag in ipairs(TAGS) do
     TAG_LABELS[tag.name] = tag.label
 end
+-- Curated collections: the BlockExchange account whose structures Skyss
+-- publishes, split into Earth and Space builds.
+local CURATOR = minetest.settings:get("classrooms.blockexchange_curator") or "Golinelli"
+local COLLECTIONS = {
+    { id = "all", label = S("All creations") },
+    { id = "earth", label = S("Earth builds") },
+    { id = "space", label = S("Space builds") },
+}
 -- Form size; both tabs lay out against it.
-local W, H = 17.5, 12.3
+local W, H = 21, 12.3
 local EXCHANGE_URL = minetest.settings:get("classrooms.blockexchange_url")
     or minetest.settings:get("blockexchange.url")
     or "https://exchange.golinelli.live"
@@ -78,6 +86,25 @@ local function claims_for(name)
         return nil
     end
     return blockexchange.get_claims(name)
+end
+
+-- Forgets a BlockExchange position and removes its marker. With WorldEdit the
+-- positions are WorldEdit's; without it the official mod keeps its own table
+-- (its HUD waypoint stays until the player leaves).
+local function clear_pos(name, index)
+    if minetest.get_modpath("worldedit") and type(worldedit) == "table" and worldedit.pos1 then
+        local key = index == 1 and "pos1" or "pos2"
+        worldedit[key][name] = nil
+        local mark = worldedit["mark_" .. key]
+        if mark then
+            mark(name)
+        end
+    elseif type(blockexchange) == "table" then
+        local map = blockexchange[index == 1 and "pos1" or "pos2"]
+        if type(map) == "table" then
+            map[name] = nil
+        end
+    end
 end
 
 local function marker_key(name)
@@ -400,7 +427,10 @@ local function render(name)
     for _, institute in ipairs(own_institutes) do
         table.insert(institute_items, institute.name)
     end
-    dropdown(fs, filters_x + 3.45, 2.2, 3.85, "bx_institute", institute_items, view.institute_index)
+    -- Curated collections have a single author, so no institute filter.
+    if (view.collection or "all") == "all" then
+        dropdown(fs, filters_x + 3.45, 2.2, 3.85, "bx_institute", institute_items, view.institute_index)
+    end
     icon_button(fs, W - 1.65, 2.2, 0.7, "bx_search", "search.png", S("Search"))
     icon_button(fs, W - 0.85 + 0.0, 2.2, 0.7, "bx_refresh", "refresh.png", S("Reload the list"))
 
@@ -427,11 +457,11 @@ local function render(name)
     else
         -- The header is a one-row table sharing the list's columns, so the
         -- titles stay aligned whatever the client's font size is.
-        local columns = "tablecolumns[text,width=11,padding=0.5;"
-            .. "text,width=17,padding=0.5;"
-            .. "text,width=11,align=center,padding=0.5;"
-            .. "text,width=7,align=right,padding=0.5;"
-            .. "text,width=14,padding=0.8]"
+        local columns = "tablecolumns[text,width=12,padding=0.5;"
+            .. "text,width=24,padding=0.5;"
+            .. "text,width=13,align=center,padding=0.5;"
+            .. "text,width=8,align=right,padding=0.5;"
+            .. "text,width=22,padding=0.8]"
         table.insert(fs, "tableoptions[background=#D7DDE2;color=#1a1a2e;border=false;"
             .. "highlight=#D7DDE2;highlight_text=#1a1a2e]")
         table.insert(fs, columns)
@@ -462,6 +492,10 @@ local function render(name)
     icon_button(fs, 0.35, 8.45, 0.55, "bx_prev", "prev_icon.png", S("Previous page"))
     label(fs, 1.05, 8.72, S("Page @1", view.page + 1), C.muted)
     icon_button(fs, 2.15, 8.45, 0.55, "bx_next", "next_icon.png", S("Next page"))
+    for k, collection in ipairs(COLLECTIONS) do
+        styled_button(fs, 3.1 + (k - 1) * 3.55, 8.42, 3.4, 0.62, "bx_view_" .. collection.id, collection.label,
+            (view.collection or "all") == collection.id and C.accent or C.tab_idle)
+    end
 
     -- Guided placement.
     local selected = view.rows[view.selected or 0]
@@ -479,6 +513,10 @@ local function render(name)
         origin and C.ok or C.muted)
     styled_button(fs, 6.4, 10.7, 3.4, 0.7, "bx_origin", S("Set start here"))
     table.insert(fs, "tooltip[bx_origin;" .. esc(S("The structure is built from your current position")) .. "]")
+    if origin then
+        styled_button(fs, 9.95, 10.7, 3.4, 0.7, "bx_clear_origin", S("Clear start"))
+        table.insert(fs, "tooltip[bx_clear_origin;" .. esc(S("Removes the start spot and its marker")) .. "]")
+    end
 
     local build_x = W - 6.1
     step_badge(fs, build_x - 0.75, 9.5, 3, false)
@@ -523,11 +561,23 @@ local function fetch_rows(name)
     if view.query:find("[%w]") then
         payload.keywords = view.query
     end
+    local tag_names = {}
     local tag = TAGS[(view.tag_index or 1) - 1]
     if tag then
-        payload.tag_name = tag.name
+        table.insert(tag_names, tag.name)
     end
-    local institute = (institutes[name] or {})[(view.institute_index or 1) - 1]
+    local collection = view.collection or "all"
+    if collection == "earth" then
+        payload.user_name = CURATOR
+        payload.exclude_tag_names = { "space" }
+    elseif collection == "space" then
+        payload.user_name = CURATOR
+        table.insert(tag_names, "space")
+    end
+    if #tag_names > 0 then
+        payload.tag_names = tag_names
+    end
+    local institute = collection == "all" and (institutes[name] or {})[(view.institute_index or 1) - 1]
     if institute then
         -- An institute without known authors must match nothing.
         payload.user_names = #institute.users > 0 and institute.users or { "\1" }
@@ -990,7 +1040,11 @@ local function use_review_tool(id, user)
     local handled, review_error = pcall(function()
         if id == "confirm" then
             leave_review_mode(user)
-            notify(name, S("Structure confirmed."), "#00CC66")
+            -- A confirmed build uses up its start spot: the next build needs a
+            -- new one, so nothing gets placed there twice by mistake.
+            clear_pos(name, 1)
+            clear_pos(name, 2)
+            notify(name, S("Structure confirmed. Set a new start spot for the next one."), "#00CC66")
         elseif id == "undo" then
             write_box(session.pmin, session.snapshot)
             leave_review_mode(user)
@@ -1582,6 +1636,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
     -- Dropdowns report their index on every submit; a new value filters.
     local filter_changed = false
+    if fields.bx_view_all or fields.bx_view_earth or fields.bx_view_space then
+        view.collection = fields.bx_view_earth and "earth" or fields.bx_view_space and "space" or "all"
+        filter_changed = true
+    end
     for field, key in pairs({ bx_tag = "tag_index", bx_institute = "institute_index" }) do
         local index = tonumber(fields[field])
         if index and index ~= (view[key] or 1) then
@@ -1606,6 +1664,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     elseif fields.bx_save_tags then
         save_selected_tags(name)
+
     elseif fields.bx_prev and view.page > 0 then
         view.page = view.page - 1
         fetch_rows(name)
@@ -1614,6 +1673,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         view.page = view.page + 1
         fetch_rows(name)
         return true
+    elseif fields.bx_clear_origin then
+        clear_pos(name, 1)
+        notify(name, S("Start spot removed."), "#00CC66")
     elseif fields.bx_origin then
         if bx_available() then
             set_origin(name)

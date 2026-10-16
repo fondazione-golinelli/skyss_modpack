@@ -31,8 +31,11 @@ the mod does nothing.
   around 0,0 is kept free of craters and holds the spawn.
 
 The mod registers no nodes, items or media: class worlds share the `instance`
-media pool, so it uses Mineclonia nodes and built-in textures (`moon.png`,
-`sunrisebg.png` with colour modifiers) only. Keep it that way, or load the mod
-on every pool member.
+media pool, so it uses Mineclonia nodes only, and the Earth, Phobos and the
+blue Martian sunset are drawn in `textures.lua` and sent as inline
+`[png:<base64>` textures. Do not use client texture names with modifiers
+(`moon.png^[colorize:...`): the proxy prefixes them with the media pool name
+(`instance_moon.png`) and the client shows a placeholder square. Keep it that
+way, or load the mod on every pool member.
 
 Regenerate the templates with `luanti-tools/templategen/templategen.sh`.
