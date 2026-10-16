@@ -1,0 +1,3 @@
+# Celestial body of this world: gravity, sky and terrain.
+# "none" turns the mod off.
+skyss_planet (Celestial body) enum none none,moon,mars
