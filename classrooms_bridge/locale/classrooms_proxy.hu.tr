@@ -733,3 +733,46 @@ Waypoints and teleport points=Útpontok és teleportpontok
 Day, night and rain=Nappal, éjszaka és eső
 Damage, PvP, hunger, mobs=Sebzés, PvP, éhség, mobok
 Start/stop, guests, delete=Indítás/leállítás, vendégek, törlés
+
+# Admin panel: new user, new class, administrators
++ New class=+ Új osztály
++ New user=+ Új felhasználó
+1-20 letters, digits, _ or -=1-20 betű, számjegy, _ vagy -
+@1 is already an administrator.=@1 már adminisztrátor.
+@1 of @2 institutes=@1 / @2 intézmény
+Account=Fiók
+Account @1 created.=@1 fiók létrehozva.
+Administrators are not bound by the institute limits.=Az adminisztrátorokra nem vonatkoznak az intézmény korlátai.
+Administrators can manage everything:=Az adminisztrátorok mindent kezelhetnek:
+Administrators can:=Az adminisztrátorok:
+Choose the owner teacher of the class.=Válaszd ki az osztály tulajdonos tanárát.
+Class (students, assistance)=Osztály (diákok, segítők)
+Class name, e.g. 3B Science=Osztály neve, pl. 3B Természettudomány
+Create a class for a teacher of an institute=Osztály létrehozása egy intézmény tanárának
+Create an account and choose its role=Fiók létrehozása és szerepkör kiválasztása
+Create user=Felhasználó létrehozása
+Give this role only to people who run the service.=Ezt a szerepkört csak a szolgáltatás üzemeltetői kapják.
+Institute (teachers)=Intézmény (tanárok)
+Invalid player name.=Érvénytelen játékosnév.
+Make @1 an administrator?=Legyen @1 adminisztrátor?
+Me (@1)=Én (@1)
+New user=Új felhasználó
+No institutes match the search.=Egy intézmény sem felel meg a keresésnek.
+No teachers=Nincs tanár
+Only what belongs to the chosen institute is listed=Csak a kiválasztott intézményhez tartozók jelennek meg
+Owner teacher=Tulajdonos tanár
+Set in the proxy configuration (PROXY_ADMIN_USERS): it cannot be changed here.=A proxy konfigurációjában van beállítva (PROXY_ADMIN_USERS): itt nem módosítható.
+Teachers belong to an institute, students and assistance to a class.=A tanárok egy intézményhez, a diákok és a segítők egy osztályhoz tartoznak.
+The class counts towards the institute of its owner.=Az osztály a tulajdonosa intézményébe számít.
+This institute has no teachers yet:=Ennek az intézménynek még nincs tanára:
+Yes, make administrator=Igen, legyen adminisztrátor
+You cannot remove your own administrator rights.=A saját adminisztrátori jogaidat nem veheted el.
+create and delete accounts and change any password=fiókokat hozhatnak létre és törölhetnek, bármely jelszót módosíthatnak
+create one in the Users tab first.=előbb hozz létre egyet a Felhasználók fülön.
+create, change and delete institutes, classes and worlds=intézményeket, osztályokat és világokat hozhatnak létre, módosíthatnak és törölhetnek
+make other users administrators or remove them=más felhasználókat adminisztrátorrá tehetnek vagy elvehetik ezt
+the new user=az új felhasználó
+you will be asked to confirm.=megerősítést kérünk.
+
+# Class worlds picker
+@1  ·  Teacher: @2  ·  @3 players inside=@1  ·  Tanár: @2  ·  @3 játékos bent

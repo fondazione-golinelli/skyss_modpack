@@ -733,3 +733,46 @@ Waypoints and teleport points=Segnaposti e punti di teletrasporto
 Day, night and rain=Giorno, notte e pioggia
 Damage, PvP, hunger, mobs=Danni, PvP, fame, mob
 Start/stop, guests, delete=Avvio/arresto, ospiti, eliminazione
+
+# Admin panel: new user, new class, administrators
++ New class=+ Nuova classe
++ New user=+ Nuovo utente
+1-20 letters, digits, _ or -=1-20 lettere, cifre, _ o -
+@1 is already an administrator.=@1 è già un amministratore.
+@1 of @2 institutes=@1 di @2 istituti
+Account=Account
+Account @1 created.=Account @1 creato.
+Administrators are not bound by the institute limits.=Gli amministratori non sono vincolati dai limiti dell'istituto.
+Administrators can manage everything:=Gli amministratori possono gestire tutto:
+Administrators can:=Gli amministratori possono:
+Choose the owner teacher of the class.=Scegli il docente proprietario della classe.
+Class (students, assistance)=Classe (studenti, assistenza)
+Class name, e.g. 3B Science=Nome della classe, es. 3B Scienze
+Create a class for a teacher of an institute=Crea una classe per un docente di un istituto
+Create an account and choose its role=Crea un account e scegli il suo ruolo
+Create user=Crea utente
+Give this role only to people who run the service.=Assegna questo ruolo solo a chi gestisce il servizio.
+Institute (teachers)=Istituto (docenti)
+Invalid player name.=Nome giocatore non valido.
+Make @1 an administrator?=Rendere @1 amministratore?
+Me (@1)=Io (@1)
+New user=Nuovo utente
+No institutes match the search.=Nessun istituto corrisponde alla ricerca.
+No teachers=Nessun docente
+Only what belongs to the chosen institute is listed=Sono elencati solo gli elementi dell'istituto scelto
+Owner teacher=Docente proprietario
+Set in the proxy configuration (PROXY_ADMIN_USERS): it cannot be changed here.=Impostato nella configurazione del proxy (PROXY_ADMIN_USERS): non si può cambiare qui.
+Teachers belong to an institute, students and assistance to a class.=I docenti appartengono a un istituto, studenti e assistenza a una classe.
+The class counts towards the institute of its owner.=La classe conta per l'istituto del suo proprietario.
+This institute has no teachers yet:=Questo istituto non ha ancora docenti:
+Yes, make administrator=Sì, rendi amministratore
+You cannot remove your own administrator rights.=Non puoi togliere i tuoi diritti di amministratore.
+create and delete accounts and change any password=creare ed eliminare account e cambiare qualsiasi password
+create one in the Users tab first.=creane uno prima nella scheda Utenti.
+create, change and delete institutes, classes and worlds=creare, modificare ed eliminare istituti, classi e mondi
+make other users administrators or remove them=rendere amministratori altri utenti o rimuoverli
+the new user=il nuovo utente
+you will be asked to confirm.=ti verrà chiesta una conferma.
+
+# Class worlds picker
+@1  ·  Teacher: @2  ·  @3 players inside=@1  ·  Insegnante: @2  ·  @3 giocatori dentro

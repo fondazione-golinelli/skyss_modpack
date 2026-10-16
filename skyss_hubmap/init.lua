@@ -27,10 +27,11 @@ local BOUNDS = { min = -170, max = 169 } -- X and Z drawn in skyss_hubmap_map.pn
 local TP_COOLDOWN = 2
 local PIN = 0.62
 local ME = 0.5            -- size of the player triangle on the map
-local ROW_H, HEAD_H = 0.55, 0.5
+local ROW_H, HEAD_H, HEAD_GAP = 0.55, 0.52, 0.12
 local SCROLL = 0.1
 
-local UI = { ink = "#302c2e", soft = "#6e4a2a", light = "#f9f3df", row = "#c4daa5", sel = "#f3dd8f" }
+local UI = { ink = "#302c2e", soft = "#6e4a2a", light = "#f9f3df", row = "#c4daa5", sel = "#f3dd8f",
+    head = "#8a5a32", head_line = "#5e3b1f" }
 local esc = core.formspec_escape
 
 skyss_hubmap = {}
@@ -328,6 +329,8 @@ local function show(player)
     local rows, height = {}, 0
     for _, tag in ipairs(TAGS) do
         if v.tag == "all" or v.tag == tag.id then
+            -- Space above every category but the first.
+            if #rows > 0 then height = height + HEAD_GAP end
             rows[#rows + 1] = { tag = tag, y = height }
             height = height + HEAD_H
             for i, place in ipairs(PLACES) do
@@ -353,8 +356,11 @@ local function show(player)
     for _, row in ipairs(rows) do
         local y = row.y
         if row.tag then
-            f:image(0.05, y + 0.07, 0.36, 0.36, "skyss_hubmap_tag_" .. row.tag.id .. ".png")
-            f:text(0.5, y, rw - 0.5, HEAD_H, row.tag.title, { size = 14, bold = true, color = UI.soft })
+            -- Category: a wooden band, so it does not look like a place row.
+            f:add(("box[0,%g;%g,%g;%s]"):format(y, rw, HEAD_H, UI.head))
+            f:add(("box[0,%g;%g,0.04;%s]"):format(y + HEAD_H - 0.04, rw, UI.head_line))
+            f:image(0.08, y + 0.08, 0.36, 0.36, "skyss_hubmap_tag_" .. row.tag.id .. ".png")
+            f:text(0.55, y, rw - 0.6, HEAD_H, row.tag.title, { size = 14, bold = true, color = UI.light })
         else
             local place, i = row.place, row.index
             local title = place_title(place, list)

@@ -733,3 +733,46 @@ Waypoints and teleport points=Wegpunkte und Teleportpunkte
 Day, night and rain=Tag, Nacht und Regen
 Damage, PvP, hunger, mobs=Schaden, PvP, Hunger, Mobs
 Start/stop, guests, delete=Starten/Stoppen, Gäste, Löschen
+
+# Admin panel: new user, new class, administrators
++ New class=+ Neue Klasse
++ New user=+ Neuer Benutzer
+1-20 letters, digits, _ or -=1-20 Buchstaben, Ziffern, _ oder -
+@1 is already an administrator.=@1 ist bereits Administrator.
+@1 of @2 institutes=@1 von @2 Schulen
+Account=Konto
+Account @1 created.=Konto @1 erstellt.
+Administrators are not bound by the institute limits.=Administratoren sind nicht an die Grenzen der Schule gebunden.
+Administrators can manage everything:=Administratoren können alles verwalten:
+Administrators can:=Administratoren können:
+Choose the owner teacher of the class.=Wähle die verantwortliche Lehrkraft der Klasse.
+Class (students, assistance)=Klasse (Schüler, Assistenz)
+Class name, e.g. 3B Science=Klassenname, z. B. 3B Naturwissenschaften
+Create a class for a teacher of an institute=Eine Klasse für eine Lehrkraft einer Schule erstellen
+Create an account and choose its role=Ein Konto erstellen und seine Rolle wählen
+Create user=Benutzer erstellen
+Give this role only to people who run the service.=Gib diese Rolle nur Personen, die den Dienst betreiben.
+Institute (teachers)=Schule (Lehrkräfte)
+Invalid player name.=Ungültiger Spielername.
+Make @1 an administrator?=@1 zum Administrator machen?
+Me (@1)=Ich (@1)
+New user=Neuer Benutzer
+No institutes match the search.=Keine Schule passt zur Suche.
+No teachers=Keine Lehrkräfte
+Only what belongs to the chosen institute is listed=Es wird nur aufgelistet, was zur gewählten Schule gehört
+Owner teacher=Verantwortliche Lehrkraft
+Set in the proxy configuration (PROXY_ADMIN_USERS): it cannot be changed here.=In der Proxy-Konfiguration festgelegt (PROXY_ADMIN_USERS): hier nicht änderbar.
+Teachers belong to an institute, students and assistance to a class.=Lehrkräfte gehören zu einer Schule, Schüler und Assistenz zu einer Klasse.
+The class counts towards the institute of its owner.=Die Klasse zählt zur Schule ihrer verantwortlichen Lehrkraft.
+This institute has no teachers yet:=Diese Schule hat noch keine Lehrkräfte:
+Yes, make administrator=Ja, zum Administrator machen
+You cannot remove your own administrator rights.=Du kannst dir deine eigenen Administratorrechte nicht entziehen.
+create and delete accounts and change any password=Konten erstellen und löschen und jedes Passwort ändern
+create one in the Users tab first.=lege zuerst eine im Tab Benutzer an.
+create, change and delete institutes, classes and worlds=Schulen, Klassen und Welten erstellen, ändern und löschen
+make other users administrators or remove them=andere Benutzer zu Administratoren machen oder es ihnen entziehen
+the new user=den neuen Benutzer
+you will be asked to confirm.=du wirst um Bestätigung gebeten.
+
+# Class worlds picker
+@1  ·  Teacher: @2  ·  @3 players inside=@1  ·  Lehrkraft: @2  ·  @3 Spieler darin

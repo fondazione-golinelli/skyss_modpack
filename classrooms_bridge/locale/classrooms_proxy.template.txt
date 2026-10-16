@@ -733,3 +733,46 @@ Waypoints and teleport points=
 Day, night and rain=
 Damage, PvP, hunger, mobs=
 Start/stop, guests, delete=
+
+# Admin panel: new user, new class, administrators
++ New class=
++ New user=
+1-20 letters, digits, _ or -=
+@1 is already an administrator.=
+@1 of @2 institutes=
+Account=
+Account @1 created.=
+Administrators are not bound by the institute limits.=
+Administrators can manage everything:=
+Administrators can:=
+Choose the owner teacher of the class.=
+Class (students, assistance)=
+Class name, e.g. 3B Science=
+Create a class for a teacher of an institute=
+Create an account and choose its role=
+Create user=
+Give this role only to people who run the service.=
+Institute (teachers)=
+Invalid player name.=
+Make @1 an administrator?=
+Me (@1)=
+New user=
+No institutes match the search.=
+No teachers=
+Only what belongs to the chosen institute is listed=
+Owner teacher=
+Set in the proxy configuration (PROXY_ADMIN_USERS): it cannot be changed here.=
+Teachers belong to an institute, students and assistance to a class.=
+The class counts towards the institute of its owner.=
+This institute has no teachers yet:=
+Yes, make administrator=
+You cannot remove your own administrator rights.=
+create and delete accounts and change any password=
+create one in the Users tab first.=
+create, change and delete institutes, classes and worlds=
+make other users administrators or remove them=
+the new user=
+you will be asked to confirm.=
+
+# Class worlds picker
+@1  ·  Teacher: @2  ·  @3 players inside=
