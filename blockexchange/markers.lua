@@ -68,6 +68,29 @@ function blockexchange.set_pos(index, playername, pos)
 	end
 end
 
+-- forgets a position and removes its marker / waypoint
+function blockexchange.clear_pos(index, playername)
+	if minetest.get_modpath("worldedit") then
+		if index == 1 then
+			worldedit.pos1[playername] = nil
+			worldedit.mark_pos1(playername)
+		elseif index == 2 then
+			worldedit.pos2[playername] = nil
+			worldedit.mark_pos2(playername)
+		end
+		return
+	end
+
+	local map = index == 2 and blockexchange.pos2 or blockexchange.pos1
+	local hud_map = index == 2 and pos2_player_map or pos1_player_map
+	map[playername] = nil
+	local player = minetest.get_player_by_name(playername)
+	if player and hud_map[playername] then
+		player:hud_remove(hud_map[playername])
+	end
+	hud_map[playername] = nil
+end
+
 -- cleanup
 minetest.register_on_leaveplayer(function(player)
 	local playername = player:get_player_name()

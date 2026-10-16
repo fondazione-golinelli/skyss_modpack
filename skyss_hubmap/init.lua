@@ -26,6 +26,7 @@ local TOOL_ORDER = 4          -- the slot of the old classrooms_bridge map
 local BOUNDS = { min = -170, max = 169 } -- X and Z drawn in skyss_hubmap_map.png
 local TP_COOLDOWN = 2
 local PIN = 0.62
+local ME = 0.5            -- size of the player triangle on the map
 local ROW_H, HEAD_H = 0.55, 0.5
 local SCROLL = 0.1
 
@@ -277,15 +278,9 @@ local function show(player)
     f:add(("image_button_exit[%g,%g;%g,%g;skyss_hubmap_close.png;close;;true;false;skyss_hubmap_close_pressed.png]")
         :format(cx, cy, cs, cs))
 
-    -- map: image, the player, then the pins (buttons stay on top)
+    -- map: image, the pins, then the player on top
     local mx, my, size = L.map[1], L.map[2], L.map[3]
     f:image(mx, my, size, size, "skyss_hubmap_map.png")
-    local me = player:get_pos()
-    if on_map(me) then
-        local ax, ay = to_map(me)
-        local dir = math.floor(player:get_look_horizontal() / (math.pi / 4) + 0.5) % 8
-        f:image(ax - 0.22, ay - 0.22, 0.44, 0.44, "skyss_hubmap_me_" .. dir .. ".png")
-    end
     local points = {}
     for i, place in ipairs(PLACES) do
         points[i] = locate(place, list)
@@ -304,6 +299,15 @@ local function show(player)
                 f:hotspot(x - PIN / 2, y - PIN / 2, PIN, PIN, "pin_" .. i, place_title(place, list))
             end
         end
+    end
+    -- The player: a triangle pointing where they look. Smaller than a pin,
+    -- so the pin under it can still be clicked around its edge.
+    local me = player:get_pos()
+    if on_map(me) then
+        local ax, ay = to_map(me)
+        local dir = math.floor(player:get_look_horizontal() / (math.pi / 4) + 0.5) % 8
+        f:image(ax - ME / 2, ay - ME / 2, ME, ME, "skyss_hubmap_me_" .. dir .. ".png")
+        f:add(("tooltip[%g,%g;%g,%g;%s]"):format(ax - ME / 2, ay - ME / 2, ME, ME, esc(S("You are here"))))
     end
 
     -- tag tabs

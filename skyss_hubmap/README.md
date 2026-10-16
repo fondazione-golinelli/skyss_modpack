@@ -8,6 +8,8 @@ Every player carries the map in the fourth slot of the classrooms toolbar
 too. The map shows the hub island with one pin per place; a pin, a list row
 or the tag tabs select a place, **Teleport** / **Go** take the player there:
 always to the same block, facing a fixed direction.
+The player is a red triangle pointing where they look (8 directions),
+drawn above the pins with the tooltip "You are here".
 
 ## Places and tags
 

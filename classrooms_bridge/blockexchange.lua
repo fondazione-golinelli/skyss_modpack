@@ -88,11 +88,13 @@ local function claims_for(name)
     return blockexchange.get_claims(name)
 end
 
--- Forgets a BlockExchange position and removes its marker. With WorldEdit the
--- positions are WorldEdit's; without it the official mod keeps its own table
--- (its HUD waypoint stays until the player leaves).
+-- Forgets a BlockExchange position and removes its marker. The Skyss copy of
+-- the BlockExchange mod has clear_pos(); otherwise the positions are cleared
+-- by hand (without WorldEdit the waypoint then stays until the player leaves).
 local function clear_pos(name, index)
-    if minetest.get_modpath("worldedit") and type(worldedit) == "table" and worldedit.pos1 then
+    if type(blockexchange) == "table" and type(blockexchange.clear_pos) == "function" then
+        blockexchange.clear_pos(index, name)
+    elseif minetest.get_modpath("worldedit") and type(worldedit) == "table" and worldedit.pos1 then
         local key = index == 1 and "pos1" or "pos2"
         worldedit[key][name] = nil
         local mark = worldedit["mark_" .. key]

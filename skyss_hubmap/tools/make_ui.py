@@ -204,11 +204,14 @@ def arrows():
             ry = x * math.sin(a) + y * math.cos(a)
             return 32 + rx, 32 - ry
 
-        outer = [rot(0, 26), rot(18, -20), rot(0, -10), rot(-18, -20)]
-        inner = [rot(0, 18), rot(11, -13), rot(0, -6), rot(-11, -13)]
-        d.polygon(outer, fill=(48, 44, 46))
-        d.polygon(inner, fill=(255, 255, 255))
-        img = img.resize((16, 16), Image.LANCZOS)
+        # dark outline, white rim, bright red-orange triangle with a notch
+        outline = [rot(0, 30), rot(22, -24), rot(0, -12), rot(-22, -24)]
+        rim = [rot(0, 25), rot(17, -19), rot(0, -9), rot(-17, -19)]
+        fill = [rot(0, 20), rot(12, -14), rot(0, -6), rot(-12, -14)]
+        d.polygon(outline, fill=(48, 44, 46))
+        d.polygon(rim, fill=(255, 255, 255))
+        d.polygon(fill, fill=(232, 70, 58))
+        img = img.resize((32, 32), Image.LANCZOS)
         img.save(os.path.join(TEX, f"{PREFIX}me_{k}.png"))
 
 

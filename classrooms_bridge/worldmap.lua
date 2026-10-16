@@ -156,7 +156,7 @@ local function find_ground(x, z, callback)
     end)
 end
 
-local function add_marker(kind, name, x, y, z)
+local function add_marker(kind, name, x, y, z, yaw)
     if #markers >= MAX_MARKERS then return false end
     local count = 0
     for _, m in ipairs(markers) do
@@ -164,7 +164,7 @@ local function add_marker(kind, name, x, y, z)
     end
     table.insert(markers, {
         id = next_id, kind = kind, name = name,
-        x = x, y = y, z = z,
+        x = x, y = y, z = z, yaw = yaw,
         color = kind == "waypoint" and WAYPOINT_COLORS[count % #WAYPOINT_COLORS + 1] or "#66e0ff",
     })
     next_id = next_id + 1
@@ -422,7 +422,7 @@ show = function(player)
     table.insert(fs, ("label[%g,1.55;%s]"):format(px0 + 0.2, colored(C.muted, S("ZOOM ×@1", zoom))))
     table.insert(fs, ("button[%g,1.3;0.8,0.55;map_zoom_out;-]button[%g,1.3;0.8,0.55;map_zoom_in;+]"):format(px0 + 2.2, px0 + 3.05))
     table.insert(fs, ("button[%g,1.3;1.6,0.55;map_me;%s]"):format(px0 + 4.6, F("Me")))
-    table.insert(fs, "tooltip[map_me;" .. F("Center the map on your position") .. "]")
+    table.insert(fs, "tooltip[map_me;" .. F("Center the map on your position and select it") .. "]")
     table.insert(fs, ("button[%g,2.0;0.9,0.5;map_n;N]"):format(px0 + 1.4))
     table.insert(fs, ("button[%g,2.55;0.9,0.5;map_w;W]button[%g,2.55;0.9,0.5;map_e;E]"):format(px0 + 0.45, px0 + 2.35))
     table.insert(fs, ("button[%g,3.1;0.9,0.5;map_s;S]"):format(px0 + 1.4))
@@ -665,8 +665,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     elseif fields.map_e then v.cx = v.cx + step
     elseif fields.map_w then v.cx = v.cx - step
     elseif fields.map_me then
+        -- Also selects the exact spot (height and facing included), so a
+        -- point added now lands where the player stands.
         local p = player:get_pos()
         v.cx, v.cz = p.x, p.z
+        v.sel = { x = math.floor(p.x + 0.5), z = math.floor(p.z + 0.5), y = math.floor(p.y + 0.5),
+            yaw = player:get_look_horizontal() }
     elseif fields.map_center and v.sel then
         v.cx, v.cz = v.sel.x, v.sel.z
     elseif (fields.map_add_wp or fields.map_add_tp) and staff and v.sel then
@@ -678,14 +682,19 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
                 or S("Teleport @1", next_id))
         end
         local sel = v.sel
-        find_ground(sel.x, sel.z, function(y)
-            if not add_marker(kind, label, sel.x, y, sel.z) then
+        local function place(y)
+            if not add_marker(kind, label, sel.x, y, sel.z, sel.yaw) then
                 minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG_MAP .. S("Too many points: remove some first.")))
             end
             local current = minetest.get_player_by_name(name)
             if current then show(current) end
-        end)
+        end
         v.name_text = ""
+        if sel.y then
+            place(sel.y)
+            return true
+        end
+        find_ground(sel.x, sel.z, place)
         return true
     elseif fields.map_set_spawn and staff and HUB_MODE and v.sel then
         local sel = v.sel
@@ -713,10 +722,11 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         return true
     elseif fields.map_go_sel and staff and v.sel then
         local sel = v.sel
-        find_ground(sel.x, sel.z, function(y)
+        local function go(y)
             local current = minetest.get_player_by_name(name)
-            if current then teleport(current, sel.x, y, sel.z) end
-        end)
+            if current then teleport(current, sel.x, y, sel.z, sel.yaw) end
+        end
+        if sel.y then go(sel.y) else find_ground(sel.x, sel.z, go) end
         minetest.close_formspec(name, FORM)
         return true
     else
@@ -755,7 +765,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             if id then
                 local m = marker_by_id(id)
                 if m and (staff or m.kind == "teleport") and may_teleport(name, staff) then
-                    teleport(player, m.x, m.y, m.z)
+                    teleport(player, m.x, m.y, m.z, tonumber(m.yaw))
                     minetest.close_formspec(name, FORM)
                     return true
                 end
