@@ -149,6 +149,7 @@ local function send_bridge_message(payload, context)
     end
     return ok
 end
+blockexchange_integration.set_sender(send_bridge_message)
 
 local zone_edit = assert(loadfile(MODPATH .. "/zone_edit.lua"))(toolbar, zones, send_bridge_message)
 
@@ -976,7 +977,8 @@ function handlers.set_teacher_defaults(data)
 
     set_teacher_access(player, true)
     forget_student_abilities(player)
-    blockexchange_integration.set_access(player, data.blockexchange_access ~= false)
+    blockexchange_integration.set_access(player, data.blockexchange_access ~= false,
+        data.blockexchange_institutes)
     set_world_tools_access(player, data.world_tools_access == true)
 
     local privs = minetest.get_player_privs(name)

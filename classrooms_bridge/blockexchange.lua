@@ -10,6 +10,20 @@ local ITEM_NAME = "classrooms_bridge:blockexchange"
 local TOOL_ID = "blockexchange"
 local FORM_NAME = "classrooms_bridge:blockexchange"
 local PAGE_SIZE = 20
+-- Content categories, created on the BlockExchange server (migration
+-- 19_skyss_tags). Names stay English everywhere.
+local TAGS = {
+    { name = "farm", label = "Farm" },
+    { name = "structure", label = "Structure" },
+    { name = "props", label = "Props" },
+    { name = "space", label = "Space" },
+}
+local TAG_LABELS = {}
+for _, tag in ipairs(TAGS) do
+    TAG_LABELS[tag.name] = tag.label
+end
+-- Form size; both tabs lay out against it.
+local W, H = 17.5, 12.3
 local EXCHANGE_URL = minetest.settings:get("classrooms.blockexchange_url")
     or minetest.settings:get("blockexchange.url")
     or "https://exchange.golinelli.live"
@@ -20,6 +34,11 @@ local EXCHANGE_URL = minetest.settings:get("classrooms.blockexchange_url")
 local http, toolbar = ...
 local access = {}
 local views = {}
+-- institutes[player] = { { name, users = { BlockExchange usernames } } }, sent
+-- by the proxy with the teacher defaults.
+local institutes = {}
+-- Sends a message to the classrooms proxy; set by init.lua.
+local send_to_proxy = function() end
 
 -- Structure previews are the isometric renders BlockExchange keeps for every
 -- schematic. The PNG travels inside the formspec as a `[png:` texture: dynamic
@@ -88,11 +107,13 @@ local function restore_upload_privilege(name)
     storage:set_string(key, "")
 end
 
+-- Escapes a table cell or dropdown item. Done by hand: whether
+-- formspec_escape() also escapes commas depends on the Luanti version.
 local function table_escape(value)
     -- string.gsub returns both the resulting string and a replacement count.
     -- Store the result first so callers (notably table.insert) receive exactly
     -- one value.
-    local escaped = minetest.formspec_escape(tostring(value or "")):gsub(",", "\\,")
+    local escaped = tostring(value or ""):gsub("[\\%[%];,]", "\\%0")
     return escaped
 end
 
@@ -185,6 +206,139 @@ local function render_preview(fs, name, selected, x, y, w, h)
         .. esc(caption) .. "]")
 end
 
+local function tag_list(tags)
+    local labels = {}
+    for _, tag in ipairs(type(tags) == "table" and tags or {}) do
+        if TAG_LABELS[tag] then
+            table.insert(labels, TAG_LABELS[tag])
+        end
+    end
+    return table.concat(labels, ", ")
+end
+
+local function tag_checkboxes(fs, x, y, prefix, checked, columns)
+    for k, tag in ipairs(TAGS) do
+        local col, row = (k - 1) % columns, math.floor((k - 1) / columns)
+        table.insert(fs, ("checkbox[%s,%s;%s%s;%s;%s]"):format(x + col * 2.0, y + row * 0.5,
+            prefix, tag.name, esc(tag.label), checked[tag.name] and "true" or "false"))
+    end
+end
+
+local function dropdown(fs, x, y, w, field, items, selected)
+    local escaped = {}
+    for k, item in ipairs(items) do
+        escaped[k] = table_escape(item)
+    end
+    table.insert(fs, ("dropdown[%s,%s;%s,0.7;%s;%s;%d;true]"):format(x, y, w, field,
+        table.concat(escaped, ","), selected or 1))
+end
+
+-- Whether `name` owns the structure in `row` (and may change its tags).
+local function owns(name, row)
+    local claims = row and claims_for(name)
+    return claims ~= nil and claims.username == row.username
+end
+
+local function render_share(fs, name, view)
+    local claims = claims_for(name)
+    local inner = W - 0.7
+    if not claims or not claims.username then
+        table.insert(fs, ("box[0.35,2.2;%s,3.1;%s]"):format(inner, C.card))
+        label(fs, 0.65, 2.55, S("To share builds, connect your BlockExchange account once."))
+        step_badge(fs, 0.65, 3.0, 1, false)
+        label(fs, 1.4, 3.28, S("Open your profile and create an access token."))
+        table.insert(fs, ("style[bx_profile;bgcolor=%s]"):format(C.button))
+        table.insert(fs, ("button_url[%s,2.95;3.6,0.62;bx_profile;"):format(W - 4.25)
+            .. esc(S("Open my profile")) .. ";" .. esc(EXCHANGE_URL .. "/profile") .. "]")
+        step_badge(fs, 0.65, 3.95, 2, false)
+        label(fs, 1.4, 4.23, S("Enter your BlockExchange username and the token."))
+        label(fs, 1.4, 4.7, S("Your game name and BlockExchange name may differ."), C.muted)
+
+        table.insert(fs, ("box[0.35,5.5;%s,1.6;%s]"):format(inner, C.card))
+        table.insert(fs, "field[0.65,6.15;6.0,0.65;bx_login_username;" .. esc(S("BlockExchange username")) .. ";"
+            .. esc(view.login_username or "") .. "]")
+        table.insert(fs, "pwdfield[6.9,6.15;6.0,0.65;bx_access_token;" .. esc(S("Access token")) .. "]")
+        styled_button(fs, W - 4.25, 6.15, 3.6, 0.65, "bx_login", S("Sign in"), C.primary)
+        if view.login_status then
+            table.insert(fs, ("textarea[0.65,7.35;%s,1.0;;;"):format(inner - 0.6) .. esc(view.login_status) .. "]")
+        end
+        label(fs, 0.65, H - 0.5, S("The token is exchanged for a session and never stored."), C.muted)
+        return
+    end
+
+    local pos1 = blockexchange.get_pos and blockexchange.get_pos(1, name)
+    local pos2 = blockexchange.get_pos and blockexchange.get_pos(2, name)
+
+    label(fs, 7.3, 1.61, S("Signed in as @1", claims.username), C.muted)
+    icon_button(fs, W - 0.97, 1.3, 0.62, "bx_logout", "clear.png", S("Sign out"))
+
+    -- Step 1: corners.
+    table.insert(fs, ("box[0.35,2.2;%s,2.75;%s]"):format(inner, C.card))
+    step_badge(fs, 0.65, 2.45, 1, pos1 ~= nil and pos2 ~= nil)
+    label(fs, 1.4, 2.73, S("Stand on two opposite corners of your build and mark them."))
+    styled_button(fs, 0.65, 3.25, 3.4, 0.65, "bx_pos1", S("Mark corner 1"))
+    label(fs, 4.25, 3.58, pos1 and minetest.pos_to_string(pos1) or S("not set"), pos1 and C.ok or C.muted)
+    styled_button(fs, 8.75, 3.25, 3.4, 0.65, "bx_pos2", S("Mark corner 2"))
+    label(fs, 12.35, 3.58, pos2 and minetest.pos_to_string(pos2) or S("not set"), pos2 and C.ok or C.muted)
+    if pos1 and pos2 then
+        label(fs, 0.65, 4.45, S("Selected size: @1 blocks", format_size({
+            size_x = math.abs(pos2.x - pos1.x) + 1,
+            size_y = math.abs(pos2.y - pos1.y) + 1,
+            size_z = math.abs(pos2.z - pos1.z) + 1,
+        })), C.muted)
+    end
+
+    -- Step 2: name.
+    local named = (view.schema_name or "") ~= ""
+    table.insert(fs, ("box[0.35,5.15;%s,1.55;%s]"):format(inner, C.card))
+    step_badge(fs, 0.65, 5.4, 2, named)
+    label(fs, 1.4, 5.68, S("Give it a name (letters, numbers, - _ .)"))
+    table.insert(fs, ("field[1.4,5.95;%s,0.6;bx_schema_name;;"):format(inner - 1.35)
+        .. esc(view.schema_name or "") .. "]")
+    table.insert(fs, "field_close_on_enter[bx_schema_name;false]")
+
+    -- Step 3: tags.
+    view.upload_tags = view.upload_tags or {}
+    local tagged = next(view.upload_tags) ~= nil
+    table.insert(fs, ("box[0.35,6.9;%s,1.25;%s]"):format(inner, C.card))
+    step_badge(fs, 0.65, 7.15, 3, tagged)
+    label(fs, 1.4, 7.43, S("Pick its tags (optional)"))
+    tag_checkboxes(fs, 6.2, 7.43, "bx_upload_tag_", view.upload_tags, #TAGS)
+
+    -- Step 4: publish.
+    table.insert(fs, ("box[0.35,8.35;%s,1.25;%s]"):format(inner, C.card))
+    step_badge(fs, 0.65, 8.7, 4, false)
+    styled_button(fs, 1.4, 8.65, 5.0, 0.7, "bx_upload", S("Publish to the library"), C.primary)
+    table.insert(fs, ("style[bx_search_page;bgcolor=%s]"):format(C.button))
+    table.insert(fs, ("button_url[%s,8.65;4.6,0.7;bx_search_page;"):format(W - 5.25)
+        .. esc(S("Open web library")) .. ";" .. esc(EXCHANGE_URL .. "/search") .. "]")
+
+    local upload_status = view.upload_status or S("Mark both corners, choose a name, then publish.")
+    if view.uploading then
+        upload_status = S("Uploading… follow the progress bar on screen.")
+    end
+    table.insert(fs, ("textarea[0.35,9.85;%s,1.6;;;"):format(inner) .. esc(upload_status) .. "]")
+end
+
+-- Tags of the selected structure, editable by its owner.
+local function render_tags_card(fs, name, view, selected, x, y, w, h)
+    table.insert(fs, ("box[%s,%s;%s,%s;%s]"):format(x, y, w, h, C.card))
+    if not selected then
+        return
+    end
+    if not owns(name, selected) then
+        local tags = tag_list(selected.tags)
+        label(fs, x + 0.2, y + 0.3, S("Tags"), C.muted)
+        table.insert(fs, ("textarea[%s,%s;%s,%s;;;%s]"):format(x + 0.1, y + 0.5, w - 0.2, h - 0.6,
+            esc(tags ~= "" and tags or S("No tags yet"))))
+        return
+    end
+    label(fs, x + 0.2, y + 0.3, S("Your tags"), C.muted)
+    tag_checkboxes(fs, x + 0.2, y + 0.7, "bx_edit_tag_", view.edit_tags or {}, 2)
+    styled_button(fs, x + 0.2, y + h - 0.7, w - 0.4, 0.55, "bx_save_tags",
+        view.saving_tags and S("Saving…") or S("Save tags"), C.primary)
+end
+
 local function render(name)
     if not access[name] then return end
 
@@ -199,16 +353,16 @@ local function render(name)
 
     local fs = {
         "formspec_version[6]",
-        "size[13.2,10.4]",
+        ("size[%s,%s]"):format(W, H),
         "bgcolor[" .. C.bg .. ";true]",
         -- Paint over the game's formspec_prepend (Mineclonia background and
         -- text colors).
-        "box[0,0;13.2,10.4;" .. C.bg .. "]",
+        ("box[0,0;%s,%s;%s]"):format(W, H, C.bg),
         "style_type[button,image_button;bgcolor=" .. C.button .. ";border=false;textcolor=" .. C.light .. "]",
         "style_type[label,checkbox;textcolor=" .. C.light .. "]",
-        "style_type[field,pwdfield,textarea;textcolor=" .. C.light .. "]",
-        "box[0,0;13.2,1.05;" .. C.header .. "]",
-        "box[0,1.05;13.2,0.05;" .. C.accent .. "]",
+        "style_type[field,pwdfield,textarea,dropdown;textcolor=" .. C.light .. "]",
+        ("box[0,0;%s,1.05;%s]"):format(W, C.header),
+        ("box[0,1.05;%s,0.05;%s]"):format(W, C.accent),
     }
     label(fs, 0.4, 0.35, S("BlockExchange Library"))
     table.insert(fs, "style[bx_home_link;font_size=15]")
@@ -216,7 +370,7 @@ local function render(name)
         .. "<global background=none margin=0 color=#8fb8de hovercolor=#c5dcf0>"
         .. "<action name=home url='" .. esc(EXCHANGE_URL) .. "'><u>"
         .. esc(EXCHANGE_URL) .. "</u></action>]")
-    table.insert(fs, "image_button_exit[12.35,0.2;0.65,0.65;clear.png;bx_close;]")
+    table.insert(fs, ("image_button_exit[%s,0.2;0.65,0.65;clear.png;bx_close;]"):format(W - 0.85))
     table.insert(fs, "tooltip[bx_close;" .. esc(S("Close")) .. "]")
 
     local sharing = view.tab == "share"
@@ -226,171 +380,112 @@ local function render(name)
         sharing and C.accent or C.tab_idle)
 
     if sharing then
-        local claims = claims_for(name)
-        if not claims or not claims.username then
-            table.insert(fs, "box[0.35,2.2;12.5,3.1;" .. C.card .. "]")
-            label(fs, 0.65, 2.55, S("To share builds, connect your BlockExchange account once."))
-            step_badge(fs, 0.65, 3.0, 1, false)
-            label(fs, 1.4, 3.28, S("Open your profile and create an access token."))
-            table.insert(fs, ("style[bx_profile;bgcolor=%s]"):format(C.button))
-            table.insert(fs, "button_url[9.3,2.95;3.3,0.62;bx_profile;" .. esc(S("Open my profile")) .. ";"
-                .. esc(EXCHANGE_URL .. "/profile") .. "]")
-            step_badge(fs, 0.65, 3.95, 2, false)
-            label(fs, 1.4, 4.23, S("Enter your BlockExchange username and the token."))
-            label(fs, 1.4, 4.7, S("Your game name and BlockExchange name may differ."), C.muted)
-
-            table.insert(fs, "box[0.35,5.5;12.5,1.6;" .. C.card .. "]")
-            table.insert(fs, "field[0.65,6.15;4.6,0.65;bx_login_username;" .. esc(S("BlockExchange username")) .. ";"
-                .. esc(view.login_username or "") .. "]")
-            table.insert(fs, "pwdfield[5.45,6.15;4.2,0.65;bx_access_token;" .. esc(S("Access token")) .. "]")
-            styled_button(fs, 9.85, 6.15, 2.75, 0.65, "bx_login", S("Sign in"), C.primary)
-            if view.login_status then
-                table.insert(fs, "textarea[0.65,7.35;12.0,1.0;;;" .. esc(view.login_status) .. "]")
-            end
-            label(fs, 0.65, 9.9, S("The token is exchanged for a session and never stored."), C.muted)
-        else
-            local pos1 = blockexchange.get_pos and blockexchange.get_pos(1, name)
-            local pos2 = blockexchange.get_pos and blockexchange.get_pos(2, name)
-
-            label(fs, 7.3, 1.61, S("Signed in as @1", claims.username), C.muted)
-            icon_button(fs, 12.2, 1.3, 0.62, "bx_logout", "clear.png", S("Sign out"))
-
-            -- Step 1: corners.
-            table.insert(fs, "box[0.35,2.2;12.5,2.75;" .. C.card .. "]")
-            step_badge(fs, 0.65, 2.45, 1, pos1 ~= nil and pos2 ~= nil)
-            label(fs, 1.4, 2.73, S("Stand on two opposite corners of your build and mark them."))
-            styled_button(fs, 0.65, 3.25, 2.9, 0.65, "bx_pos1", S("Mark corner 1"))
-            label(fs, 3.75, 3.58, pos1 and minetest.pos_to_string(pos1) or S("not set"),
-                pos1 and C.ok or C.muted)
-            styled_button(fs, 6.55, 3.25, 2.9, 0.65, "bx_pos2", S("Mark corner 2"))
-            label(fs, 9.65, 3.58, pos2 and minetest.pos_to_string(pos2) or S("not set"),
-                pos2 and C.ok or C.muted)
-            if pos1 and pos2 then
-                label(fs, 0.65, 4.45, S("Selected size: @1 blocks", format_size({
-                    size_x = math.abs(pos2.x - pos1.x) + 1,
-                    size_y = math.abs(pos2.y - pos1.y) + 1,
-                    size_z = math.abs(pos2.z - pos1.z) + 1,
-                })), C.muted)
-            end
-
-            -- Step 2: name.
-            local named = (view.schema_name or "") ~= ""
-            table.insert(fs, "box[0.35,5.15;12.5,1.55;" .. C.card .. "]")
-            step_badge(fs, 0.65, 5.4, 2, named)
-            label(fs, 1.4, 5.68, S("Give it a name (letters, numbers, - _ .)"))
-            table.insert(fs, "field[1.4,5.95;11.2,0.6;bx_schema_name;;"
-                .. esc(view.schema_name or "") .. "]")
-            table.insert(fs, "field_close_on_enter[bx_schema_name;false]")
-
-            -- Step 3: publish.
-            table.insert(fs, "box[0.35,6.9;12.5,1.25;" .. C.card .. "]")
-            step_badge(fs, 0.65, 7.25, 3, false)
-            styled_button(fs, 1.4, 7.2, 4.2, 0.7, "bx_upload", S("Publish to the library"), C.primary)
-            table.insert(fs, ("style[bx_search_page;bgcolor=%s]"):format(C.button))
-            table.insert(fs, "button_url[8.6,7.2;4.0,0.7;bx_search_page;" .. esc(S("Open web library")) .. ";"
-                .. esc(EXCHANGE_URL .. "/search") .. "]")
-
-            local upload_status = view.upload_status
-                or S("Mark both corners, choose a name, then publish.")
-            if view.uploading then
-                upload_status = S("Uploading… follow the progress bar on screen.")
-            end
-            table.insert(fs, "textarea[0.35,8.4;12.5,1.6;;;" .. esc(upload_status) .. "]")
-        end
-
+        render_share(fs, name, view)
         minetest.show_formspec(name, FORM_NAME, table.concat(fs))
         return
     end
 
-    -- Find & place.
-    table.insert(fs, "field[0.35,2.2;10.85,0.7;bx_query;;" .. esc(view.query) .. "]")
+    -- Find & place: search and filters.
+    local own_institutes = institutes[name] or {}
+    local filters_x = W - 9.05
+    table.insert(fs, ("field[0.35,2.2;%s,0.7;bx_query;;"):format(filters_x - 0.5) .. esc(view.query) .. "]")
     table.insert(fs, "field_close_on_enter[bx_query;false]")
-    table.insert(fs, "tooltip[bx_query;" .. esc(S("Type a word (e.g. house, bridge) and press Enter")) .. "]")
-    icon_button(fs, 11.35, 2.2, 0.7, "bx_search", "search.png", S("Search"))
-    icon_button(fs, 12.15, 2.2, 0.7, "bx_refresh", "refresh.png", S("Reload the list"))
+    table.insert(fs, "tooltip[bx_query;" .. esc(S("Type part of a name (e.g. wind, house) and press Enter")) .. "]")
+    local tag_items = { S("All tags") }
+    for _, tag in ipairs(TAGS) do
+        table.insert(tag_items, tag.label)
+    end
+    dropdown(fs, filters_x, 2.2, 3.3, "bx_tag", tag_items, view.tag_index)
+    local institute_items = { S("All institutes") }
+    for _, institute in ipairs(own_institutes) do
+        table.insert(institute_items, institute.name)
+    end
+    dropdown(fs, filters_x + 3.45, 2.2, 3.85, "bx_institute", institute_items, view.institute_index)
+    icon_button(fs, W - 1.65, 2.2, 0.7, "bx_search", "search.png", S("Search"))
+    icon_button(fs, W - 0.85 + 0.0, 2.2, 0.7, "bx_refresh", "refresh.png", S("Reload the list"))
 
+    local list_w = W - 5.2
+    local side_x, side_w = list_w + 0.55, W - list_w - 0.9
     if not bx_available() then
-        table.insert(fs, "textarea[0.35,3.15;12.5,2.2;;" .. esc(S("BlockExchange unavailable")) .. ";")
+        table.insert(fs, ("textarea[0.35,3.15;%s,2.2;;"):format(W - 0.7) .. esc(S("BlockExchange unavailable")) .. ";")
         table.insert(fs, esc(S("The official blockexchange mod must be installed, enabled, online, and configured for @1.",
             EXCHANGE_URL)))
         table.insert(fs, "]")
     elseif not http then
-        table.insert(fs, "textarea[0.35,3.15;12.5,2.2;;" .. esc(S("Catalogue unavailable")) .. ";")
+        table.insert(fs, ("textarea[0.35,3.15;%s,2.2;;"):format(W - 0.7) .. esc(S("Catalogue unavailable")) .. ";")
         table.insert(fs, esc(S("Add classrooms_bridge to secure.http_mods, then restart this instance.")))
         table.insert(fs, "]")
     elseif view.loading then
         table.insert(fs, "image[0.45,3.2;0.5,0.5;refresh.png]")
         label(fs, 1.15, 3.45, S("Loading structures…"), C.muted)
     elseif view.error then
-        table.insert(fs, "textarea[0.35,3.15;12.5,1.5;;" .. esc(S("Could not load structures")) .. ";")
+        table.insert(fs, ("textarea[0.35,3.15;%s,1.5;;"):format(W - 0.7) .. esc(S("Could not load structures")) .. ";")
         table.insert(fs, esc(view.error))
         table.insert(fs, "]")
     elseif #view.rows == 0 then
-        label(fs, 0.45, 3.45, S("No structures found. Try another word."), C.muted)
+        label(fs, 0.45, 3.45, S("No structures found. Try another word or filter."), C.muted)
     else
         -- The header is a one-row table sharing the list's columns, so the
-        -- titles stay aligned whatever the client's font size is. The right
-        -- third of the row belongs to the preview card.
-        local columns = "tablecolumns[text,width=12,padding=0.5;"
-            .. "text,width=20,padding=0.5;"
-            .. "text,width=12,align=center,padding=0.5;"
-            .. "text,width=7,align=right,padding=0.5]"
+        -- titles stay aligned whatever the client's font size is.
+        local columns = "tablecolumns[text,width=11,padding=0.5;"
+            .. "text,width=17,padding=0.5;"
+            .. "text,width=11,align=center,padding=0.5;"
+            .. "text,width=7,align=right,padding=0.5;"
+            .. "text,width=14,padding=0.8]"
         table.insert(fs, "tableoptions[background=#D7DDE2;color=#1a1a2e;border=false;"
             .. "highlight=#D7DDE2;highlight_text=#1a1a2e]")
         table.insert(fs, columns)
-        table.insert(fs, "table[0.35,3.1;9.05,0.5;bx_header;" .. table_escape(S("Owner")) .. ","
+        table.insert(fs, ("table[0.35,3.1;%s,0.5;bx_header;"):format(list_w) .. table_escape(S("Owner")) .. ","
             .. table_escape(S("Structure")) .. "," .. table_escape(S("Size")) .. ","
-            .. table_escape(S("Downloads")) .. ";0]")
+            .. table_escape(S("Downloads")) .. "," .. table_escape(S("Tags")) .. ";0]")
         table.insert(fs, "tableoptions[background=#1B1B1B;border=true;highlight=#356A91;highlight_text=#FFFFFF]")
         table.insert(fs, columns)
-        table.insert(fs, "table[0.35,3.65;9.05,3.2;bx_structures;")
-        local first = true
+        table.insert(fs, ("table[0.35,3.65;%s,4.6;bx_structures;"):format(list_w))
+        local cells = {}
         for _, row in ipairs(view.rows) do
-            if not first then
-                table.insert(fs, ",")
-            end
-            first = false
-            table.insert(fs, table_escape(row.username))
-            table.insert(fs, ",")
-            table.insert(fs, table_escape(row.schema.name))
-            table.insert(fs, ",")
-            table.insert(fs, table_escape(format_size(row.schema)))
-            table.insert(fs, ",")
-            table.insert(fs, table_escape(row.schema.downloads or 0))
+            table.insert(cells, table_escape(row.username))
+            table.insert(cells, table_escape(row.schema.name))
+            table.insert(cells, table_escape(format_size(row.schema)))
+            table.insert(cells, table_escape(row.schema.downloads or 0))
+            table.insert(cells, table_escape(tag_list(row.tags)))
         end
+        table.insert(fs, table.concat(cells, ","))
         table.insert(fs, ";")
         table.insert(fs, tostring(view.selected or 0))
         table.insert(fs, "]")
 
-        render_preview(fs, name, view.rows[view.selected or 0], 9.55, 3.1, 3.3, 3.75)
+        local selected = view.rows[view.selected or 0]
+        render_preview(fs, name, selected, side_x, 3.1, side_w, 3.65)
+        render_tags_card(fs, name, view, selected, side_x, 6.85, side_w, 1.4)
     end
 
-    icon_button(fs, 0.35, 6.95, 0.55, "bx_prev", "prev_icon.png", S("Previous page"))
-    label(fs, 1.05, 7.22, S("Page @1", view.page + 1), C.muted)
-    icon_button(fs, 2.15, 6.95, 0.55, "bx_next", "next_icon.png", S("Next page"))
+    icon_button(fs, 0.35, 8.45, 0.55, "bx_prev", "prev_icon.png", S("Previous page"))
+    label(fs, 1.05, 8.72, S("Page @1", view.page + 1), C.muted)
+    icon_button(fs, 2.15, 8.45, 0.55, "bx_next", "next_icon.png", S("Next page"))
 
     -- Guided placement.
     local selected = view.rows[view.selected or 0]
     local origin = bx_available() and blockexchange.get_pos and blockexchange.get_pos(1, name)
-    table.insert(fs, "box[0.35,7.7;12.5,2.45;" .. C.card .. "]")
+    table.insert(fs, ("box[0.35,9.25;%s,2.7;%s]"):format(W - 0.7, C.card))
 
-    step_badge(fs, 0.6, 7.9, 1, selected ~= nil)
-    label(fs, 1.3, 8.05, S("Pick a structure"))
-    label(fs, 1.3, 8.45, selected and (selected.username .. " / " .. selected.schema.name)
+    step_badge(fs, 0.6, 9.5, 1, selected ~= nil)
+    label(fs, 1.3, 9.65, S("Pick a structure"))
+    label(fs, 1.3, 10.05, selected and (selected.username .. " / " .. selected.schema.name)
         or S("Click a row in the list"), selected and C.ok or C.muted)
 
-    step_badge(fs, 0.6, 9.0, 2, origin ~= nil)
-    label(fs, 1.3, 9.15, S("Go to the start spot"))
-    label(fs, 1.3, 9.55, origin and S("Start: @1", minetest.pos_to_string(origin)) or S("Start not set"),
+    step_badge(fs, 0.6, 10.75, 2, origin ~= nil)
+    label(fs, 1.3, 10.9, S("Go to the start spot"))
+    label(fs, 1.3, 11.3, origin and S("Start: @1", minetest.pos_to_string(origin)) or S("Start not set"),
         origin and C.ok or C.muted)
-    styled_button(fs, 5.15, 8.95, 2.35, 0.65, "bx_origin", S("Set start here"))
+    styled_button(fs, 6.4, 10.7, 3.4, 0.7, "bx_origin", S("Set start here"))
     table.insert(fs, "tooltip[bx_origin;" .. esc(S("The structure is built from your current position")) .. "]")
 
-    step_badge(fs, 7.75, 7.9, 3, false)
-    label(fs, 8.45, 8.05, S("Build it"))
-    styled_button(fs, 8.45, 8.35, 4.15, 0.6, "bx_allocate", S("Check the space"))
+    local build_x = W - 6.1
+    step_badge(fs, build_x - 0.75, 9.5, 3, false)
+    label(fs, build_x, 9.65, S("Build it"))
+    styled_button(fs, build_x, 10.0, 5.4, 0.65, "bx_allocate", S("Check the space"))
     table.insert(fs, "tooltip[bx_allocate;" .. esc(S("Shows how big it is and whether it fits, without building")) .. "]")
-    styled_button(fs, 8.45, 9.05, 4.15, 0.75, "bx_load", S("Build here"), C.primary)
+    styled_button(fs, build_x, 10.8, 5.4, 0.85, "bx_load", S("Build here"), C.primary)
 
     minetest.show_formspec(name, FORM_NAME, table.concat(fs))
 end
@@ -427,6 +522,15 @@ local function fetch_rows(name)
     }
     if view.query:find("[%w]") then
         payload.keywords = view.query
+    end
+    local tag = TAGS[(view.tag_index or 1) - 1]
+    if tag then
+        payload.tag_name = tag.name
+    end
+    local institute = (institutes[name] or {})[(view.institute_index or 1) - 1]
+    if institute then
+        -- An institute without known authors must match nothing.
+        payload.user_names = #institute.users > 0 and institute.users or { "\1" }
     end
 
     http.fetch({
@@ -471,6 +575,9 @@ local function fetch_rows(name)
                         and type(row.username) == "string"
                         and type(row.schema) == "table"
                         and type(row.schema.name) == "string" then
+                    if type(row.tags) ~= "table" then
+                        row.tags = {}
+                    end
                     table.insert(current.rows, row)
                 end
             end
@@ -1088,6 +1195,77 @@ local function request_preview(name)
     end)
 end
 
+local function token_for(name)
+    local settings = bx_available() and blockexchange.get_player_settings(name)
+    return settings and settings.token
+end
+
+-- Replaces the tags of a structure owned by `name`; `done(ok)` runs after.
+local function put_tags(name, schema_uid, tag_names, done)
+    local token = token_for(name)
+    if not http or not token or type(schema_uid) ~= "string" then
+        done(false)
+        return
+    end
+    http.fetch({
+        url = EXCHANGE_URL .. "/api/schema/" .. schema_uid .. "/tags",
+        method = "POST",
+        timeout = 15,
+        extra_headers = {
+            "Content-Type: application/json",
+            "Authorization: " .. token,
+        },
+        -- An empty Lua table would encode as null.
+        data = #tag_names > 0 and minetest.write_json(tag_names) or "[]",
+    }, function(result)
+        done(result.succeeded and result.code == 200)
+    end)
+end
+
+local function checked_tags(checked)
+    local names = {}
+    for _, tag in ipairs(TAGS) do
+        if checked[tag.name] then
+            table.insert(names, tag.name)
+        end
+    end
+    return names
+end
+
+local function save_selected_tags(name)
+    local view = views[name]
+    local selected = view and selected_structure(name)
+    if not selected or not owns(name, selected) or view.saving_tags then return end
+
+    local names = checked_tags(view.edit_tags or {})
+    view.saving_tags = true
+    put_tags(name, selected.schema.uid, names, function(ok)
+        local current = views[name]
+        if current then
+            current.saving_tags = nil
+        end
+        if ok then
+            selected.tags = names
+            notify(name, S("Tags saved."), "#00CC66")
+        else
+            notify(name, S("The tags could not be saved."), "#FF5555")
+        end
+        if current and current.tab ~= "share" then
+            safe_render(name, "tags saved")
+        end
+    end)
+end
+
+-- Tells the proxy which BlockExchange account this teacher uses, so the
+-- library can filter structures by the author's institute.
+local function report_account(name)
+    local claims = claims_for(name)
+    if claims and type(claims.username) == "string" then
+        send_to_proxy({ action = "blockexchange_linked", player = name, bx_username = claims.username },
+            "blockexchange_linked")
+    end
+end
+
 local function set_origin(name)
     local player = minetest.get_player_by_name(name)
     if not player then return end
@@ -1196,6 +1374,7 @@ local function login(name, username, access_token)
             current.login_pending = false
             current.login_status = nil
             notify(name, S("Signed in as @1.", claims.username), "#00CC66")
+            report_account(name)
             safe_render(name, "login success")
         end)
         :catch(function(err)
@@ -1262,6 +1441,7 @@ local function upload_structure(name, schema_name)
         return
     end
 
+    local upload_tags = checked_tags(view.upload_tags or {})
     view.uploading = true
     view.upload_status = S("Uploading @1…", schema_name)
     safe_render(name, "upload start")
@@ -1277,6 +1457,13 @@ local function upload_structure(name, schema_name)
                 safe_render(name, "upload success")
             end
             notify(name, S("Published @1 successfully.", schema_name), "#00CC66")
+            if #upload_tags > 0 then
+                put_tags(name, result.schema and result.schema.uid, upload_tags, function(ok)
+                    if not ok then
+                        notify(name, S("The tags could not be saved."), "#FF5555")
+                    end
+                end)
+            end
         end)
         :catch(function(err)
             local current = views[name]
@@ -1347,6 +1534,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             view.login_username = fields.bx_login_username
         end
 
+        for _, tag in ipairs(TAGS) do
+            local value = fields["bx_upload_tag_" .. tag.name]
+            if value ~= nil then
+                view.upload_tags = view.upload_tags or {}
+                view.upload_tags[tag.name] = value == "true" or nil
+            end
+        end
+
         if fields.bx_login then
             login(name, fields.bx_login_username, fields.bx_access_token)
             return true
@@ -1369,8 +1564,36 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         local event = minetest.explode_table_event(fields.bx_structures)
         if event.type == "CHG" or event.type == "DCL" then
             view.selected = event.row
+            view.edit_tags = {}
+            local selected = selected_structure(name)
+            for _, tag in ipairs(selected and selected.tags or {}) do
+                view.edit_tags[tag] = true
+            end
             request_preview(name)
         end
+    end
+    for _, tag in ipairs(TAGS) do
+        local value = fields["bx_edit_tag_" .. tag.name]
+        if value ~= nil then
+            view.edit_tags = view.edit_tags or {}
+            view.edit_tags[tag.name] = value == "true" or nil
+        end
+    end
+
+    -- Dropdowns report their index on every submit; a new value filters.
+    local filter_changed = false
+    for field, key in pairs({ bx_tag = "tag_index", bx_institute = "institute_index" }) do
+        local index = tonumber(fields[field])
+        if index and index ~= (view[key] or 1) then
+            view[key] = index
+            filter_changed = true
+        end
+    end
+    if filter_changed then
+        view.query = tostring(fields.bx_query or view.query):match("^%s*(.-)%s*$")
+        view.page = 0
+        fetch_rows(name)
+        return true
     end
 
     if fields.bx_search or fields.key_enter_field == "bx_query" then
@@ -1381,6 +1604,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     elseif fields.bx_refresh then
         fetch_rows(name)
         return true
+    elseif fields.bx_save_tags then
+        save_selected_tags(name)
     elseif fields.bx_prev and view.page > 0 then
         view.page = view.page - 1
         fetch_rows(name)
@@ -1414,24 +1639,44 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     return true
 end)
 
-function integration.set_access(player, enabled)
+-- `institute_list` comes from the proxy: { { name, users = { ... } } }.
+function integration.set_access(player, enabled, institute_list)
     if not player or not player:is_player() then return end
     local name = player:get_player_name()
     if enabled then
         access[name] = true
         grant_upload_privilege(name)
+        institutes[name] = {}
+        for _, institute in ipairs(type(institute_list) == "table" and institute_list or {}) do
+            if type(institute) == "table" and type(institute.name) == "string" then
+                local users = {}
+                for _, user in ipairs(type(institute.users) == "table" and institute.users or {}) do
+                    if type(user) == "string" then
+                        table.insert(users, user)
+                    end
+                end
+                table.insert(institutes[name], { name = institute.name, users = users })
+            end
+        end
+        report_account(name)
     else
         access[name] = nil
         views[name] = nil
+        institutes[name] = nil
         leave_review_mode(player)
         restore_upload_privilege(name)
     end
     toolbar.set_enabled(player, TOOL_ID, enabled)
 end
 
+function integration.set_sender(send)
+    send_to_proxy = send
+end
+
 function integration.clear_player(name)
     access[name] = nil
     views[name] = nil
+    institutes[name] = nil
     sessions[name] = nil
     restore_upload_privilege(name)
 end
