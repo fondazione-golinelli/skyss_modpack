@@ -41,6 +41,18 @@ SKIP_PARTS = ("tallgrass", "fern", "flower", "sapling", "deadbush", "double_", "
               "pressure_plate", "rail", "carpet", "sign", "lever")
 
 COLORS = [
+    # Moon and Mars ground (skyss_planets), before the generic names below.
+    ("concrete_powder_white", (214, 216, 218)),
+    ("concrete_powder_silver", (150, 150, 146)),
+    ("concrete_powder_grey", (88, 91, 95)),
+    ("concrete_powder_brown", (104, 72, 50)),
+    ("hardened_clay_orange", (162, 84, 38)),
+    ("hardened_clay_red", (142, 60, 46)),
+    ("hardened_clay_brown", (77, 51, 36)),
+    ("hardened_clay_yellow", (186, 133, 36)),
+    ("blackstone", (44, 38, 43)),
+    ("basalt", (82, 82, 88)),
+    ("tuff", (108, 109, 102)),
     ("water", (52, 98, 182)),
     ("ice", (166, 202, 240)),
     ("snow", (238, 243, 248)),

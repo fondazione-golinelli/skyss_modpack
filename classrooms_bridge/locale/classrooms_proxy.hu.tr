@@ -692,3 +692,27 @@ Start a HUB minigame for the class or one of its groups=HUB minijáték indítá
 Starting...=Indítás...
 Started for @1 students; @2 are in line for a free arena.=Elindítva @1 diáknak; @2 szabad arénára vár.
 Started for @1 students; @2 did not fit.=Elindítva @1 diáknak; @2 nem fért be.
+
+# Map templates (classrooms.json display_name / server_description)
+Flat World=Sík világ
+Generic World=Általános világ
+Moon=Hold
+Mars=Mars
+Italy=Olaszország
+Spain=Spanyolország
+Hungary=Magyarország
+Germany=Németország
+Poland=Lengyelország
+HUB=HUB
+Test World=Tesztvilág
+Flat grass, ideal for free building=Sík fű, ideális szabad építéshez
+Standard Mineclonia world, shown on the map=Szabványos Mineclonia-világ, a térképen
+Craters, 1/6 of Earth's gravity, black sky=Kráterek, 1/6 földi gravitáció, fekete ég
+Red desert, canyon, volcano, 38% gravity=Vörös sivatag, kanyon, vulkán, 38% gravitáció
+Real terrain of Italy from geographic data=Olaszország valós domborzata
+Real terrain of Spain from geographic data=Spanyolország valós domborzata
+Real terrain of Hungary from geographic data=Magyarország valós domborzata
+Real terrain of Germany from geographic data=Németország valós domborzata
+Real terrain of Poland from geographic data=Lengyelország valós domborzata
+Copy of the HUB world=A HUB világ másolata
+World for development tests=Világ fejlesztési tesztekhez

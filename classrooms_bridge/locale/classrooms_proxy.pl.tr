@@ -692,3 +692,27 @@ Start a HUB minigame for the class or one of its groups=Uruchom minigrę z HUB-u
 Starting...=Uruchamianie...
 Started for @1 students; @2 are in line for a free arena.=Uruchomiono dla @1 uczniów; @2 czeka na wolną arenę.
 Started for @1 students; @2 did not fit.=Uruchomiono dla @1 uczniów; @2 się nie zmieściło.
+
+# Map templates (classrooms.json display_name / server_description)
+Flat World=Płaski świat
+Generic World=Zwykły świat
+Moon=Księżyc
+Mars=Mars
+Italy=Włochy
+Spain=Hiszpania
+Hungary=Węgry
+Germany=Niemcy
+Poland=Polska
+HUB=HUB
+Test World=Świat testowy
+Flat grass, ideal for free building=Płaska trawa, idealna do swobodnej budowy
+Standard Mineclonia world, shown on the map=Standardowy świat Mineclonia, na mapie
+Craters, 1/6 of Earth's gravity, black sky=Kratery, 1/6 grawitacji Ziemi, czarne niebo
+Red desert, canyon, volcano, 38% gravity=Pustynia, kanion, wulkan, grawitacja 38%
+Real terrain of Italy from geographic data=Prawdziwy teren Włoch
+Real terrain of Spain from geographic data=Prawdziwy teren Hiszpanii
+Real terrain of Hungary from geographic data=Prawdziwy teren Węgier
+Real terrain of Germany from geographic data=Prawdziwy teren Niemiec
+Real terrain of Poland from geographic data=Prawdziwy teren Polski
+Copy of the HUB world=Kopia świata HUB
+World for development tests=Świat do testów deweloperskich
