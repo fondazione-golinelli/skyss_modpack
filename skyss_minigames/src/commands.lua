@@ -124,6 +124,24 @@ function skyss_minigames.stop(arena_name)
     return arena ~= nil and P.stop(arena)
 end
 
+-- Where each game's launcher stands, for maps (skyss_hubmap):
+-- [game] = { title, icon, pos, yaw, exit = { pos, yaw } }, yaws in radians.
+function skyss_minigames.list_launchers()
+    local list = {}
+    for game_name, launcher in pairs(P.launchers) do
+        local game = P.games[game_name]
+        if game then
+            local exit = P.exit_point({ game = game_name, spawns = {} })
+            list[game_name] = {
+                title = game.title, icon = game.icon,
+                pos = vector.copy(launcher.pos), yaw = launcher.yaw,
+                exit = exit and { pos = vector.copy(exit.pos), yaw = exit.yaw },
+            }
+        end
+    end
+    return list
+end
+
 -- Plain data about every arena, for dashboards.
 function skyss_minigames.list_arenas()
     local list = {}

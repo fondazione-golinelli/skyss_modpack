@@ -26,6 +26,14 @@ local blockexchange_integration = blockexchange_loader(classrooms_http, toolbar)
 local frozen_players = {}   -- { [player_name] = true }
 local watching_players = {}  -- { [player_name] = teacher_name }
 
+-- For other mods (skyss_hubmap): a dedicated toolbar slot and the freeze state.
+classrooms_bridge = {
+    register_tool = toolbar.register_tool,
+    set_tool = toolbar.set_enabled,
+    on_drop = toolbar.on_drop,
+    is_frozen = function(name) return frozen_players[name] == true end,
+}
+
 -- ── Mod Channel Setup ───────────────────────────────────────────────────────
 
 minetest.register_on_mods_loaded(function()

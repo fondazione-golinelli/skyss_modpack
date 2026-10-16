@@ -11,6 +11,7 @@ local S = P.S
 
 local AUTO_START = 20
 local MAX_DISTANCE = 24
+local WARN_DISTANCE = 18  -- a warning a few steps before leaving the line
 
 P.queues = {}  -- [game] = { list = {names}, deadline_us = number|nil }
 P.queued = {}  -- [player name] = game
@@ -60,6 +61,7 @@ local function remove_from_line(name)
                 break
             end
         end
+        if queue.warned then queue.warned[name] = nil end
         if #queue.list == 0 then P.queues[game_name] = nil end
     end
     return game_name
@@ -232,10 +234,21 @@ core.register_globalstep(function(dtime)
         local launcher = P.launchers[game_name]
         for _, name in ipairs(table.copy(queue.list)) do
             local player = core.get_player_by_name(name)
-            local far = player and launcher and vector.distance(player:get_pos(), launcher.pos) > MAX_DISTANCE
+            local dist = player and launcher and vector.distance(player:get_pos(), launcher.pos)
+            local far = dist and dist > MAX_DISTANCE
             if not player or far then
                 P.queue_leave(name)
                 if far then core.chat_send_player(name, S("You walked away and left the line.")) end
+            elseif dist and dist > WARN_DISTANCE then
+                queue.warned = queue.warned or {}
+                if not queue.warned[name] then
+                    queue.warned[name] = true
+                    P.hud_message(player, "hint", S("Careful! If you walk further from the launcher you leave the line for @1.",
+                        P.games[game_name].title), 4, 0xffb347)
+                    core.sound_play("mesecons_noteblock_hit", { to_player = name, gain = 0.6, pitch = 0.6 }, true)
+                end
+            elseif dist and dist < WARN_DISTANCE - 3 and queue.warned then
+                queue.warned[name] = nil  -- warn again next time
             end
         end
     end
@@ -247,6 +260,28 @@ core.register_globalstep(function(dtime)
             for _, name in ipairs(P.queues[game_name].list) do
                 local player = core.get_player_by_name(name)
                 if player then P.hud_status(player, text) end
+            end
+        end
+    end
+end)
+
+-- A tick for everyone in line during the last seconds before the start
+-- (checked often, so no second is skipped).
+local BEEP_FROM = 5
+local beep_timer = 0
+core.register_globalstep(function(dtime)
+    beep_timer = beep_timer + dtime
+    if beep_timer < 0.2 then return end
+    beep_timer = 0
+    for _, queue in pairs(P.queues) do
+        local left = queue.deadline_us and math.ceil((queue.deadline_us - core.get_us_time()) / 1000000)
+        if left and left >= 1 and left <= BEEP_FROM then
+            if queue.beeped_deadline ~= queue.deadline_us or queue.beeped ~= left then
+                queue.beeped_deadline, queue.beeped = queue.deadline_us, left
+                for _, name in ipairs(queue.list) do
+                    core.sound_play("mesecons_noteblock_hit",
+                        { to_player = name, gain = 0.7, pitch = left == 1 and 1.5 or 1.0 }, true)
+                end
             end
         end
     end

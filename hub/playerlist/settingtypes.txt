@@ -1,0 +1,3 @@
+# Key that shows the player list while held (a player control name:
+# zoom, aux1, sneak, ...). E (aux1) is the sprint key in Mineclonia.
+playerlist_key (Player list key) string zoom

@@ -34,7 +34,7 @@ function P.hud_status(player, text)
             alignment = { x = 0, y = 1 },
             text = text,
             number = 0xffffff,
-            size = { x = 2 },
+            size = { x = 2, y = 2 },
             style = 1,
             z_index = 100,
         })
@@ -55,7 +55,7 @@ function P.hud_message(player, slot, text, seconds, color)
             alignment = { x = 0, y = 0 },
             text = text,
             number = color or 0xffffff,
-            size = { x = layout.size },
+            size = { x = layout.size, y = layout.size },
             style = 1,
             z_index = 100,
         }),

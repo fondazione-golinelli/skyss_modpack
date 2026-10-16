@@ -43,6 +43,11 @@ local worldmap = {}
 
 local maps = dofile(modpath .. "/maps.lua")
 local template = minetest.settings:get("classrooms.map_template") or os.getenv("INSTANCE_TEMPLATE_NAME")
+-- The HUB has its own map mod with fixed, translated places.
+if template == "hub" and minetest.get_modpath("skyss_hubmap") then
+    minetest.log("action", "[classrooms_bridge] World map: off, skyss_hubmap is the HUB map")
+    template = nil
+end
 local MAP = template and maps[template]
 local TEXTURE = MAP and ("classrooms_bridge_map_" .. template .. ".png")
 

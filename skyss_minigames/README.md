@@ -1,7 +1,7 @@
 # skyss_minigames
 
 Minigame manager for the Skyss hub. It replaces arena_lib for our own games
-(`skyss_animalgame`, `skyss_cleanup`, `skyss_treegame`).
+(`skyss_animalgame`, `skyss_cleanup`, `skyss_treegame`, `skyss_firegame`).
 
 What it handles:
 
@@ -17,12 +17,21 @@ What it handles:
 - per-game or per-arena building rules (`can_dig`, `can_place`);
 - the area is saved before every match and restored after it (nodes,
   metadata, dropped items). A crash mid-match is repaired at the next start;
+  the snapshot is a compressed VoxelManip copy of the nodes (not a
+  schematic: the engine keeps schematic files in memory by path, so every
+  restore after the first would put back the first snapshot) with its
+  corners, so it is restored in the right place even after the arena's
+  corners change;
 - one global leaderboard per game, by time (lower is better) or by score
   (higher is better);
 - one launcher per game in the hub's pavilions: anyone clicks it and plays or
   gets in line; the match runs in any free arena of the game (solo games run
   one player per arena in parallel, e.g. the six farm pens) and players come
-  back to the pavilion afterwards;
+  back to the pavilion afterwards. A cooperative line starts 20 seconds after
+  it reaches the minimum, and everyone in line hears a tick in each of the
+  last 5 seconds (a higher one in the last). Players in line who walk more
+  than 18 nodes from the launcher get a warning above the hotbar; beyond 24
+  they leave the line;
 - teachers can start a game for chosen players, in game (launcher menu) or
   from the class dashboard through `classrooms_bridge`;
 - an in-game editor for admins (`/minigames edit`, or Edit in a launcher
@@ -192,7 +201,8 @@ Helpers: `get_match_by_player(name)`, `get_match(arena_name)`,
 For other mods: `start(arena_name, names, {time_limit, by})`,
 `start_game(game, names, {time_limit, by})` (returns ok, message, started,
 waiting, left_out), `stop(arena_name)`, `list_arenas()`,
-`set_staff_check(fn)`.
+`list_launchers()` (per game: title, icon, launcher pos/yaw and the return
+point `exit`, yaws in radians; the HUB map uses it), `set_staff_check(fn)`.
 
 The map is restored from a snapshot, so games may change nodes freely with
 `core.set_node`; they only have to remove their own entities in `on_end`.

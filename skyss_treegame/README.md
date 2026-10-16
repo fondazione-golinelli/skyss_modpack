@@ -11,7 +11,7 @@ All'avvio ogni giocatore riceve quattro strumenti (slot 1-4). Ogni strumento si 
 | **Concime** | terreno spoglio: terra grossolana, podzol, terra, erba secca | diventa *terreno concimato* (area 3×3) |
 | **Annaffiatoio** | terreno concimato | diventa erba sana, verde (area 3×3) |
 | | alberello piantato | l'alberello cresce in un albero dopo 6 secondi |
-| | barile dell'acqua piovana, acqua | lo riempie (12 annaffiate) |
+| | barile dell'acqua piovana, acqua | lo riempie (15 annaffiate) |
 | **Semi di prato fiorito** | erba ripristinata dalla squadra | spuntano fino a 5 tra erba alta e fiori intorno |
 | **Alberelli** | erba ripristinata dalla squadra, con spazio sopra e nessun albero a meno di 2 blocchi | pianta un alberello (quercia, betulla o abete) |
 

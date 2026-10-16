@@ -184,3 +184,4 @@ Right-click the same block again to move the launcher of @1 there.=
 EDIT MODE - @1 - arena @2=
 Leaderboard=
 Nobody yet: be the first!=
+Careful! If you walk further from the launcher you leave the line for @1.=

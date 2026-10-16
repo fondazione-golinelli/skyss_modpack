@@ -13,7 +13,7 @@ local TAG = "[" .. S("Forest") .. "] "
 local SOLO_GOALS = {soil = 45, plants = 15, trees = 3}
 local GROUP_EXPONENT = 0.9
 
-local CAN_CAPACITY = 12       -- waterings per refill
+local CAN_CAPACITY = 15       -- waterings per refill
 local TOOL_COOLDOWN = 0.3     -- seconds between two uses of a tool
 local TREE_GROW_TIME = 6      -- seconds from watering to a grown tree
 local TREE_SPACING = 2        -- no other trunk or sapling this close
