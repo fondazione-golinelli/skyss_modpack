@@ -8,10 +8,15 @@ local TAG = "[Eco-CleanUp] "
 
 local CARRY_LIMIT = 8            -- waste a single player can carry at once
 local WRONG_BIN_PENALTY = 10     -- seconds added to the team time per wrong bin
-local WASTE_BASE = 10            -- automatic amount: base + per player, capped
-local WASTE_PER_PLAYER = 4
-local WASTE_MAX = 40
-local HINT_THRESHOLD = 3         -- show waypoints when this many are left on the ground
+-- Automatic amount: WASTE_SOLO for one player, growing as
+-- players ^ GROUP_EXPONENT up to WASTE_MAX at 30 players. More waste would
+-- weigh on the server, so big groups get fewer pieces each.
+local WASTE_SOLO = 14
+local GROUP_EXPONENT = 0.58
+local WASTE_MAX = 100
+local DENSE_AMOUNT = 80          -- above this, a fainter shimmer to spare the clients
+local HINT_SHARE = 0.25          -- show waypoints when this share of the waste is left on the ground
+local HINT_MIN = 3               -- ...or this many, whichever is more
 local CELEBRATION_TIME = 10
 
 local hud_type = core.features.hud_def_type_field and "type" or "hud_elem_type"
@@ -256,7 +261,7 @@ local function hud_update_waypoints(match, p_name)
 	if not player or not h then return end
 
 	local targets, sig = {}, ""
-	if playing(match) and count_ground(match) <= HINT_THRESHOLD then
+	if playing(match) and count_ground(match) <= math.max(HINT_MIN, math.ceil(match.total * HINT_SHARE)) then
 		for id, rec in pairs(match.waste) do
 			targets[#targets + 1] = rec
 			sig = sig .. id .. ";"
@@ -479,7 +484,7 @@ core.register_entity(MOD .. ":waste", {
 
 		-- A gentle shimmer makes waste easy to spot, bubbles when underwater.
 		core.add_particlespawner({
-			amount = rec.water and 3 or 2,
+			amount = match.dense and 1 or (rec.water and 3 or 2),
 			time = 0,
 			attached = self.object,
 			minpos = {x = -0.3, y = 0.1, z = -0.3},
@@ -826,7 +831,7 @@ local game_def = {
 	mode = "coop",
 	ranking = "time",
 	min_players = 1,
-	max_players = 16,
+	max_players = 30,
 	join_in_progress = true,
 	exclusive = false,
 	celebration_time = CELEBRATION_TIME,
@@ -927,8 +932,9 @@ function game_def.on_start(arena)
 	local players = 0
 	for _ in pairs(arena.players) do players = players + 1 end
 	local waste_amount = tonumber(arena.params.waste_amount)
-	local wanted = waste_amount and waste_amount > 0 and waste_amount
-		or math.min(WASTE_MAX, WASTE_BASE + WASTE_PER_PLAYER * players)
+	local wanted = waste_amount and waste_amount > 0 and math.floor(waste_amount)
+		or math.min(WASTE_MAX, math.ceil(WASTE_SOLO * math.max(1, players) ^ GROUP_EXPONENT))
+	match.dense = wanted > DENSE_AMOUNT
 
 	match.spots = take_markers(arena)
 	if #match.spots == 0 then

@@ -13,7 +13,7 @@ Minigioco cooperativo `arena_lib` per Luanti/Mineclonia. All'avvio la squadra tr
   | Indifferenziata | grigio | sacchi dell'immondizia, bidoni vecchi |
 - **Errori**: un rifiuto messo nel cassonetto sbagliato viene rifiutato. La squadra prende **+10 secondi** e il giocatore riceve la spiegazione corretta.
 - **Vittoria**: quando l'ultimo rifiuto è conferito partono i fuochi d'artificio. Il tempo finale (cronometro + penalità) viene confrontato con il record dell'arena.
-- Quando a terra restano 3 rifiuti o meno, compaiono indicatori con la distanza.
+- Quando a terra resta un quarto dei rifiuti o meno (almeno 3), compaiono indicatori con la distanza verso ciascuno di quelli rimasti.
 - Alla prima raccolta di ogni tipo il giocatore riceve in chat una curiosità ambientale ("Lo sapevi?").
 
 L'HUD in alto a destra (lontano dalla chat) mostra il cronometro, la barra di avanzamento della squadra, quanti rifiuti restano a terra o nei sacchi, il contenuto del proprio sacco diviso per cassonetto, gli errori e il record.
@@ -27,7 +27,13 @@ L'HUD in alto a destra (lontano dalla chat) mostra il cronometro, la barra di av
    Senza marcatori la mod sparge i rifiuti sulla superficie più alta di colonne casuali, sia a terra sia sul fondale, evitando alberi e cassonetti. I marcatori sono comunque preferibili nelle arene al chiuso o con tetti.
 5. Salva la mappa e abilita l'arena.
 
-Quantità di rifiuti: in automatico 10 + 4 per giocatore, massimo 40, limitata dal numero di marcatori disponibili. Per fissarla, imposta la proprietà d'arena `waste_amount` dall'editor (0 = automatico).
+Quantità di rifiuti: cresce con il numero di giocatori (fino a 30), da 14 per un giocatore a 100 per 30. La formula è 14 × giocatori^0,58, con un massimo di 100 rifiuti per non appesantire il server, ed è limitata dal numero di marcatori disponibili. Con tanti giocatori ognuno raccoglie quindi meno rifiuti che da solo.
+
+| Giocatori | 1 | 2 | 5 | 10 | 15 | 20 | 30 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Rifiuti | 14 | 21 | 36 | 54 | 68 | 80 | 100 |
+
+Oltre gli 80 rifiuti il luccichio intorno a ciascuno è più leggero, per non appesantire i computer dei giocatori. I valori si cambiano in cima a `init.lua` (`WASTE_SOLO`, `GROUP_EXPONENT`, `WASTE_MAX`). Per fissare la quantità, imposta il parametro d'arena `waste_amount` (0 = automatico).
 
 Se mancano cassonetti o non ci sono punti utilizzabili, la partita termina subito con un messaggio in chat e un avviso nel log del server.
 
