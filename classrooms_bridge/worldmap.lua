@@ -33,6 +33,8 @@ local TOOL = "map"
 local VIEW = 9.6          -- viewport size in formspec units
 local GRID = 20           -- clickable cells per side at zoom ×1
 local ZOOMS = { 1, 2, 4, 8 }
+local ME = 0.5            -- size of the player arrow on the map
+local ME_DIRS = 16        -- arrow textures, from tools/make_arrows.py
 local MAX_MARKERS = 30
 local BEAM_RANGE = 80
 local TP_COOLDOWN = 3
@@ -235,7 +237,8 @@ end
 -- ── Formspec ─────────────────────────────────────────────────────────────────
 
 local C = { bg = "#141a2a", header = "#0f3460", accent = "#e94560", card = "#202a44", row = "#28334f",
-    button = "#34446a", primary = "#2a8c7f", muted = "#aaaaaa", light = "#f0f0f0" }
+    button = "#34446a", primary = "#2a8c7f", muted = "#aaaaaa", light = "#f0f0f0",
+    lit = "#4a5a8a", lit_edge = "#ffd43b", lit_go = "#3cc4b0" }
 
 local function esc(s) return minetest.formspec_escape(tostring(s)) end
 local function colored(color, text) return esc(minetest.colorize(color, text)) end
@@ -335,12 +338,24 @@ show = function(player)
             table.insert(fs, ("label[%g,%g;%s]"):format(x1 + 0.1, y1 + 0.22, colored(color, zone.name)))
         end
     end
+    -- Names shown when hovering: area tooltips work under the click grid. The
+    -- client shows the first area that contains the mouse, so the small ones
+    -- (player, pins) come before the zones.
+    local tips = {}
+    local function tip(x, y, w, h, text)
+        table.insert(tips, ("tooltip[%g,%g;%g,%g;%s]"):format(x, y, w, h, esc(text)))
+    end
+    local me = player:get_pos()
+    local mx, my = pos(me.x, me.z)
+    tip(mx - ME / 2, my - ME / 2, ME, ME, S("You are here"))
     for _, m in ipairs(markers) do
         local px, py = pos(m.x, m.z)
         local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
             or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
         local yoff = m.kind == "teleport" and 0.25 or 0.5
         table.insert(fs, ("image[%g,%g;0.5,0.5;%s]"):format(px - 0.25, py - yoff, esc(icon)))
+        tip(px - 0.25, py - yoff, 0.5, 0.5, m.kind == "teleport" and S("Teleport point: @1", m.name)
+            or S("Waypoint: @1", m.name))
     end
     -- Zone teleport points: staff every zone, students their group's zones.
     for _, zone in ipairs(teleport_zones(name, staff)) do
@@ -348,10 +363,17 @@ show = function(player)
         local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
         table.insert(fs, ("image[%g,%g;0.45,0.45;%s]"):format(px - 0.225, py - 0.225,
             esc("classrooms_bridge_map_tp.png^[multiply:" .. color)))
+        tip(px - 0.225, py - 0.225, 0.45, 0.45, S("Teleport point: @1", zone.name))
     end
-    local me = player:get_pos()
-    local mx, my = pos(me.x, me.z)
-    table.insert(fs, ("image[%g,%g;0.42,0.42;classrooms_bridge_map_me.png]"):format(mx - 0.21, my - 0.21))
+    for _, zone in ipairs(zones.list()) do
+        local x1, y1 = pos(zone.min_x, zone.max_z + 1)
+        local x2, y2 = pos(zone.max_x + 1, zone.min_z)
+        tip(x1, y1, x2 - x1, y2 - y1, S("Zone: @1", zone.name))
+    end
+    -- The player: an arrow pointing where they look (yaw counter-clockwise from north).
+    local dir = math.floor(player:get_look_horizontal() / (2 * math.pi) * ME_DIRS + 0.5) % ME_DIRS
+    table.insert(fs, ("image[%g,%g;%g,%g;classrooms_bridge_map_me_%d.png]"):format(mx - ME / 2, my - ME / 2, ME, ME, dir))
+    table.insert(fs, table.concat(tips))
     if v.sel then
         local px, py = pos(v.sel.x, v.sel.z)
         table.insert(fs, ("box[%g,%g;0.5,0.04;#ffffff]box[%g,%g;0.04,0.5;#ffffff]"):format(
@@ -380,6 +402,17 @@ show = function(player)
                 table.insert(fs, ("image_button[%g,%g;%g,%g;blank.png;mc_%d_%d;]"):format(i * CELL, j * CELL, CELL, CELL, i, j))
             end
         end
+    end
+
+    -- Pins: above the click grid, clicking one selects its place in the list.
+    for _, m in ipairs(markers) do
+        local px, py = pos(m.x, m.z)
+        local yoff = m.kind == "teleport" and 0.25 or 0.5
+        table.insert(fs, ("image_button[%g,%g;0.5,0.5;blank.png;map_pin_%d;]"):format(px - 0.25, py - yoff, m.id))
+    end
+    for _, zone in ipairs(teleport_zones(name, staff)) do
+        local px, py = pos(zone.tp.x, zone.tp.z)
+        table.insert(fs, ("image_button[%g,%g;0.45,0.45;blank.png;map_zpin_%d;]"):format(px - 0.225, py - 0.225, zone.id))
     end
 
     -- Other players (staff, when shown): above the click grid so hovering
@@ -485,15 +518,36 @@ show = function(player)
     end
     local area_y, area_h = list_y + 0.5, list_h - 0.6
     local content_h = #rows * 0.55
+    local function row_key(row)
+        return row.marker and ("m" .. row.marker.id) or ("z" .. row.zone.id)
+    end
     if content_h > area_h then
-        table.insert(fs, ("scrollbaroptions[min=0;max=%d;smallstep=5;largestep=20]"):format(
-            math.ceil((content_h - area_h) / SCROLL_FACTOR)))
+        local max_scroll = math.ceil((content_h - area_h) / SCROLL_FACTOR)
+        -- A place just picked on the map: scroll its row into view, once.
+        if v.hl and v.hl_scroll then
+            for i, row in ipairs(rows) do
+                if row_key(row) == v.hl then
+                    local top, view_top = (i - 1) * 0.55, v.list_scroll * SCROLL_FACTOR
+                    if top < view_top or top + 0.5 > view_top + area_h then
+                        v.list_scroll = clamp(math.floor((top - (area_h - 0.55) / 2) / SCROLL_FACTOR), 0, max_scroll)
+                    end
+                    break
+                end
+            end
+        end
+        v.list_scroll = clamp(v.list_scroll, 0, max_scroll)
+        table.insert(fs, ("scrollbaroptions[min=0;max=%d;smallstep=5;largestep=20]"):format(max_scroll))
         table.insert(fs, ("scrollbar[%g,%g;0.25,%g;vertical;map_list;%d]"):format(px0 + 6.1, area_y, area_h, v.list_scroll))
     end
     table.insert(fs, ("scroll_container[%g,%g;6.05,%g;map_list;vertical;%g]"):format(px0 + 0.05, area_y, area_h, SCROLL_FACTOR))
+    v.hl_scroll = nil
     for i, row in ipairs(rows) do
         local ly = (i - 1) * 0.55
-        table.insert(fs, ("box[0.05,%g;5.95,0.5;%s]"):format(ly, C.row))
+        local lit = v.hl == row_key(row)
+        table.insert(fs, ("box[0.05,%g;5.95,0.5;%s]"):format(ly, lit and C.lit or C.row))
+        if lit then
+            table.insert(fs, ("box[0.05,%g;0.06,0.5;%s]"):format(ly, C.lit_edge))
+        end
         local label, dist, go, show_key, del
         if row.marker then
             local m = row.marker
@@ -516,7 +570,7 @@ show = function(player)
         table.insert(fs, ("button[3.75,%g;0.95,0.42;%s;%s]"):format(ly + 0.04, show_key, F("Show")))
         if go then
             table.insert(fs, ("style[%s;bgcolor=%s]button[4.75,%g;0.75,0.42;%s;%s]tooltip[%s;%s]"):format(
-                go, C.primary, ly + 0.04, go, F("Go"), go, F("Teleport there")))
+                go, lit and C.lit_go or C.primary, ly + 0.04, go, F("Go"), go, F("Teleport there")))
         end
         if del then
             table.insert(fs, ("image_button[5.55,%g;0.42,0.42;clear.png;%s;]tooltip[%s;%s]"):format(ly + 0.04, del, del, F("Remove")))
@@ -604,7 +658,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         if hooks and hooks.return_hub then hooks.return_hub(player) end
         return true
     end
-    if fields.map_close or fields.quit then return true end
+    if fields.map_close or fields.quit then
+        v.hl = nil -- the highlighted place lasts while the map is open
+        return true
+    end
     if fields.map_name then v.name_text = fields.map_name end
 
     -- Pure scroll: keep the client's view. When the view leaves the cells
@@ -671,6 +728,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         v.cx, v.cz = p.x, p.z
         v.sel = { x = math.floor(p.x + 0.5), z = math.floor(p.z + 0.5), y = math.floor(p.y + 0.5),
             yaw = player:get_look_horizontal() }
+        v.hl = nil
     elseif fields.map_center and v.sel then
         v.cx, v.cz = v.sel.x, v.sel.z
     elseif (fields.map_add_wp or fields.map_add_tp) and staff and v.sel then
@@ -730,11 +788,31 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         minetest.close_formspec(name, FORM)
         return true
     else
+        -- Selects a place of the list: crosshair on it, row highlighted and
+        -- scrolled into view. The map view stays where it is.
+        local function pick(key, x, y, z, yaw)
+            v.sel = { x = x, z = z, y = y and math.floor(y + 0.5), yaw = tonumber(yaw) }
+            v.hl, v.hl_scroll = key, true
+        end
         for key in pairs(fields) do
+            local id = tonumber(key:match("^map_pin_(%d+)$") or "")
+            if id then
+                local m = marker_by_id(id)
+                if m then pick("m" .. m.id, m.x, m.y, m.z, m.yaw) end
+                break
+            end
+            id = tonumber(key:match("^map_zpin_(%d+)$") or "")
+            if id then
+                local zone = zone_by_id(id)
+                if zone and zone.tp and (staff or (zone.allowed and zone.allowed[name])) then
+                    pick("z" .. zone.id, zone.tp.x, zone.tp.y, zone.tp.z, zone.tp.yaw)
+                end
+                break
+            end
             local i, j = key:match("^mc_(%d+)_(%d+)$")
             if i and v.cell then
                 local x, z = content_to_node((tonumber(i) + 0.5) * v.cell, (tonumber(j) + 0.5) * v.cell, v.zoom)
-                v.sel = { x = x, z = z }
+                v.sel, v.hl = { x = x, z = z }, nil
                 if v.zoom > 1 then
                     -- Keep the client's current scroll: don't recentre.
                     local sx, sy = scroll_for(v)
@@ -745,20 +823,26 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             local pl = tonumber(key:match("^map_pl_(%d+)$") or "")
             if pl and staff and v.players and v.players[pl] then
                 local target = v.players[pl]
-                v.sel = { x = target.x, z = target.z }
+                v.sel, v.hl = { x = target.x, z = target.z }, nil
                 v.name_text = target.name
                 break
             end
-            local id = tonumber(key:match("^map_show_(%d+)$") or "")
+            id = tonumber(key:match("^map_show_(%d+)$") or "")
             if id then
                 local m = marker_by_id(id)
-                if m then v.cx, v.cz, v.sel = m.x, m.z, { x = m.x, z = m.z } end
+                if m then
+                    pick("m" .. m.id, m.x, m.y, m.z, m.yaw)
+                    v.cx, v.cz = m.x, m.z
+                end
                 break
             end
             id = tonumber(key:match("^map_zshow_(%d+)$") or "")
             if id then
                 local zone = zone_by_id(id)
-                if zone and zone.tp then v.cx, v.cz, v.sel = zone.tp.x, zone.tp.z, { x = zone.tp.x, z = zone.tp.z } end
+                if zone and zone.tp then
+                    pick("z" .. zone.id, zone.tp.x, zone.tp.y, zone.tp.z, zone.tp.yaw)
+                    v.cx, v.cz = zone.tp.x, zone.tp.z
+                end
                 break
             end
             id = tonumber(key:match("^map_tp_(%d+)$") or "")

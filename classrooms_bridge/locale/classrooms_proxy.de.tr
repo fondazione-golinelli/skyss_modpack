@@ -776,3 +776,15 @@ you will be asked to confirm.=du wirst um Bestätigung gebeten.
 
 # Class worlds picker
 @1  ·  Teacher: @2  ·  @3 players inside=@1  ·  Lehrkraft: @2  ·  @3 Spieler darin
+
+# Map templates, new country versions (countrygen)
+Italy (new)=Italien (neu)
+Spain (new)=Spanien (neu)
+Germany (new)=Deutschland (neu)
+Hungary (new)=Ungarn (neu)
+Poland (new)=Polen (neu)
+New version: Alps, Apennines, Po, Etna=Neue Version: Alpen, Apennin, Po, Ätna
+New version: Pyrenees, Meseta, Ebro=Neue Version: Pyrenäen, Meseta, Ebro
+New version: Alps, Black Forest, Rhine=Neue Version: Alpen, Schwarzwald, Rhein
+New version: Danube, Balaton, Great Plain=Neue Version: Donau, Balaton, Puszta
+New version: Tatras, Vistula, Masuria=Neue Version: Tatra, Weichsel, Masuren

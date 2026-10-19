@@ -8,6 +8,9 @@ material, adds hill shading, and writes:
   textures/classrooms_bridge_map_<template>.png   (at most --size pixels)
   maps.lua                                         (bounds per template)
 
+<template>/map_overlay.png, when present, is drawn over the map (see
+apply_overlay).
+
 The classrooms_bridge mod picks the map of its world from the
 INSTANCE_TEMPLATE_NAME environment variable set by the classrooms plugin.
 
@@ -38,7 +41,8 @@ BS = 16
 SKIP_EXACT = {"air", "ignore", "mcl_core:snow"}
 SKIP_PARTS = ("tallgrass", "fern", "flower", "sapling", "deadbush", "double_", "mushroom",
               "torch", "reeds", "sweet_berry", "vine", "lily", "seagrass", "kelp", "button",
-              "pressure_plate", "rail", "carpet", "sign", "lever")
+              "pressure_plate", "rail", "carpet", "sign", "lever", "poppy", "dandelion",
+              "daisy", "cornflower", "bluet", "allium", "tulip", "orchid")
 
 COLORS = [
     # Moon and Mars ground (skyss_planets), before the generic names below.
@@ -114,8 +118,9 @@ def _read_name_map(buf, off):
     return names, off
 
 
-def decode_block(data):
-    """Return (param0 array [z][y][x], {id: name}) or None."""
+def decode_block(data, with_param2=False):
+    """Return (param0 array [z][y][x], {id: name}) or None; with_param2 adds
+    the param2 array as a third value."""
     ver = data[0]
     if ver == 29:
         if zstandard is None:
@@ -125,6 +130,9 @@ def decode_block(data):
         names, off = _read_name_map(buf, off)
         off += 2  # content_width, params_width
         p0 = np.frombuffer(buf, dtype=">u2", count=4096, offset=off)
+        if with_param2:
+            p2 = np.frombuffer(buf, dtype=np.uint8, count=4096, offset=off + 8192 + 4096)
+            return p0.reshape(BS, BS, BS), names, p2.reshape(BS, BS, BS)
         return p0.reshape(BS, BS, BS), names
     if 25 <= ver <= 28:
         d = zlib.decompressobj()
@@ -143,11 +151,64 @@ def decode_block(data):
         off += 4  # timestamp
         names, _ = _read_name_map(rest, off)
         p0 = np.frombuffer(nodes, dtype=">u2", count=4096)
+        if with_param2:
+            p2 = np.frombuffer(nodes, dtype=np.uint8, count=4096, offset=8192 + 4096)
+            return p0.reshape(BS, BS, BS), names, p2.reshape(BS, BS, BS)
         return p0.reshape(BS, BS, BS), names
     return None
 
 
-def render(world, size):
+MCL_TEXTURES = os.path.join(MOD_DIR, "..", "..", "luanti-games", "mineclonia", "mods", "ITEMS", "mcl_core", "textures")
+
+
+def load_palette(name, k):
+    """Mineclonia palette image as 256 RGB rows (param2 index), darkened by k."""
+    path = os.path.join(MCL_TEXTURES, name)
+    if not os.path.exists(path):
+        return None
+    im = Image.open(path).convert("RGB")
+    px = np.asarray(im).reshape(-1, 3).astype(np.float32) * k
+    out = np.zeros((256, 3), np.uint8)
+    out[:min(256, len(px))] = np.clip(px[:256], 0, 255).astype(np.uint8)
+    return out
+
+
+# Grass and leaves take their colour from param2 (the biome palette).
+PALETTES = {1: load_palette("mcl_core_palette_grass.png", 0.8), 2: load_palette("mcl_core_palette_leaves.png", 0.62)}
+
+
+def palette_kind(name):
+    local = name.split(":")[-1]
+    if local == "dirt_with_grass" and PALETTES[1] is not None:
+        return 1
+    if "leaves" in local and "cherry" not in local and PALETTES[2] is not None:
+        return 2
+    return 0
+
+
+def apply_overlay(img, min_x, max_z, overlay_dir):
+    """Composite <template>/map_overlay.png (RGBA, one pixel per block, north
+    up) at the position given in map_overlay.json ({"xmin", "zmax"}), e.g. a
+    country border drawn by luanti-tools/countrygen. img is north up too."""
+    png = os.path.join(overlay_dir, "map_overlay.png")
+    if not os.path.exists(png):
+        return img
+    import json
+    pos = json.load(open(os.path.join(overlay_dir, "map_overlay.json")))
+    ov = np.asarray(Image.open(png).convert("RGBA")).astype(np.float32)
+    r0, c0 = max_z - pos["zmax"], pos["xmin"] - min_x
+    rs, cs = max(0, r0), max(0, c0)
+    re, ce = min(img.shape[0], r0 + ov.shape[0]), min(img.shape[1], c0 + ov.shape[1])
+    if rs >= re or cs >= ce:
+        return img
+    o = ov[rs - r0:re - r0, cs - c0:ce - c0]
+    a = o[..., 3:4] / 255.0
+    out = img.astype(np.float32)
+    out[rs:re, cs:ce] = out[rs:re, cs:ce] * (1 - a) + o[..., :3] * a
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
+def render(world, size, overlay_dir=None):
     db = sqlite3.connect(f"file:{os.path.join(world, 'map.sqlite')}?mode=ro", uri=True)
     min_bx, max_bx, min_bz, max_bz = db.execute(
         "SELECT min(x), max(x), min(z), max(z) FROM blocks").fetchone()
@@ -158,7 +219,7 @@ def render(world, size):
     water = np.zeros((d, w), dtype=bool)
 
     name_ids = {}        # name -> global id
-    lut_ground, lut_color, lut_water = [], [], []
+    lut_ground, lut_color, lut_water, lut_pal = [], [], [], []
 
     def gid(name):
         if name not in name_ids:
@@ -166,6 +227,7 @@ def render(world, size):
             lut_ground.append(is_ground(name))
             lut_color.append(color_of(name))
             lut_water.append("water" in name)
+            lut_pal.append(palette_kind(name))
         return name_ids[name]
 
     skipped = 0
@@ -176,11 +238,11 @@ def render(world, size):
             cur, filled = (bx, bz), np.zeros((BS, BS), dtype=bool)
         if filled.all():
             continue
-        decoded = decode_block(data)
+        decoded = decode_block(data, with_param2=True)
         if decoded is None:
             skipped += 1
             continue
-        p0, names = decoded
+        p0, names, p2 = decoded
         local_to_global = np.zeros(max(names) + 1 if names else 1, dtype=np.int32)
         for nid, name in names.items():
             local_to_global[nid] = gid(name)
@@ -198,6 +260,11 @@ def render(world, size):
         node = ids[zz, top[zz, xx], xx]
         height[gz, gx] = by * BS + top[zz, xx]
         colors[gz, gx] = np.array(lut_color, dtype=np.uint8)[node]
+        kind = np.array(lut_pal, dtype=np.uint8)[node]
+        for k in (1, 2):
+            sel = kind == k
+            if sel.any():
+                colors[gz[sel], gx[sel]] = PALETTES[k][p2[zz[sel], top[zz[sel], xx[sel]], xx[sel]]]
         water[gz, gx] = np.array(lut_water, dtype=bool)[node]
         filled |= new
 
@@ -213,7 +280,10 @@ def render(world, size):
     img[height == -32768] = (24, 28, 40)
 
     # Row 0 is the north edge (+z), column 0 the west edge (-x).
-    image = Image.fromarray(np.ascontiguousarray(img[::-1, :, :]))
+    img = np.ascontiguousarray(img[::-1, :, :])
+    if overlay_dir:
+        img = apply_overlay(img, min_bx * BS, (max_bz + 1) * BS - 1, overlay_dir)
+    image = Image.fromarray(img)
     scale = max(1, -(-max(w, d) // size))
     if scale > 1:
         image = image.resize((w // scale, d // scale), Image.LANCZOS)
@@ -248,7 +318,7 @@ def main():
         if not os.path.exists(os.path.join(world, "map.sqlite")):
             continue
         print(f"rendering {name} ...", flush=True)
-        image, b, skipped = render(world, args.size)
+        image, b, skipped = render(world, args.size, os.path.join(args.templates, name))
         out = os.path.join(MOD_DIR, "textures", f"classrooms_bridge_map_{name}.png")
         image.save(out, optimize=True)
         print(f"  {b['max_x'] - b['min_x'] + 1}x{b['max_z'] - b['min_z'] + 1} nodes -> "

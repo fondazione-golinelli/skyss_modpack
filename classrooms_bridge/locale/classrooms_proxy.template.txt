@@ -776,3 +776,15 @@ you will be asked to confirm.=
 
 # Class worlds picker
 @1  ·  Teacher: @2  ·  @3 players inside=
+
+# Map templates, new country versions (countrygen)
+Italy (new)=
+Spain (new)=
+Germany (new)=
+Hungary (new)=
+Poland (new)=
+New version: Alps, Apennines, Po, Etna=
+New version: Pyrenees, Meseta, Ebro=
+New version: Alps, Black Forest, Rhine=
+New version: Danube, Balaton, Great Plain=
+New version: Tatras, Vistula, Masuria=
