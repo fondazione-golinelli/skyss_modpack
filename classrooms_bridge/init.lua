@@ -168,6 +168,14 @@ if minetest.global_exists("skyss_minigames") then
     skyss_minigames.set_staff_check(is_staff)
 end
 local missions = assert(loadfile(MODPATH .. "/missions.lua"))(zones, send_bridge_message, is_staff)
+-- For other mods: special mission activities and extra catalog items (see
+-- missions.lua), and the zone helpers activities need.
+classrooms_bridge.register_special_mission = missions.register_special
+classrooms_bridge.register_mission_item = missions.register_catalog_item
+classrooms_bridge.zone_at = zones.zone_at
+classrooms_bridge.is_staff = is_staff
+-- Activities shipped with the bridge.
+assert(loadfile(MODPATH .. "/activities/fossils.lua"))(missions, zones, is_staff)
 -- On the map a spectator is never staff, even a teacher of another class.
 local function is_map_staff(name) return is_staff(name) and not visitor_state[name] end
 -- Filled below, once the spawn and channel helpers exist.
@@ -981,9 +989,11 @@ function handlers.set_teacher_defaults(data)
         data.blockexchange_institutes)
     set_world_tools_access(player, data.world_tools_access == true)
 
+    -- Class staff fly (K), move fast (J) and pass through blocks (H).
     local privs = minetest.get_player_privs(name)
     privs.fly = true
     privs.fast = true
+    privs.noclip = true
     minetest.set_player_privs(name, privs)
 
     if mcl_gamemode and mcl_gamemode.set_gamemode then
@@ -1066,6 +1076,7 @@ function handlers.clear_teacher_defaults(data)
     local privs = minetest.get_player_privs(name)
     privs.fly = nil
     privs.fast = nil
+    privs.noclip = nil
     minetest.set_player_privs(name, privs)
 
     if mcl_gamemode and mcl_gamemode.set_gamemode then
@@ -1145,6 +1156,7 @@ end
 function handlers.set_zones(data)
     zones.set(data.zones)
     missions.set_world(data.missions)
+    missions.sync_specials()
 end
 
 function handlers.show_zones(data)
@@ -1167,6 +1179,7 @@ function handlers.mission_catalog_request(data)
         action = "mission_catalog",
         player = data.player,
         catalog = missions.catalog_payload(),
+        special = missions.special_payload(),
     }, "mission_catalog")
 end
 

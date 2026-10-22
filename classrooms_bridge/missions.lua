@@ -12,6 +12,12 @@
 --     mission's zone (world missions: the first time they are in the world).
 -- World missions count animals and blocks around their delivery chest.
 -- Completion is sticky: once every goal was met the mission stays completed.
+--
+-- Special missions (mission.kind) add an activity registered with
+-- missions.register_special: it is set up in the world when the mission
+-- starts, cleaned up when it is deleted, counts its own goals (type
+-- "special") and hands out its tools inside the zone, taking them back when
+-- the player leaves it.
 
 local zones, send, is_staff = ...
 
@@ -137,6 +143,7 @@ local CANDIDATES = {
 }
 
 local catalog -- [kind] = { {key, label, names = {...}} }, built lazily
+local extra_entries = {} -- [kind] = { {key, name} } added by other mods
 
 local function item_name(name)
     if minetest.registered_items[name] then return name end
@@ -184,6 +191,14 @@ local function build_catalog()
             end
         end
     end
+    for kind, list in pairs(extra_entries) do
+        for _, entry in ipairs(list) do
+            local name = item_name(entry.name)
+            if name and result[kind] then
+                table.insert(result[kind], { key = entry.key, label = item_label(name), names = { name }, icon = name })
+            end
+        end
+    end
     for _, entry in ipairs(CANDIDATES.animals) do
         for i = 2, #entry do
             if minetest.registered_entities[entry[i]] then
@@ -222,6 +237,14 @@ function missions.catalog()
     return catalog
 end
 
+-- Adds an item to the "deliver" (also used by Gather goals) or "tools"
+-- list of the catalog. Call it while mods load.
+function missions.register_catalog_item(kind, key, name)
+    extra_entries[kind] = extra_entries[kind] or {}
+    table.insert(extra_entries[kind], { key = key, name = name })
+    catalog = nil
+end
+
 local function resolve(kind, key)
     for _, entry in ipairs(missions.catalog()[kind] or {}) do
         if entry.key == key then return entry end
@@ -238,6 +261,91 @@ function missions.catalog_payload()
         end
     end
     return out
+end
+
+-- ── Special missions ─────────────────────────────────────────────────────────
+-- def = {
+--     label, description,   -- shown to the teacher (S() strings)
+--     icon,                 -- item name for the picture
+--     zone_only,            -- needs a zone (not offered for world missions)
+--     dig,                  -- students dig: warn about teachers-only zones
+--     settings = { {key, label, type = "number"|"choice", default, min, max, options} },
+--     goals = { {key, label, icon, count_from = setting key} },
+--     tools = { item name | {name, setting, min} },  -- one each, inside the
+--                           -- zone only; with setting: while settings[setting] >= min
+--     on_start(site, mission),  -- set up the activity (site: zone, or world site)
+--     on_stop(mission_id),      -- clean up: the mission was deleted
+--     count(site, goal, mission, previous) -> number,
+--     on_presence(player, inside, mission),  -- optional: a participant or
+--                           -- staff entered (true) or left (false) the zone;
+--                           -- also false when the mission ends
+-- }
+-- Goal keys must be unique across activities (prefix them with the kind).
+
+local specials = {}      -- [kind] = def
+local special_order = {} -- kinds in registration order
+local special_tools = {} -- [item name] = true, tools of every activity
+local SPECIAL_KEY = "special_missions" -- storage: { [id] = kind } of started missions
+
+function missions.register_special(kind, def)
+    assert(type(kind) == "string" and kind:match("^[%w_]+$"), "invalid special mission kind")
+    if not specials[kind] then table.insert(special_order, kind) end
+    specials[kind] = def
+    def.tool_list = {}
+    for _, tool in ipairs(def.tools or {}) do
+        local entry = type(tool) == "table" and tool or { name = tool }
+        table.insert(def.tool_list, entry)
+        special_tools[entry.name] = true
+    end
+end
+
+-- The activity tools a mission hands out with its settings.
+local function mission_special_tools(def, mission)
+    local out = {}
+    for _, tool in ipairs(def.tool_list) do
+        if not tool.setting or (tonumber((mission.settings or {})[tool.setting]) or 0) >= (tool.min or 0) then
+            table.insert(out, tool.name)
+        end
+    end
+    return out
+end
+
+function missions.special_payload()
+    local out = {}
+    for _, kind in ipairs(special_order) do
+        local def = specials[kind]
+        local tools = {}
+        for _, tool in ipairs(def.tool_list) do
+            if minetest.registered_items[tool.name] then
+                table.insert(tools, { key = tool.name, label = item_label(tool.name), icon = tool.name,
+                    setting = tool.setting, min = tool.min })
+            end
+        end
+        local goals = {}
+        for _, goal in ipairs(def.goals or {}) do
+            table.insert(goals, { key = goal.key, label = goal.label, icon = goal.icon, count_from = goal.count_from })
+        end
+        table.insert(out, {
+            key = kind,
+            label = def.label or kind,
+            description = def.description or "",
+            icon = def.icon,
+            zone_only = def.zone_only == true,
+            dig = def.dig == true,
+            settings = def.settings or {},
+            goals = goals,
+            tools = tools,
+        })
+    end
+    return out
+end
+
+local function special_goal(key)
+    for _, kind in ipairs(special_order) do
+        for _, goal in ipairs(specials[kind].goals or {}) do
+            if goal.key == key then return goal end
+        end
+    end
 end
 
 -- ── Delivery chest ───────────────────────────────────────────────────────────
@@ -277,6 +385,10 @@ end
 missions.item_texture = item_texture
 
 local function goal_icon(goal)
+    if goal.type == "special" then
+        local def = special_goal(goal.key)
+        return def and def.icon
+    end
     local entry = resolve(goal.type == "collect" and "deliver" or goal.type, goal.key)
     return entry and entry.icon
 end
@@ -923,7 +1035,62 @@ local function world_site(mission)
     return site
 end
 
+-- Starts the activities of new special missions and stops those of deleted
+-- ones; called whenever the proxy sends the zones and missions.
+function missions.sync_specials()
+    local started = minetest.parse_json(storage:get_string(SPECIAL_KEY) ~= ""
+        and storage:get_string(SPECIAL_KEY) or "{}") or {}
+    local present = {}
+    local function visit(site, mission)
+        if not mission or not mission.id or not mission.kind or mission.kind == "" then return end
+        local id = tostring(mission.id)
+        present[id] = true
+        local def = specials[mission.kind]
+        if started[id] or not def then return end
+        started[id] = mission.kind
+        storage:set_string(SPECIAL_KEY, minetest.write_json(started))
+        if def.on_start then
+            local ok, err = pcall(def.on_start, site, mission)
+            if not ok then
+                minetest.log("error", "[classrooms_bridge] " .. mission.kind .. " start failed: " .. tostring(err))
+            end
+        end
+        minetest.log("action", "[classrooms_bridge] Started special mission " .. id .. " (" .. mission.kind .. ")")
+    end
+    for _, zone in ipairs(zones.list()) do
+        visit(zone, zone.mission)
+    end
+    for _, mission in ipairs(world_missions) do
+        visit(world_site(mission), mission)
+    end
+    for id, kind in pairs(started) do
+        local def = specials[kind]
+        -- Without its activity loaded the mission cannot be cleaned up yet.
+        if not present[id] and def then
+            started[id] = nil
+            storage:set_string(SPECIAL_KEY, minetest.write_json(started))
+            if def.on_stop then
+                local ok, err = pcall(def.on_stop, tonumber(id))
+                if not ok then
+                    minetest.log("error", "[classrooms_bridge] " .. kind .. " stop failed: " .. tostring(err))
+                end
+            end
+            minetest.log("action", "[classrooms_bridge] Stopped special mission " .. id .. " (" .. kind .. ")")
+        end
+    end
+end
+
 local function count_goal(zone, goal, previous, mission)
+    if goal.type == "special" then
+        local def = specials[mission.kind or ""]
+        if not def or not def.count then return previous or 0 end
+        local ok, n = pcall(def.count, zone, goal, mission, previous)
+        if not ok then
+            minetest.log("error", "[classrooms_bridge] " .. tostring(mission.kind) .. " count failed: " .. tostring(n))
+            return previous or 0
+        end
+        return tonumber(n) or previous or 0
+    end
     local kind = goal.type == "collect" and "deliver" or goal.type
     local entry = resolve(kind, goal.key)
     if not entry then return 0 end
@@ -985,6 +1152,7 @@ end
 local GOAL_VERBS = { deliver = S("Deliver"), collect = S("Gather"), animals = S("Animals:"), blocks = S("Blocks:") }
 
 local function goal_label(goal)
+    if goal.type == "special" then return tostring(goal.label or goal.key) end
     return (GOAL_VERBS[goal.type] or "") .. " " .. tostring(goal.label or goal.key)
 end
 
@@ -1185,6 +1353,10 @@ local function announce_complete(zone, mission)
     end
 end
 
+local special_wanted = {} -- [player] = { [tool] = true }, rebuilt every step
+local special_present = {} -- [player] = { [kind] = mission }, inside an activity zone
+local present_now = {}     -- the same, being rebuilt this step
+
 local function give_tools(player, mission)
     if type(mission.tools) ~= "table" or #mission.tools == 0 then return end
     local name = player:get_player_name()
@@ -1251,6 +1423,15 @@ local function update_mission(site, mission, players, visible)
         if participant and here then
             give_tools(player, mission)
         end
+        local def = specials[mission.kind or ""]
+        if def and here and not site.global and (participant or is_staff(name)) then
+            special_wanted[name] = special_wanted[name] or {}
+            for _, tool in ipairs(mission_special_tools(def, mission)) do special_wanted[name][tool] = true end
+            if def.on_presence then
+                present_now[name] = present_now[name] or {}
+                present_now[name][mission.kind] = mission
+            end
+        end
     end
 
     local report = minetest.write_json({ state.counts, state.complete, state.chest })
@@ -1268,9 +1449,71 @@ local function update_mission(site, mission, players, visible)
     end
 end
 
+-- Activity tools: one of each while in the zone, none elsewhere. They are
+-- never handed out for world missions (no zone to take them back at).
+local TOOL_LISTS = { "main", "offhand", "craft" }
+local tools_full_notice = {}
+
+local function apply_special_tools(player)
+    local name = player:get_player_name()
+    local wanted = special_wanted[name] or {}
+    local inv = player:get_inventory()
+    for tool in pairs(special_tools) do
+        local held = false
+        for _, list in ipairs(TOOL_LISTS) do
+            for i, stack in ipairs(inv:get_list(list) or {}) do
+                if stack:get_name() == tool then
+                    if wanted[tool] and not held then
+                        held = true
+                    else
+                        inv:set_stack(list, i, ItemStack(""))
+                    end
+                end
+            end
+        end
+        if wanted[tool] and not held then
+            if inv:room_for_item("main", tool) then
+                inv:add_item("main", tool)
+                tools_full_notice[name] = nil
+            elseif not tools_full_notice[name] then
+                tools_full_notice[name] = true
+                minetest.chat_send_player(name, minetest.colorize("#FFB347",
+                    TAG_MISSION .. S("Make room in your inventory to get the mission tools.")))
+            end
+        end
+    end
+end
+
+local function call_presence(player, kind, inside, mission)
+    local def = specials[kind]
+    if def and def.on_presence then
+        local ok, err = pcall(def.on_presence, player, inside, mission)
+        if not ok then
+            minetest.log("error", "[classrooms_bridge] " .. kind .. " presence failed: " .. tostring(err))
+        end
+    end
+end
+
+-- Tells activities who entered or left their zones since the last step.
+local function apply_presence(players)
+    for _, player in ipairs(players) do
+        local name = player:get_player_name()
+        local before, now = special_present[name] or {}, present_now[name] or {}
+        for kind, mission in pairs(before) do
+            if not now[kind] then call_presence(player, kind, false, mission) end
+        end
+        for kind, mission in pairs(now) do
+            if not before[kind] then call_presence(player, kind, true, mission) end
+        end
+        special_present[name] = next(now) and now or nil
+    end
+end
+
 local function step()
     local players = minetest.get_connected_players()
     if #players == 0 then return end
+    special_wanted = {}
+    present_now = {}
     local visible = {} -- [name] = list
     for _, zone in ipairs(zones.list()) do
         if zone.mission and zone.mission.id then
@@ -1283,6 +1526,10 @@ local function step()
         end
     end
     missions.update_chests(players)
+    if next(special_tools) then
+        for _, player in ipairs(players) do apply_special_tools(player) end
+    end
+    apply_presence(players)
     for _, player in ipairs(players) do
         local list = visible[player:get_player_name()] or {}
         -- Own missions first, at most a couple on screen.
@@ -1305,6 +1552,18 @@ end)
 
 minetest.register_on_leaveplayer(function(player)
     huds[player:get_player_name()] = nil
+    tools_full_notice[player:get_player_name()] = nil
+    special_present[player:get_player_name()] = nil
+end)
+
+-- Activity tools never leave the world in an inventory.
+minetest.register_on_joinplayer(function(player)
+    local name = player:get_player_name()
+    special_wanted[name] = nil
+    minetest.after(0, function()
+        local current = minetest.get_player_by_name(name)
+        if current then apply_special_tools(current) end
+    end)
 end)
 
 return missions

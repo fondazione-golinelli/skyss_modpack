@@ -7,7 +7,8 @@
 --
 -- Everyone sees the map with zones, waypoints, teleport points and their own
 -- position. Staff can add/remove waypoints and teleport points; students can
--- teleport to teleport points only.
+-- teleport to teleport points, and to zones open to everyone or to their
+-- group. Filters hide teleport points, zones or waypoints.
 --
 -- On the "hub" map (the HUB lobby) every player carries the map, staff are the
 -- hub admins (server or hub_admin privilege) and they can also move the spawn
@@ -255,16 +256,37 @@ local function distance_text(player, m)
     return distance_to(player, m.x, m.z)
 end
 
--- Zones the player may teleport to from the list: staff all, students the
--- zones of their own group.
+-- Whether the player may teleport to a zone: staff to every zone, students to
+-- zones open to everyone and to the zones of their own group.
+local function can_go_zone(zone, name, staff)
+    return zone.tp ~= nil and (staff or zone.open or (zone.allowed and zone.allowed[name]) == true)
+end
+
+-- Zones the player may teleport to from the list.
 local function teleport_zones(name, staff)
     local list = {}
     for _, zone in ipairs(zones.list()) do
-        if zone.tp and (staff or (zone.allowed and zone.allowed[name])) then
+        if can_go_zone(zone, name, staff) then
             table.insert(list, zone)
         end
     end
     return list
+end
+
+-- Map filters: what the map and the places list show.
+local FILTERS = {
+    { key = "tp", label = S("Teleports"), tip = S("Show teleport points") },
+    { key = "zones", label = S("Zones"), tip = S("Show zones") },
+    { key = "wp", label = S("Waypoints"), tip = S("Show waypoints") },
+}
+
+local function shows(v, key)
+    return not (v.hidden and v.hidden[key])
+end
+
+-- Whether a marker passes the filters.
+local function marker_shown(v, m)
+    return shows(v, m.kind == "teleport" and "tp" or "wp")
 end
 
 local show -- forward
@@ -324,7 +346,9 @@ show = function(player)
     local function pos(x, z) return node_to_content(x, z, zoom) end
     table.insert(fs, ("image[0,0;%g,%g;%s]"):format(cw, ch, TEXTURE))
 
-    for _, zone in ipairs(zones.list()) do
+    local shown_zones = shows(v, "zones") and zones.list() or {}
+    local tp_zones = shows(v, "tp") and teleport_zones(name, staff) or {}
+    for _, zone in ipairs(shown_zones) do
         local x1, y1 = pos(zone.min_x, zone.max_z + 1)
         local x2, y2 = pos(zone.max_x + 1, zone.min_z)
         local bw, bh = x2 - x1, y2 - y1
@@ -349,23 +373,25 @@ show = function(player)
     local mx, my = pos(me.x, me.z)
     tip(mx - ME / 2, my - ME / 2, ME, ME, S("You are here"))
     for _, m in ipairs(markers) do
-        local px, py = pos(m.x, m.z)
-        local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
-            or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
-        local yoff = m.kind == "teleport" and 0.25 or 0.5
-        table.insert(fs, ("image[%g,%g;0.5,0.5;%s]"):format(px - 0.25, py - yoff, esc(icon)))
-        tip(px - 0.25, py - yoff, 0.5, 0.5, m.kind == "teleport" and S("Teleport point: @1", m.name)
-            or S("Waypoint: @1", m.name))
+        if marker_shown(v, m) then
+            local px, py = pos(m.x, m.z)
+            local icon = m.kind == "teleport" and "classrooms_bridge_map_tp.png"
+                or ("classrooms_bridge_map_pin.png^[multiply:" .. m.color)
+            local yoff = m.kind == "teleport" and 0.25 or 0.5
+            table.insert(fs, ("image[%g,%g;0.5,0.5;%s]"):format(px - 0.25, py - yoff, esc(icon)))
+            tip(px - 0.25, py - yoff, 0.5, 0.5, m.kind == "teleport" and S("Teleport point: @1", m.name)
+                or S("Waypoint: @1", m.name))
+        end
     end
-    -- Zone teleport points: staff every zone, students their group's zones.
-    for _, zone in ipairs(teleport_zones(name, staff)) do
+    -- Zone teleport points: staff every zone, students open zones and their group's.
+    for _, zone in ipairs(tp_zones) do
         local px, py = pos(zone.tp.x, zone.tp.z)
         local color = zone.color:match("^#%x%x%x%x%x%x$") and zone.color or "#9aa3b5"
         table.insert(fs, ("image[%g,%g;0.45,0.45;%s]"):format(px - 0.225, py - 0.225,
             esc("classrooms_bridge_map_tp.png^[multiply:" .. color)))
         tip(px - 0.225, py - 0.225, 0.45, 0.45, S("Teleport point: @1", zone.name))
     end
-    for _, zone in ipairs(zones.list()) do
+    for _, zone in ipairs(shown_zones) do
         local x1, y1 = pos(zone.min_x, zone.max_z + 1)
         local x2, y2 = pos(zone.max_x + 1, zone.min_z)
         tip(x1, y1, x2 - x1, y2 - y1, S("Zone: @1", zone.name))
@@ -406,11 +432,13 @@ show = function(player)
 
     -- Pins: above the click grid, clicking one selects its place in the list.
     for _, m in ipairs(markers) do
-        local px, py = pos(m.x, m.z)
-        local yoff = m.kind == "teleport" and 0.25 or 0.5
-        table.insert(fs, ("image_button[%g,%g;0.5,0.5;blank.png;map_pin_%d;]"):format(px - 0.25, py - yoff, m.id))
+        if marker_shown(v, m) then
+            local px, py = pos(m.x, m.z)
+            local yoff = m.kind == "teleport" and 0.25 or 0.5
+            table.insert(fs, ("image_button[%g,%g;0.5,0.5;blank.png;map_pin_%d;]"):format(px - 0.25, py - yoff, m.id))
+        end
     end
-    for _, zone in ipairs(teleport_zones(name, staff)) do
+    for _, zone in ipairs(tp_zones) do
         local px, py = pos(zone.tp.x, zone.tp.z)
         table.insert(fs, ("image_button[%g,%g;0.45,0.45;blank.png;map_zpin_%d;]"):format(px - 0.225, py - 0.225, zone.id))
     end
@@ -508,15 +536,27 @@ show = function(player)
     local list_h = 10.95 - list_y
     table.insert(fs, ("box[%g,%g;6.4,%g;%s]"):format(px0, list_y, list_h, C.card))
     table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.28, colored(C.muted, S("PLACES"))))
+    -- Filters: on/off for teleport points, zones and waypoints.
+    for i, f in ipairs(FILTERS) do
+        local on = shows(v, f.key)
+        local field = "map_filter_" .. f.key
+        table.insert(fs, ("style[%s;bgcolor=%s;textcolor=%s]button[%g,%g;1.98,0.42;%s;%s]tooltip[%s;%s]"):format(
+            field, on and C.primary or C.button, on and C.light or C.muted, px0 + 0.15 + (i - 1) * 2.05,
+            list_y + 0.5, field, esc(f.label), field, esc(f.tip)))
+    end
     local rows = {}
-    for _, m in ipairs(markers) do table.insert(rows, { marker = m }) end
-    for _, zone in ipairs(teleport_zones(name, staff)) do table.insert(rows, { zone = zone }) end
+    for _, m in ipairs(markers) do
+        if marker_shown(v, m) then table.insert(rows, { marker = m }) end
+    end
+    if shows(v, "zones") then
+        for _, zone in ipairs(teleport_zones(name, staff)) do table.insert(rows, { zone = zone }) end
+    end
     if #rows == 0 then
-        table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 0.75, colored(C.muted,
+        table.insert(fs, ("label[%g,%g;%s]"):format(px0 + 0.2, list_y + 1.25, colored(C.muted,
             staff and S("None yet: select a point on the map.")
                 or (HUB_MODE and S("No places yet.") or S("Your teacher has not placed any yet.")))))
     end
-    local area_y, area_h = list_y + 0.5, list_h - 0.6
+    local area_y, area_h = list_y + 1.0, list_h - 1.1
     local content_h = #rows * 0.55
     local function row_key(row)
         return row.marker and ("m" .. row.marker.id) or ("z" .. row.zone.id)
@@ -709,6 +749,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         show(player)
         return true
     end
+    for _, f in ipairs(FILTERS) do
+        if fields["map_filter_" .. f.key] then
+            v.hidden = v.hidden or {}
+            v.hidden[f.key] = not v.hidden[f.key] or nil
+            show(player)
+            return true
+        end
+    end
 
     local e = EXTENT / v.zoom
     local step = e / 4
@@ -804,7 +852,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             id = tonumber(key:match("^map_zpin_(%d+)$") or "")
             if id then
                 local zone = zone_by_id(id)
-                if zone and zone.tp and (staff or (zone.allowed and zone.allowed[name])) then
+                if zone and can_go_zone(zone, name, staff) then
                     pick("z" .. zone.id, zone.tp.x, zone.tp.y, zone.tp.z, zone.tp.yaw)
                 end
                 break
@@ -858,7 +906,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             id = tonumber(key:match("^map_ztp_(%d+)$") or "")
             if id then
                 local zone = zone_by_id(id)
-                local allowed = zone and zone.tp and (staff or (zone.allowed and zone.allowed[name]))
+                local allowed = zone and can_go_zone(zone, name, staff)
                 if allowed and may_teleport(name, staff) then
                     teleport(player, zone.tp.x, zone.tp.y, zone.tp.z, tonumber(zone.tp.yaw))
                     minetest.close_formspec(name, FORM)
