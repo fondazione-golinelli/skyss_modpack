@@ -215,7 +215,7 @@ local use_detector -- defined below
 
 minetest.register_tool(DETECTOR, {
     description = S("Fossil detector") .. "\n" .. minetest.colorize("#aaaaaa",
-        S("Click to find out how close the nearest fossil is.")),
+        S("Click to lock onto the nearest fossil, then hold it and follow the arrow.")),
     inventory_image = "classrooms_bridge_fossil_detector.png",
     groups = { not_in_creative_inventory = 1, mission_tool = 1 },
     on_use = function(itemstack, user)
@@ -828,6 +828,42 @@ local function hidden(rec)
     return out
 end
 
+-- Marks fossils and bones that are no longer in the world (dug some other
+-- way) as found, so neither the detector nor the goals wait for them.
+local function prune(id, rec)
+    local changed = false
+    for _, f in ipairs(rec.small or {}) do
+        if not f.found then
+            local node = minetest.get_node_or_nil(f)
+            if node and our_nodes[node.name] ~= "small" then
+                f.found, changed = true, true
+                index[hash(f)] = nil
+            end
+        end
+    end
+    for _, sk in ipairs(rec.skeletons or {}) do
+        if not sk.done then
+            local all = true
+            for _, cell in ipairs(sk.cells) do
+                if not cell.open then
+                    local node = minetest.get_node_or_nil(cell)
+                    if node and our_nodes[node.name] ~= "covered" then
+                        cell.open, changed = true, true
+                    else
+                        all = false
+                    end
+                end
+            end
+            if all then sk.done, changed = true, true end
+        end
+    end
+    if changed then save_record(id) end
+end
+
+local function inside(zone, p)
+    return p.x >= zone.min_x and p.x <= zone.max_x and p.z >= zone.min_z and p.z <= zone.max_z
+end
+
 -- Top of the ground over a clue column, following holes the students dug.
 local function clue_ground(cx, cz, sy, floor_y)
     for y = sy + 3, floor_y + 1, -1 do
@@ -866,10 +902,11 @@ minetest.register_globalstep(function(dtime)
                 if zones.zone_at(player:get_pos()) == zone then table.insert(near, player:get_pos()) end
             end
             if #near > 0 then
+                prune(id, rec)
                 local shown = {}
                 for _, target in ipairs(hidden(rec)) do
-                    local key = target.cx .. "," .. target.cz
-                    if not shown[key] and target.cx then
+                    local key = target.cx and (target.cx .. "," .. target.cz)
+                    if key and not shown[key] and inside(zone, target.pos) then
                         for _, p in ipairs(near) do
                             if math.abs(p.x - target.cx) <= CLUE_RANGE and math.abs(p.z - target.cz) <= CLUE_RANGE then
                                 shown[key] = true
@@ -885,84 +922,188 @@ minetest.register_globalstep(function(dtime)
     end
 end)
 
-local detector_huds = {} -- [player] = { id, token }
-local detector_last = {} -- [player] = time of the last use
+-- The detector locks onto the nearest hidden fossil when clicked and, while
+-- held, guides to it: an arrow turning with the view, whether it is above,
+-- below or at the player's level (and how many blocks), the distance in a
+-- hot/cold colour, and beeps that speed up when close. A target that is
+-- found, gone or no longer inside the zone is dropped for the next nearest.
 
-local function detector_message(player, text, color)
-    local name = player:get_player_name()
-    local old = detector_huds[name]
-    if old then player:hud_remove(old.id) end
-    local token = {}
-    detector_huds[name] = { token = token, id = player:hud_add({
-        type = "text", position = { x = 0.5, y = 0.72 }, alignment = { x = 0, y = 0 },
-        text = text, number = color, size = { x = 1.5 }, style = 1, z_index = 110,
-    }) }
-    minetest.after(3, function()
-        local current = minetest.get_player_by_name(name)
-        local hud = detector_huds[name]
-        if current and hud and hud.token == token then
-            current:hud_remove(hud.id)
-            detector_huds[name] = nil
+local DETECT_EVERY = 0.25
+local locks = {}      -- [player] = { id, target }
+local det_huds = {}   -- [player] = { arrow, level, text, tex = {} }
+local beep_at = {}    -- [player] = time of the next beep
+local detector_last = {}
+
+-- The fossil zone the player is in, with its record id.
+local function fossil_zone_at(pos)
+    local zone = zones.zone_at(pos)
+    if not zone then return nil end
+    for id in pairs(active) do
+        local rec = load_record(id)
+        if rec and zone_by_id(rec.zone) == zone then return zone, id, rec end
+    end
+end
+
+local function still_hidden(target)
+    local node = minetest.get_node_or_nil(target.pos)
+    if not node then return true end -- not loaded: trust the record
+    return our_nodes[node.name] == (target.bone and "covered" or "small")
+end
+
+local function nearest(pos, zone, id, rec)
+    prune(id, rec)
+    local best, best_d
+    for _, target in ipairs(hidden(rec)) do
+        if inside(zone, target.pos) then
+            local d = vector.distance(pos, target.pos)
+            if not best_d or d < best_d then best, best_d = target, d end
         end
-    end)
+    end
+    return best
+end
+
+local function clear_detector_hud(player)
+    local name = player:get_player_name()
+    local h = det_huds[name]
+    if not h then return end
+    for _, key in ipairs({ "arrow", "level", "text" }) do
+        if h[key] then player:hud_remove(h[key]) end
+    end
+    det_huds[name] = nil
+end
+
+-- Shows (or updates) the guide: arrow and level icons may be nil.
+local function draw_detector(player, arrow, level, text, color)
+    local name = player:get_player_name()
+    local h = det_huds[name]
+    if not h then
+        h = { tex = {} }
+        det_huds[name] = h
+        h.arrow = player:hud_add({ type = "image", position = { x = 0.5, y = 0.66 }, offset = { x = -34, y = 0 },
+            alignment = { x = 0, y = 0 }, scale = { x = 3, y = 3 }, text = "blank.png", z_index = 110 })
+        h.level = player:hud_add({ type = "image", position = { x = 0.5, y = 0.66 }, offset = { x = 34, y = 0 },
+            alignment = { x = 0, y = 0 }, scale = { x = 3, y = 3 }, text = "blank.png", z_index = 110 })
+        h.text = player:hud_add({ type = "text", position = { x = 0.5, y = 0.66 }, offset = { x = 0, y = 52 },
+            alignment = { x = 0, y = 0 }, text = "", number = 0xFFFFFF, size = { x = 1.3 }, style = 1, z_index = 110 })
+    end
+    local function set(key, field, value)
+        if h.tex[key .. field] ~= value then
+            player:hud_change(h[key], field, value)
+            h.tex[key .. field] = value
+        end
+    end
+    set("arrow", "text", arrow or "blank.png")
+    set("level", "text", level or "blank.png")
+    set("text", "text", text)
+    set("text", "number", color)
+end
+
+local function heat(d)
+    if d <= 3 then return S("Very hot"), 0xFF5A3C, 0.35, 2.0 end
+    if d <= 8 then return S("Hot"), 0xFFA03C, 0.7, 1.6 end
+    if d <= 16 then return S("Warm"), 0xFFE066, 1.4, 1.25 end
+    return S("Cold"), 0x6FB7FF, 2.6, 0.8
+end
+
+-- One guide update for a player holding the detector.
+local function guide(player)
+    local name = player:get_player_name()
+    local pos = player:get_pos()
+    local lock = locks[name]
+    local rec = lock and load_record(lock.id)
+    local zone = rec and zone_by_id(rec.zone)
+    if lock and not (rec and zone and inside(zone, lock.target.pos) and still_hidden(lock.target)) then
+        -- Found or gone: on to the next one of the same site.
+        local here_zone, id, here_rec = fossil_zone_at(pos)
+        local next_target = here_zone and nearest(pos, here_zone, id, here_rec)
+        if next_target then
+            lock = { id = id, target = next_target }
+            locks[name] = lock
+            rec, zone = here_rec, here_zone
+            minetest.chat_send_player(name, minetest.colorize("#7FD18B", TAG .. S("The detector locked onto the next fossil.")))
+        else
+            locks[name], lock = nil, nil
+        end
+    end
+    if not lock then
+        local here = fossil_zone_at(pos)
+        draw_detector(player, nil, nil, here and S("Click to look for the nearest fossil.")
+            or S("Use the detector inside the dig site."), 0xCCCCCC)
+        return
+    end
+    local t = lock.target.pos
+    local dx, dz = t.x - pos.x, t.z - pos.z
+    local flat = math.sqrt(dx * dx + dz * dz)
+    local feet = math.floor(pos.y + 0.5)
+    local dy = t.y - feet
+    local d = vector.distance(pos, t)
+    local arrow
+    if flat < 1.5 then
+        arrow = "classrooms_bridge_detector_here.png"
+    else
+        local target = math.atan2(-dx, dz)
+        local rel = (player:get_look_horizontal() - target) % (2 * math.pi)
+        arrow = "classrooms_bridge_arrow_" .. (math.floor(rel / (math.pi / 4) + 0.5) % 8) .. ".png"
+    end
+    local level, where
+    if dy < 0 then
+        level, where = "classrooms_bridge_detector_down.png", S("@1 blocks below you", -dy)
+    elseif dy > 1 then
+        level, where = "classrooms_bridge_detector_up.png", S("@1 blocks above you", dy - 1)
+    else
+        level, where = "classrooms_bridge_detector_level.png", S("At your level")
+    end
+    local label, color, interval, pitch = heat(d)
+    draw_detector(player, arrow, level, label .. " · " .. math.floor(d + 0.5) .. " m · " .. where, color)
+    local now = minetest.get_us_time() / 1e6
+    if not beep_at[name] or now >= beep_at[name] then
+        beep_at[name] = now + interval
+        minetest.sound_play("mcl_experience", { to_player = name, gain = 0.25, pitch = pitch }, true)
+    end
 end
 
 use_detector = function(player)
     local name = player:get_player_name()
     local now = minetest.get_us_time() / 1e6
-    if detector_last[name] and now - detector_last[name] < 1 then return end
+    if detector_last[name] and now - detector_last[name] < 0.5 then return end
     detector_last[name] = now
     local pos = player:get_pos()
-    local zone = zones.zone_at(pos)
-    local best, best_d
-    for id in pairs(active) do
-        local rec = load_record(id)
-        if rec and zone and zone_by_id(rec.zone) == zone then
-            for _, target in ipairs(hidden(rec)) do
-                local d = vector.distance(pos, target.pos)
-                if not best_d or d < best_d then best, best_d = target, d end
-            end
-        end
-    end
-    if not best then
-        detector_message(player, zone and S("No fossils left to find here.")
-            or S("Use the detector inside the dig site."), 0xCCCCCC)
+    local zone, id, rec = fossil_zone_at(pos)
+    if not zone then
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG .. S("Use the detector inside the dig site.")))
         return
     end
-    local text, color
-    if best_d <= 4 then
-        text, color = S("Very hot! A fossil is right here."), 0xFF5A3C
-    elseif best_d <= 10 then
-        text, color = S("Hot: a fossil is very close."), 0xFFA03C
-    elseif best_d <= 20 then
-        text, color = S("Warm: a fossil is not far."), 0xFFE066
-    else
-        text, color = S("Cold: the nearest fossil is far away."), 0x6FB7FF
+    local target = nearest(pos, zone, id, rec)
+    if not target then
+        locks[name] = nil
+        minetest.chat_send_player(name, minetest.colorize("#FFB347", TAG .. S("No fossils left to find here.")))
+        return
     end
-    local below = math.floor(pos.y + 0.5) - best.pos.y
-    if below >= 2 then
-        text = text .. "\n" .. S("About @1 blocks below you.", below)
-    end
-    detector_message(player, text, color)
-    minetest.sound_play("mcl_experience", { to_player = name, gain = 0.3,
-        pitch = best_d <= 4 and 2 or (best_d <= 10 and 1.5 or (best_d <= 20 and 1.1 or 0.7)) }, true)
-    -- A short trail of sparks pointing the way along the ground.
-    local dir = { x = best.pos.x - pos.x, y = 0, z = best.pos.z - pos.z }
-    if vector.length(dir) > 2 then
-        dir = vector.normalize(dir)
-        for i = 1, 4 do
-            minetest.add_particle({
-                pos = { x = pos.x + dir.x * i * 0.8, y = pos.y + 0.6, z = pos.z + dir.z * i * 0.8 },
-                velocity = vector.multiply(dir, 0.6), expirationtime = 1.2, size = 2.5, glow = 12,
-                texture = "classrooms_bridge_spark.png^[multiply:#7fd18b", playername = name,
-            })
-        end
-    end
+    locks[name] = { id = id, target = target }
+    beep_at[name] = nil
+    minetest.chat_send_player(name, minetest.colorize("#7FD18B", TAG .. (target.bone
+        and S("Detector locked onto a buried skeleton. Follow the arrow!")
+        or S("Detector locked onto a fossil. Follow the arrow!"))))
+    guide(player)
 end
 
+local detect_timer = 0
+minetest.register_globalstep(function(dtime)
+    detect_timer = detect_timer + dtime
+    if detect_timer < DETECT_EVERY then return end
+    detect_timer = 0
+    for _, player in ipairs(minetest.get_connected_players()) do
+        if player:get_wielded_item():get_name() == DETECTOR then
+            guide(player)
+        elseif det_huds[player:get_player_name()] then
+            clear_detector_hud(player)
+        end
+    end
+end)
+
 minetest.register_on_leaveplayer(function(player)
-    detector_huds[player:get_player_name()] = nil
-    detector_last[player:get_player_name()] = nil
+    local name = player:get_player_name()
+    det_huds[name], locks[name], beep_at[name], detector_last[name] = nil, nil, nil, nil
 end)
 
 -- ── Registration ─────────────────────────────────────────────────────────────

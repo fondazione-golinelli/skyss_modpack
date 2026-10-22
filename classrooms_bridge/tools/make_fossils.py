@@ -10,6 +10,7 @@ Writes into ../textures:
   classrooms_bridge_fossil_hammer.png, _brush.png, _notebook.png,
   _detector.png                            tools
   classrooms_bridge_miner_helmet.png, _layer.png  miner's helmet (item, worn)
+  classrooms_bridge_detector_up/down/level/here.png  detector HUD
 
 Run: python3 tools/make_fossils.py
 """
@@ -405,6 +406,71 @@ def draw_tools():
     save(helmet, "miner_helmet")
 
 
+def draw_detector_icons():
+    """Detector HUD: the fossil is above, below, at your level, or here."""
+    pal = {"o": hexcolor("#1c1f24"), "u": hexcolor("#7fd18b"), "d": hexcolor("#ff8a3c"),
+           "l": hexcolor("#ffe066"), "h": hexcolor("#ff5a3c")}
+    up = [
+        "................",
+        ".......oo.......",
+        "......ouuo......",
+        ".....ouuuuo.....",
+        "....ouuuuuuo....",
+        "...ouuuuuuuuo...",
+        "..ooooouuooooo..",
+        "......ouuo......",
+        "......ouuo......",
+        "......ouuo......",
+        "......ouuo......",
+        "......ouuo......",
+        "......ouuo......",
+        "......oooo......",
+        "................",
+        "................",
+    ]
+    save(from_ascii(up, pal), "detector_up")
+    down = [row.replace("u", "d") for row in reversed(up)]
+    save(from_ascii(down, pal), "detector_down")
+    level = from_ascii([
+        "................",
+        "................",
+        "................",
+        "....o......o....",
+        "...olo....olo...",
+        "..ollo....ollo..",
+        ".olllo....olllo.",
+        "ollllooooolllllo"[:16],
+        "ollllllllllllllo",
+        ".olllo....olllo.",
+        "..ollo....ollo..",
+        "...olo....olo...",
+        "....o......o....",
+        "................",
+        "................",
+        "................",
+    ], pal)
+    save(level, "detector_level")
+    here = from_ascii([
+        "................",
+        ".....oooooo.....",
+        "...oohhhhhhoo...",
+        "..ohhoooooohho..",
+        ".ohho......ohho.",
+        ".oho..oooo..oho.",
+        "ohho.ohhhho.ohho",
+        "oho..ohhhho..oho",
+        "oho..ohhhho..oho",
+        "ohho.ohhhho.ohho",
+        ".oho..oooo..oho.",
+        ".ohho......ohho.",
+        "..ohhoooooohho..",
+        "...oohhhhhhoo...",
+        ".....oooooo.....",
+        "................",
+    ], pal)
+    save(here, "detector_here")
+
+
 def draw_helmet_layer():
     """The helmet on the player model: the hat layer of the 64x32 armor
     texture (top 40-47 x 0-7; sides, front and back 32-63 x 8-15)."""
@@ -431,4 +497,5 @@ if __name__ == "__main__":
     draw_bones()
     draw_tools()
     draw_helmet_layer()
+    draw_detector_icons()
     print("fossil textures written to", os.path.normpath(OUT))
