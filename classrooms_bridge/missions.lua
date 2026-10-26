@@ -279,6 +279,11 @@ end
 --     on_presence(player, inside, mission),  -- optional: a participant or
 --                           -- staff entered (true) or left (false) the zone;
 --                           -- also false when the mission ends
+--     count_player(name, site, goal, mission) -> number,  -- optional: the
+--                           -- participant's own progress, shown in their HUD
+--                           -- (the mission is done for them when every goal is)
+--     player_note(name, site, mission, staff) -> text,  -- optional: an extra
+--                           -- HUD line, e.g. how many classmates have finished
 -- }
 -- Goal keys must be unique across activities (prefix them with the kind).
 
@@ -1189,28 +1194,54 @@ local function draw_hud(player, list)
     local lines = {}
     -- Translated here, not by the client: the lines are wrapped and measured.
     local function T(text) return translate_for(player:get_player_name(), text) end
+    local name = player:get_player_name()
     for _, item in ipairs(list) do
         local mission, state = item.mission, item.state
         local title = tostring(mission.title)
-        local heading = T(state.complete and S("MISSION COMPLETE: @1", title) or S("MISSION: @1", title))
-        for _, text in ipairs(wrap(heading, HUD_WRAP)) do
-            table.insert(lines, { text = text, color = state.complete and 0x7FD18B or 0xFFE066, size = 1 })
+        -- Activities may count each participant on their own: the mission is
+        -- then done for a student once their own goals are met.
+        local def = specials[mission.kind or ""]
+        local own = {}
+        local complete = state.complete
+        if def and def.count_player and item.mine and not state.complete then
+            complete = #(mission.objectives or {}) > 0
+            for i, goal in ipairs(mission.objectives or {}) do
+                local have = state.counts[i] or 0
+                if goal.type == "special" then
+                    local ok, n = pcall(def.count_player, name, item.site, goal, mission)
+                    if ok and tonumber(n) then have = tonumber(n) end
+                    own[i] = have
+                end
+                if have < (tonumber(goal.count) or 1) then complete = false end
+            end
         end
-        if not state.complete and mission.description and mission.description ~= "" then
+        local heading = T(complete and S("MISSION COMPLETE: @1", title) or S("MISSION: @1", title))
+        for _, text in ipairs(wrap(heading, HUD_WRAP)) do
+            table.insert(lines, { text = text, color = complete and 0x7FD18B or 0xFFE066, size = 1 })
+        end
+        if not complete and mission.description and mission.description ~= "" then
             for _, text in ipairs(wrap(mission.description, HUD_WRAP)) do
                 table.insert(lines, { text = text, color = 0xCCCCCC })
             end
         end
         for i, goal in ipairs(mission.objectives or {}) do
-            local have = state.counts[i] or 0
+            local have = own[i] or state.counts[i] or 0
             local need = tonumber(goal.count) or 1
-            local ok = state.complete or have >= need
+            local ok = complete or have >= need
             local goal_lines = wrap((ok and "[x] " or "[ ] ") .. T(goal_label(goal)) .. "  "
                 .. math.min(have, need) .. "/" .. need, HUD_WRAP)
             local icon = item_texture(goal_icon(goal))
             for j, text in ipairs(goal_lines) do
                 table.insert(lines, { text = j == 1 and text or ("     " .. text), color = ok and 0x7FD18B or 0xFFFFFF,
                     icon = j == 1 and icon or nil, indent = icon ~= nil })
+            end
+        end
+        if def and def.player_note and not state.complete then
+            local ok, note = pcall(def.player_note, name, item.site, mission, not item.mine)
+            if ok and type(note) == "string" and note ~= "" then
+                for _, text in ipairs(wrap(T(note), HUD_WRAP)) do
+                    table.insert(lines, { text = text, color = 0xCCCCCC })
+                end
             end
         end
         if state.needs_chest then
@@ -1222,7 +1253,6 @@ local function draw_hud(player, list)
     local parts = {}
     for _, line in ipairs(lines) do table.insert(parts, line.text .. (line.icon or "")) end
     local signature = table.concat(parts, "\n")
-    local name = player:get_player_name()
     if huds[name] and huds[name].signature == signature then return end
     clear_hud(player)
     if #list == 0 then return end
@@ -1418,7 +1448,7 @@ local function update_mission(site, mission, players, visible)
         local here = site.global or zones.zone_at(player:get_pos()) == site
         if here and (participant or is_staff(name)) and not (site.global and state.complete) then
             visible[name] = visible[name] or {}
-            table.insert(visible[name], { mission = mission, state = state, mine = participant })
+            table.insert(visible[name], { mission = mission, state = state, mine = participant, site = site })
         end
         if participant and here then
             give_tools(player, mission)

@@ -10,13 +10,14 @@ local ITEM_NAME = "classrooms_bridge:blockexchange"
 local TOOL_ID = "blockexchange"
 local FORM_NAME = "classrooms_bridge:blockexchange"
 local PAGE_SIZE = 20
--- Content categories, created on the BlockExchange server (migration
--- 19_skyss_tags). Names stay English everywhere.
+-- Content categories, created on the BlockExchange server (migrations
+-- 19_skyss_tags and 20_skyss_tag_museum). Names stay English everywhere.
 local TAGS = {
     { name = "farm", label = "Farm" },
     { name = "structure", label = "Structure" },
     { name = "props", label = "Props" },
     { name = "space", label = "Space" },
+    { name = "museum", label = "Museum" },
 }
 local TAG_LABELS = {}
 for _, tag in ipairs(TAGS) do
@@ -245,10 +246,10 @@ local function tag_list(tags)
     return table.concat(labels, ", ")
 end
 
-local function tag_checkboxes(fs, x, y, prefix, checked, columns)
+local function tag_checkboxes(fs, x, y, prefix, checked, columns, row_height)
     for k, tag in ipairs(TAGS) do
         local col, row = (k - 1) % columns, math.floor((k - 1) / columns)
-        table.insert(fs, ("checkbox[%s,%s;%s%s;%s;%s]"):format(x + col * 2.0, y + row * 0.5,
+        table.insert(fs, ("checkbox[%s,%s;%s%s;%s;%s]"):format(x + col * 2.0, y + row * (row_height or 0.5),
             prefix, tag.name, esc(tag.label), checked[tag.name] and "true" or "false"))
     end
 end
@@ -363,7 +364,7 @@ local function render_tags_card(fs, name, view, selected, x, y, w, h)
         return
     end
     label(fs, x + 0.2, y + 0.3, S("Your tags"), C.muted)
-    tag_checkboxes(fs, x + 0.2, y + 0.7, "bx_edit_tag_", view.edit_tags or {}, 2)
+    tag_checkboxes(fs, x + 0.2, y + 0.7, "bx_edit_tag_", view.edit_tags or {}, 2, 0.42)
     styled_button(fs, x + 0.2, y + h - 0.7, w - 0.4, 0.55, "bx_save_tags",
         view.saving_tags and S("Saving…") or S("Save tags"), C.primary)
 end
@@ -487,8 +488,8 @@ local function render(name)
         table.insert(fs, "]")
 
         local selected = view.rows[view.selected or 0]
-        render_preview(fs, name, selected, side_x, 3.1, side_w, 3.65)
-        render_tags_card(fs, name, view, selected, side_x, 6.85, side_w, 1.4)
+        render_preview(fs, name, selected, side_x, 3.1, side_w, 2.75)
+        render_tags_card(fs, name, view, selected, side_x, 5.95, side_w, 2.3)
     end
 
     icon_button(fs, 0.35, 8.45, 0.55, "bx_prev", "prev_icon.png", S("Previous page"))

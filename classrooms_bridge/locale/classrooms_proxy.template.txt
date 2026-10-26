@@ -790,3 +790,5 @@ New version: Danube, Balaton, Great Plain=
 New version: Tatras, Vistula, Masuria=
 Europe=
 The continent: Alps, seas, rivers, capitals=
+◄ Simple missions=
+Back to a mission with your own goals: deliveries, gathering, animals, blocks=
