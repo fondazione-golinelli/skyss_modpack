@@ -392,3 +392,6 @@ The detector locked onto the next fossil.=Il rilevatore ha agganciato il fossile
 Click to look for the nearest fossil.=Clicca per cercare il fossile più vicino.
 Detector locked onto a buried skeleton. Follow the arrow!=Rilevatore agganciato a uno scheletro sepolto. Segui la freccia!
 Detector locked onto a fossil. Follow the arrow!=Rilevatore agganciato a un fossile. Segui la freccia!
+# guide.lua
+Teacher guide=Guida per l'insegnante
+Use to read the handbook: controls, game basics and the class panel=Usala per leggere il manuale: comandi, basi del gioco e pannello della classe

@@ -392,3 +392,6 @@ The detector locked onto the next fossil.=El detector ha fijado el siguiente fó
 Click to look for the nearest fossil.=Haz clic para buscar el fósil más cercano.
 Detector locked onto a buried skeleton. Follow the arrow!=Detector fijado en un esqueleto enterrado. ¡Sigue la flecha!
 Detector locked onto a fossil. Follow the arrow!=Detector fijado en un fósil. ¡Sigue la flecha!
+# guide.lua
+Teacher guide=Guía del docente
+Use to read the handbook: controls, game basics and the class panel=Úsala para leer el manual: controles, lo básico del juego y el panel de la clase

@@ -183,6 +183,9 @@ local map_hooks = {}
 local worldmap = assert(loadfile(MODPATH .. "/worldmap.lua"))(MODPATH, zones, toolbar, is_map_staff,
     function(name) return frozen_players[name] == true end, map_hooks)
 
+-- Handbook for class staff, in its own toolbar slot (see guide.lua).
+local guide = assert(loadfile(MODPATH .. "/guide.lua"))(MODPATH, toolbar, is_staff)
+
 local function request_teacher_panel(user)
     if not user or not user:is_player() then return end
     local name = user:get_player_name()
@@ -325,6 +328,7 @@ local function set_teacher_access(player, enabled)
     local name = player:get_player_name()
     teacher_access[name] = enabled or nil
     toolbar.set_enabled(player, TEACHER_PANEL_TOOL, enabled)
+    guide.set_access(player, enabled)
     -- Students carry the map and class worlds items; staff use World Tools.
     worldmap.set_item(player, not enabled)
     toolbar.set_enabled(player, WORLDS_TOOL, not enabled and hub_players[name] == true)

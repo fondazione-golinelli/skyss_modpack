@@ -316,3 +316,6 @@ Back to the spawn point of the hub settings=
 Spawn point reset to @1, @2, @3.=
 Spawn: @1, @2, @3=
 Minigame started for @1 student(s).=
+# guide.lua
+Teacher guide=
+Use to read the handbook: controls, game basics and the class panel=

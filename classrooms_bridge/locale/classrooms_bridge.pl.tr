@@ -392,3 +392,6 @@ The detector locked onto the next fossil.=Wykrywacz namierzył następną skamie
 Click to look for the nearest fossil.=Kliknij, aby szukać najbliższej skamieniałości.
 Detector locked onto a buried skeleton. Follow the arrow!=Wykrywacz namierzył zakopany szkielet. Idź za strzałką!
 Detector locked onto a fossil. Follow the arrow!=Wykrywacz namierzył skamieniałość. Idź za strzałką!
+# guide.lua
+Teacher guide=Poradnik nauczyciela
+Use to read the handbook: controls, game basics and the class panel=Użyj, aby przeczytać podręcznik: sterowanie, podstawy gry i panel klasy

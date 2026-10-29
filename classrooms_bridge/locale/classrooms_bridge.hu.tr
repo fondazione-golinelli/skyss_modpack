@@ -392,3 +392,6 @@ The detector locked onto the next fossil.=A kereső befogta a következő kövü
 Click to look for the nearest fossil.=Kattints a legközelebbi kövület kereséséhez.
 Detector locked onto a buried skeleton. Follow the arrow!=A kereső egy eltemetett csontvázat fogott be. Kövesd a nyilat!
 Detector locked onto a fossil. Follow the arrow!=A kereső befogott egy kövületet. Kövesd a nyilat!
+# guide.lua
+Teacher guide=Tanári útmutató
+Use to read the handbook: controls, game basics and the class panel=Használd a kézikönyv olvasásához: irányítás, a játék alapjai és az osztálypanel
