@@ -2,6 +2,38 @@ local function clone_table() end
 local function add_sub_elem() end
 local function update_sub_elems() end
 
+local hud_vector_defaults = {
+    position = {x = 0.5, y = 0.5},
+    scale = {x = 1, y = 1},
+    alignment = {x = 0, y = 0},
+    offset = {x = 0, y = 0},
+    size = {x = 0, y = 0},
+    world_pos = {x = 0, y = 0, z = 0},
+}
+
+local function complete_hud_vector(field, value)
+    local defaults = hud_vector_defaults[field]
+    if not defaults or type(value) ~= "table" then
+        return value
+    end
+
+    local complete = clone_table(value)
+    for axis, default in pairs(defaults) do
+        if complete[axis] == nil then
+            complete[axis] = default
+        end
+    end
+    return complete
+end
+
+local function complete_hud_vectors(def)
+    for field in pairs(hud_vector_defaults) do
+        if def[field] ~= nil then
+            def[field] = complete_hud_vector(field, def[field])
+        end
+    end
+end
+
 local panels = {}       -- KEY: p_name; VALUE: {{"panel name" = panel}, {"panel name 2" = panel2}, ...}
 local hud_type = minetest.features.hud_def_type_field and "type" or "hud_elem_type"
 
@@ -29,7 +61,7 @@ Panel = {
         position    = {x = 0.5, y = 0.5},
         alignment   = {x = 0, y = 0},
         offset      = {x = 0, y = 0},
-        size        = { x = 1 },
+        size        = { x = 1, y = 0 },
         number      = 0xFFFFFF,
         text        = "",
         style       = 0,
@@ -148,6 +180,9 @@ function Panel:new(name, def)
 
     local player = minetest.get_player_by_name(def.player)
 
+    complete_hud_vectors(panel.background_def)
+    complete_hud_vectors(panel.title_def)
+
     -- assegno sfondo e titolo
     panel.hud_id.bg_hud_id = player:hud_add(panel.background_def)
     panel.hud_id.text_hud_id = player:hud_add(panel.title_def)
@@ -223,6 +258,7 @@ function Panel:update(def, txt_elems, img_elems)
     for k, v in pairs(def) do
       -- aggiorno eventuale posizione, influenzando anche i vari sottoelementi
       if k == "position" then
+        v = complete_hud_vector(k, v)
         self.background_def.position = v
         self.title_def.position = v
 
@@ -241,6 +277,7 @@ function Panel:update(def, txt_elems, img_elems)
 
       -- aggiorno eventuale scostamento, influenzando anche i vari sottoelementi
       elseif k == "offset" then
+        v = complete_hud_vector(k, v)
         self.background_def.offset = v
         self.title_def.offset = v
 
@@ -440,6 +477,8 @@ function add_sub_elem(panel, type, name, HUD_elem)
   -- mostro l'elemento se il pannello era già visibile
   panel[name].text = panel:is_visible() and panel[name].text or ""
 
+  complete_hud_vectors(panel[name])
+
   -- salvo
   panel.hud_id[name] = minetest.get_player_by_name(panel.player_name):hud_add(panel[name])
   panel.hud_text[name] = HUD_elem.text
@@ -463,6 +502,7 @@ function update_sub_elems(panel, elems)
 
   for elem, _ in pairs(elems) do
     for k, v in pairs(elems[elem]) do
+      v = complete_hud_vector(k, v)
       if k == "offset" and (panel.background_def.offset.x ~= 0 or panel.background_def.offset.y ~= 0) then
         panel[elem][k] = { x = panel.background_def.offset.x + (v.x or 0), y = panel.background_def.offset.y + (v.y or 0)}
       else
